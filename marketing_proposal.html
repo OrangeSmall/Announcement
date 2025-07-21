@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平凡五金行會員集點日企劃提案</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #F6F6F6 0%, #E8E5E1 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #833B36 0%, #AD9667 100%);
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.05) 10px,
+                rgba(255,255,255,0.05) 20px
+            );
+            animation: float 20s linear infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: rotate(0deg) translateX(-10px); }
+            100% { transform: rotate(360deg) translateX(-10px); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: slideInDown 1s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header .subtitle {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            animation: fadeIn 1s ease-out 0.5s both;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .theme-banner {
+            background: linear-gradient(90deg, #AD9667, #833B36, #AD9667);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin: 0;
+            box-shadow: 0 4px 8px rgba(131,59,54,0.3);
+            position: relative;
+        }
+        
+        .theme-banner::after {
+            content: '✨';
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(1); }
+            50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(113,110,110,0.1);
+            margin: 30px 0;
+            overflow: hidden;
+            border: 2px solid #AD9667;
+        }
+        
+        .section-header {
+            background: linear-gradient(90deg, #716E6E, #833B36);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th {
+            background: #833B36;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 3px solid #AD9667;
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #AD9667;
+            vertical-align: top;
+        }
+        
+        .comparison-table tr:nth-child(even) {
+            background: rgba(246,246,246,0.5);
+        }
+        
+        .comparison-table tr:hover {
+            background: rgba(173,150,103,0.1);
+            transition: background 0.3s ease;
+        }
+        
+        .proposals-grid {
+            display: none;
+        }
+        
+        .proposal-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(131,59,54,0.15);
+            border: 2px solid #AD9667;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .proposal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(131,59,54,0.2);
+        }
+        
+        .card-header {
+            padding: 25px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        .card-header.type-b {
+            background: linear-gradient(135deg, #833B36, #AD9667);
+        }
+        
+        .card-header.type-c {
+            background: linear-gradient(135deg, #AD9667, #716E6E);
+        }
+        
+        .card-header h2 {
+            font-size: 1.6em;
+            margin-bottom: 10px;
+        }
+        
+        .card-header .tagline {
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+        
+        .card-content {
+            padding: 30px;
+        }
+        
+        .card-content h3 {
+            color: #833B36;
+            margin: 25px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #AD9667;
+            font-size: 1.3em;
+        }
+        
+        .card-content h4 {
+            color: #716E6E;
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+        }
+        
+        .highlight-box {
+            background: rgba(173,150,103,0.1);
+            border: 2px solid #AD9667;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .highlight-box::before {
+            content: '📋';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 1.2em;
+        }
+        
+        .benefits-box {
+            background: rgba(173,150,103,0.08);
+            border-left: 5px solid #833B36;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .key-points-box {
+            background: rgba(246,246,246,0.8);
+            border: 1px solid #AD9667;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .success-factors {
+            background: linear-gradient(135deg, rgba(173,150,103,0.1), rgba(131,59,54,0.05));
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #AD9667;
+        }
+        
+        .success-factors h3 {
+            color: #833B36 !important;
+            border-bottom: 2px solid #AD9667 !important;
+        }
+        
+        ul {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        
+        li {
+            margin: 8px 0;
+            position: relative;
+        }
+        
+        li::marker {
+            color: #AD9667;
+        }
+        
+        .action-section {
+            background: linear-gradient(135deg, #833B36, #AD9667);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 40px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .action-buttons {
+            margin-top: 25px;
+        }
+        
+        .btn {
+            background: white;
+            color: #833B36;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:hover {
+            background: #F6F6F6;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .footer {
+            background: #716E6E;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 50px;
+        }
+        
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .color-item {
+            text-align: center;
+        }
+        
+        .color-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .color-circle.c1 { background: #833B36; }
+        .color-circle.c2 { background: #AD9667; }
+        .color-circle.c3 { background: #716E6E; }
+        .color-circle.c4 { background: #F6F6F6; border-color: #716E6E; }
+        
+        .scroll-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #833B36;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(131,59,54,0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .scroll-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .scroll-top:hover {
+            background: #AD9667;
+            transform: translateY(-5px);
+        }
+        
+        @media (max-width: 768px) {
+            .proposals-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .color-palette {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #833B36, #AD9667);
+            border-radius: 2px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #AD9667;
+            width: 45%;
+            box-shadow: 0 4px 15px rgba(173,150,103,0.2);
+        }
+        
+        .timeline-item:nth-child(odd) {
+            left: 0;
+        }
+        
+        .timeline-item:nth-child(even) {
+            left: 55%;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 15px;
+            height: 15px;
+            background: #833B36;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #AD9667;
+        }
+        
+        .timeline-item:nth-child(odd)::before {
+            right: -32px;
+        }
+        
+        .timeline-item:nth-child(even)::before {
+            left: -32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>平凡五金行會員集點日企劃提案</h1>
+            <div class="subtitle">平凡雙倍點數 - 發薪發什麼？發現你缺點數！快來加倍！</div>
+            <div class="subtitle">官網活動優惠方案｜活動企劃課</div>
+        </div>
+    </div>
+
+    <div class="theme-banner">
+        發薪日補貨趣！平凡「五」金行雙倍點數，月初採購來平凡！
+    </div>
+
+    <div class="container">
+        <div class="comparison-section">
+            <div class="section-header">
+                🎯 企劃內容
+            </div>
+            <div style="padding: 30px;">
+                <h3 style="color: #833B36; margin-bottom: 20px;">活動內容</h3>
+                <div class="highlight-box">
+                    <strong>活動時間：</strong>每月10號營業時間<br>
+                    <strong>參與對象：</strong>平凡五金行會員<br>
+                    <strong>優惠內容：</strong>當日所有消費享點數雙倍累積<br>
+                    <strong>創意概念：</strong>「五」金行「雙倍」點數，那就是「十號」了
+                </div>
+
+                <h3 style="color: #833B36; margin: 25px 0 15px 0; border-bottom: 2px solid #AD9667; padding-bottom: 8px;">目標客群</h3>
+                <ul>
+                    <li>25-45歲家庭主要採購者</li>
+                    <li>重視CP值、習慣月初大量採購</li>
+                    <li>發薪日資金充裕（5號、8號、10號發薪族群）</li>
+                    <li>五金行的「五」×2=10號，在10號享雙倍點數，數字記憶點強烈</li>
+                </ul>
+
+                <h3 style="color: #833B36; margin: 25px 0 15px 0; border-bottom: 2px solid #AD9667; padding-bottom: 8px;">行銷策略</h3>
+                <div class="benefits-box">
+                    <h4>宣傳通路</h4>
+                    <ul>
+                        <li>店內宣傳：海報、立牌、結帳時口頭提醒</li>
+                        <li>數位宣傳：LINE官方帳號推播「五金行雙倍點數日」（待評估）</li>
+                        <li>簡訊提醒：每月9號發送「明天平凡雙倍補貨日！」（可評估）</li>
+                        <li>口碑行銷：銷售課協助推廣「五金行雙倍日」概念</li>
+                    </ul>
+                    
+                    <h4>溝通策略</h4>
+                    <ul>
+                        <li>理性訴求：強調經濟效益與實用價值</li>
+                        <li>情感連結：營造約定感與雙倍點數體驗</li>
+                        <li>個人化溝通：「親愛的會員」拉近距離</li>
+                        <li>趣味文案：「五金行的小魔法，雙倍點數在平凡」</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #833B36; margin: 25px 0 15px 0; border-bottom: 2px solid #AD9667; padding-bottom: 8px;">預期效益</h3>
+                <div class="benefits-box">
+                    <h4>業績提升</h4>
+                    <ul>
+                        <li>預估期望每月10號業績較平日提升30-60%</li>
+                        <li>涵蓋5號、8號、10號等不同發薪日族群，客群更廣</li>
+                        <li>「五金行雙倍點數」概念增強品牌記憶度</li>
+                    </ul>
+                    
+                    <h4>會員經營</h4>
+                    <ul>
+                        <li>建立固定消費習慣，每月10號成為指定採購日</li>
+                        <li>「平凡五金行雙倍點數日」成為品牌特色記憶點</li>
+                        <li>提升會員對品牌的情感認同和趣味印象</li>
+                        <li>透過雙倍點數趣味概念，降低會員流失率</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #833B36; margin: 25px 0 15px 0; border-bottom: 2px solid #AD9667; padding-bottom: 8px;">⚠️ 注意風險</h3>
+                <div class="key-points-box" style="border-left: 4px solid #E74C3C;">
+                    <ul>
+                        <li>由於為固定日期，有遇上假日可能（周末、雙十等），但不適合因假日取消或順延</li>
+                        <li>後臺設定錯誤或結帳失誤，造成客訴或後期調整困難度</li>
+                    </ul>
+                </div>
+
+                <div class="success-factors">
+                    <h3>✅ 成功關鍵因素</h3>
+                    <ul>
+                        <li><strong>數字創意：</strong>「五」金行在10號享雙倍點數，概念簡單好記</li>
+                        <li><strong>發薪日覆蓋：</strong>10號涵蓋更多發薪日族群</li>
+                        <li><strong>價值感塑造：</strong>強調薪水花得更有價值</li>
+                        <li><strong>情感連結：</strong>營造約定感與品牌黏著度</li>
+                        <li><strong>品牌記憶：</strong>「雙倍點數日」成為品牌專屬標語</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-section">
+            <h2>📋 提案建議</h2>
+            <p>根據平凡五金行的品牌特性，結合實用價值與情感連結，打造完整的會員雙倍點數體驗，培養固定習慣與品牌忠誠。</p>
+            
+            <div class="key-points-box">
+                <h4 style="color: #833B36; margin-bottom: 15px;">💰 預算規劃</h4>
+                <div style="color: black; font-weight: bold; line-height: 1.8;">
+                    宣傳物料：5,000-8,000元<br>
+                    點數成本：營業額2-3%<br>
+                    人力成本：現有人力即可執行<br>
+                    系統升級：視POS系統而定
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn" onclick="printPage()">🖨️ 列印企劃書</button>
+                <button class="btn" onclick="exportData()">📊 匯出數據</button>
+                <button class="btn" onclick="copyContent()">📋 複製內容</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 活動企劃課 2025/07</p>
+    </div>
+
+    <button class="scroll-top" onclick="scrollToTop()">↑</button>
+
+    <script>
+        // 滾動到頂部按鈕
+        window.addEventListener('scroll', function() {
+            const scrollTop = document.querySelector('.scroll-top');
+            if (window.pageYOffset > 300) {
+                scrollTop.classList.add('visible');
+            } else {
+                scrollTop.classList.remove('visible');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function printPage() {
+            window.print();
+        }
+
+        function exportData() {
+            const data = {
+                企劃名稱: "平凡五金行會員集點日",
+                活動日期: "每月10號",
+                營業時間: "10:00-21:00",
+                優惠內容: "雙倍點數",
+                企業色號: ["#833B36", "#AD9667", "#716E6E", "#F6F6F6"]
+            };
+            
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '平凡五金行企劃數據.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('數據已匯出！');
+        }
+
+        function copyContent() {
+            const content = `
+平凡五金行會員集點日企劃提案
+
+🎯 核心概念：
+發薪日補貨趣！平凡「五」金行雙倍點數，月初採購來平凡！
+
+📅 活動時間：每月10號（10:00-21:00）
+🎁 優惠內容：當日消費享點數雙倍累積
+🎨 企業色號：#833B36 #AD9667 #716E6E #F6F6F6
+
+企劃B：實用理性版 - 薪水花得有價值，點數累積超有感
+企劃C：情感連結版 - 每月10號約定您，「五
