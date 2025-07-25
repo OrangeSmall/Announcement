@@ -63,7 +63,8 @@
       </div>
     </div>
     <div class="button-group">
-      <button id="googleLoginBtn" class="btn btn-primary">🔐 登入 Google</button>
+      <button class="btn btn-primary" onclick="handleLogin()">🔐 登入 Google</button>
+      <button id="fetchSheetBtn" class="btn btn-success">📄 讀取試算表</button>
       <button id="clearLogs" class="btn btn-info">🧹 清除日誌</button>
     </div>
     <div class="log-panel" id="logPanel">
@@ -75,10 +76,13 @@
     const CONFIG = {
       apiKey: 'AIzaSyAkJNxalxCSVuf5bqUg_vRyZJxvU_YFohM',
       clientId: '930590768575-j1cutl028ggcl8lcplfrtnjnurne4dcm.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly'
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+      sheetId: '1qRtV3q1sHoHOlhQ0NnkSRzTliDP5xKL2v0Ayz1Ik0Nc',
+      sheetRange: 'A1:H10'
     };
 
     let accessToken = null;
+    let tokenClient = null;
 
     function log(message) {
       const time = new Date().toLocaleTimeString();
@@ -97,26 +101,48 @@
       el.textContent = text;
     }
 
-    function initGsiAuth() {
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: CONFIG.clientId,
-        scope: CONFIG.scope,
-        callback: (response) => {
-          if (response && response.access_token) {
-            accessToken = response.access_token;
-            updateStatus('signInStatus', 'success', '✅ 已登入');
-            log('✅ 取得 Access Token：' + accessToken);
-          } else {
-            updateStatus('signInStatus', 'error', '❌ 登入失敗');
-            log('❌ 未取得 Access Token');
+    function handleLogin() {
+      if (!tokenClient) {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: CONFIG.clientId,
+          scope: CONFIG.scope,
+          redirect_uri: 'https://orangesmall.github.io/Announcement/diagnostic_scheduler.html',
+          callback: (response) => {
+            if (response && response.access_token) {
+              accessToken = response.access_token;
+              updateStatus('signInStatus', 'success', '✅ 已登入');
+              log('✅ 取得 Access Token：' + accessToken);
+            } else {
+              updateStatus('signInStatus', 'error', '❌ 登入失敗');
+              log('❌ 未取得 Access Token');
+            }
           }
+        });
+      }
+      tokenClient.requestAccessToken();
+      log('🔐 開始進行 Google 登入');
+    }
+
+    async function fetchSheetData() {
+      if (!accessToken) {
+        log('⚠️ 請先登入 Google');
+        return;
+      }
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.sheetId}/values/${CONFIG.sheetRange}?key=${CONFIG.apiKey}`;
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
         }
       });
-
-      document.getElementById('googleLoginBtn').addEventListener('click', () => {
-        client.requestAccessToken();
-        log('🔐 開始進行 Google 登入');
-      });
+      const data = await res.json();
+      if (data.values) {
+        log('📄 取得試算表資料：');
+        console.log(data.values);
+        data.values.forEach(row => log(row.join(' | ')));
+      } else {
+        log('❌ 無法讀取試算表資料');
+        console.error(data);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -126,7 +152,7 @@
       document.getElementById('clearLogs').addEventListener('click', () => {
         document.getElementById('logContent').innerHTML = '📝 日誌已清除';
       });
-      initGsiAuth();
+      document.getElementById('fetchSheetBtn').addEventListener('click', fetchSheetData);
     });
   </script>
 </body>
