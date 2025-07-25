@@ -47,21 +47,6 @@
             font-size: 1.1em;
         }
 
-        /* 環境提示 */
-        .environment-notice {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .environment-notice.local {
-            background: rgba(40, 167, 69, 0.1);
-            border-color: rgba(40, 167, 69, 0.3);
-        }
-
         /* 一周時間軸 */
         .timeline-container {
             margin-bottom: 30px;
@@ -490,13 +475,6 @@
             transform: translateY(-2px);
         }
 
-        .data-controls {
-            margin-left: auto;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
         @media (max-width: 768px) {
             .activity-grid {
                 grid-template-columns: 1fr;
@@ -518,12 +496,6 @@
                 min-width: 75px;
                 padding: 12px;
             }
-
-            .data-controls {
-                margin-left: 0;
-                margin-top: 10px;
-                flex-wrap: wrap;
-            }
         }
     </style>
 </head>
@@ -532,11 +504,6 @@
         <div class="header">
             <h1>活動檔期排程表</h1>
             <p>如有任何疑問，或有活動新增，請聯絡門市活動課</p>
-        </div>
-
-        <!-- 環境提示 -->
-        <div class="environment-notice local" id="environmentNotice">
-            📱 本機模式：資料儲存在瀏覽器本地，重新整理不會消失 | 如需多電腦同步請使用網頁版本
         </div>
 
         <!-- 一周時間軸 -->
@@ -558,8 +525,9 @@
                 <div class="filter-tab" data-filter="store-activity">門市活動</div>
                 <div class="filter-tab" data-filter="promotion">商品促銷</div>
             </div>
-            <div class="data-controls">
-                <span id="syncStatus" style="font-size: 0.8em; color: #28a745;">📱 本機模式</span>
+            <div class="data-controls" style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                <span id="syncStatus" style="font-size: 0.8em; color: #666;">離線模式</span>
+                <button class="btn btn-secondary" id="toggleSyncBtn" style="padding: 8px 16px; font-size: 0.9em;">🔄 切換同步</button>
                 <button class="btn btn-secondary" id="exportBtn" style="padding: 8px 16px; font-size: 0.9em;">📤 匯出</button>
                 <label for="importFile" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9em; cursor: pointer;">📥 匯入</label>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
@@ -619,13 +587,219 @@
         </div>
     </div>
 
+    <!-- Google Sheets API -->
+    <script src="https://apis.google.com/js/api.js"></script>
     <script>
+        // Google Sheets API 設定
+        const GOOGLE_SHEETS_CONFIG = {
+            apiKey: 'YOUR_API_KEY_HERE', // 請貼上您從 Google Cloud Console 取得的 API 金鑰
+            spreadsheetId: 'YOUR_SPREADSHEET_ID_HERE', // 請貼上您剛建立的試算表 ID (從網址複製)
+            range: 'Activities!A:H', // 資料範圍
+            discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+            scope: 'https://www.googleapis.com/auth/spreadsheets'
+        };
+
+        // OAuth 設定
+        const OAUTH_CONFIG = {
+            client_id: 'YOUR_CLIENT_ID_HERE' // 請貼上您的 OAuth 2.0 用戶端 ID
+        };
+
+        let gapi_loaded = false;
+        let gauth_loaded = false;
+        let isOnlineMode = false; // 是否使用線上同步
+
         // 全域變數
         let activities = [];
         let currentFilter = 'all';
         let nextId = 1;
         let isEditMode = false;
         let editingActivityId = null;
+
+        // Google API 初始化
+        function initializeGoogleAPI() {
+            gapi.load('auth2', function() {
+                gapi.auth2.init({
+                    client_id: OAUTH_CONFIG.client_id
+                }).then(function() {
+                    gauth_loaded = true;
+                    checkAPIReady();
+                });
+            });
+
+            gapi.load('client', function() {
+                gapi.client.init({
+                    apiKey: GOOGLE_SHEETS_CONFIG.apiKey,
+                    discoveryDocs: GOOGLE_SHEETS_CONFIG.discoveryDocs,
+                }).then(function() {
+                    gapi_loaded = true;
+                    checkAPIReady();
+                });
+            });
+        }
+
+        function checkAPIReady() {
+            if (gapi_loaded && gauth_loaded) {
+                console.log('Google API 準備就緒');
+                console.log('當前網域:', window.location.hostname);
+                
+                // 檢查是否已設定 API Key 和 Spreadsheet ID
+                if (GOOGLE_SHEETS_CONFIG.apiKey !== 'YOUR_API_KEY_HERE' && 
+                    GOOGLE_SHEETS_CONFIG.spreadsheetId !== 'YOUR_SPREADSHEET_ID_HERE') {
+                    
+                    // 強制顯示模式選擇，即使在 GitHub Pages 環境
+                    if (isGitHubPages || !isLocalhost) {
+                        console.log('GitHub Pages 環境，顯示同步模式選擇');
+                        showSyncModeSelection();
+                    } else {
+                        showSyncModeSelection();
+                    }
+                } else {
+                    console.log('需要設定 Google Sheets API 金鑰');
+                    isOnlineMode = false;
+                    init();
+                }
+            }
+        }
+
+        // 顯示同步模式選擇
+        function showSyncModeSelection() {
+            const choice = confirm(
+                '選擇資料儲存模式：\n\n' +
+                '確定 = 雲端同步模式 (多人共用)\n' +
+                '取消 = 本機儲存模式 (單人使用)\n\n' +
+                '雲端模式需要 Google 帳號授權'
+            );
+            
+            if (choice) {
+                enableOnlineMode();
+            } else {
+                isOnlineMode = false;
+                init();
+            }
+        }
+
+        // 啟用線上模式
+        function enableOnlineMode() {
+            const authInstance = gapi.auth2.getAuthInstance();
+            if (!authInstance.isSignedIn.get()) {
+                authInstance.signIn().then(function() {
+                    isOnlineMode = true;
+                    console.log('已登入 Google 帳號，啟用雲端同步');
+                    init();
+                }).catch(function(error) {
+                    console.error('Google 登入失敗:', error);
+                    isOnlineMode = false;
+                    init();
+                });
+            } else {
+                isOnlineMode = true;
+                console.log('已登入 Google 帳號，啟用雲端同步');
+                init();
+            }
+        }
+
+        // 從 Google Sheets 載入資料
+        async function loadFromGoogleSheets() {
+            if (!isOnlineMode) return false;
+            
+            try {
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: GOOGLE_SHEETS_CONFIG.spreadsheetId,
+                    range: GOOGLE_SHEETS_CONFIG.range,
+                });
+
+                const rows = response.result.values;
+                if (!rows || rows.length <= 1) {
+                    // 沒有資料或只有標題行，建立初始結構
+                    await createInitialSheetStructure();
+                    activities = [...defaultActivities];
+                    nextId = 3;
+                    await saveToGoogleSheets();
+                } else {
+                    // 解析資料
+                    activities = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row[0]) { // 確保有 ID
+                            activities.push({
+                                id: parseInt(row[0]),
+                                type: row[1] || '',
+                                name: row[2] || '',
+                                startTime: row[3] || '',
+                                endTime: row[4] || '',
+                                description: row[5] || '',
+                                stores: row[6] ? row[6].split('、') : []
+                            });
+                        }
+                    }
+                    nextId = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
+                }
+                
+                console.log('從 Google Sheets 載入:', activities.length, '個活動');
+                return true;
+            } catch (error) {
+                console.error('從 Google Sheets 載入失敗:', error);
+                return false;
+            }
+        }
+
+        // 儲存到 Google Sheets
+        async function saveToGoogleSheets() {
+            if (!isOnlineMode) return false;
+
+            try {
+                // 準備資料
+                const values = [
+                    ['ID', '類型', '名稱', '開始時間', '結束時間', '描述', '店別', '更新時間']
+                ];
+                
+                activities.forEach(activity => {
+                    values.push([
+                        activity.id,
+                        activity.type,
+                        activity.name,
+                        activity.startTime,
+                        activity.endTime,
+                        activity.description,
+                        activity.stores.join('、'),
+                        new Date().toISOString()
+                    ]);
+                });
+
+                await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: GOOGLE_SHEETS_CONFIG.spreadsheetId,
+                    range: GOOGLE_SHEETS_CONFIG.range,
+                    valueInputOption: 'RAW',
+                    resource: { values: values }
+                });
+
+                console.log('資料已儲存到 Google Sheets:', activities.length, '個活動');
+                return true;
+            } catch (error) {
+                console.error('儲存到 Google Sheets 失敗:', error);
+                return false;
+            }
+        }
+
+        // 建立初始試算表結構
+        async function createInitialSheetStructure() {
+            try {
+                const values = [
+                    ['ID', '類型', '名稱', '開始時間', '結束時間', '描述', '店別', '更新時間']
+                ];
+
+                await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: GOOGLE_SHEETS_CONFIG.spreadsheetId,
+                    range: 'Activities!A1:H1',
+                    valueInputOption: 'RAW',
+                    resource: { values: values }
+                });
+
+                console.log('Google Sheets 初始結構已建立');
+            } catch (error) {
+                console.error('建立初始結構失敗:', error);
+            }
+        }
 
         // 預設活動資料
         const defaultActivities = [
@@ -649,8 +823,21 @@
             }
         ];
 
-        // 儲存和載入函數
-        function saveToStorage() {
+        // 儲存和載入函數 - 支援雙模式
+        async function saveToStorage() {
+            if (isOnlineMode) {
+                const success = await saveToGoogleSheets();
+                if (!success) {
+                    // 雲端儲存失敗，備用本機儲存
+                    saveToLocalStorage();
+                    console.log('雲端儲存失敗，已改用本機儲存');
+                }
+            } else {
+                saveToLocalStorage();
+            }
+        }
+
+        function saveToLocalStorage() {
             try {
                 const data = { activities, nextId };
                 localStorage.setItem('activityScheduler', JSON.stringify(data));
@@ -660,7 +847,20 @@
             }
         }
 
-        function loadFromStorage() {
+        async function loadFromStorage() {
+            if (isOnlineMode) {
+                const success = await loadFromGoogleSheets();
+                if (!success) {
+                    // 雲端載入失敗，嘗試本機載入
+                    loadFromLocalStorage();
+                    console.log('雲端載入失敗，已改用本機資料');
+                }
+            } else {
+                loadFromLocalStorage();
+            }
+        }
+
+        function loadFromLocalStorage() {
             try {
                 const saved = localStorage.getItem('activityScheduler');
                 if (saved) {
@@ -671,7 +871,7 @@
                 } else {
                     activities = [...defaultActivities];
                     nextId = 3;
-                    saveToStorage();
+                    saveToLocalStorage();
                     console.log('載入預設資料並儲存:', activities.length, '個活動');
                 }
             } catch (error) {
@@ -779,18 +979,13 @@
                 
                 // 計算當日活動
                 const dayActivities = activities.filter(activity => {
-                    try {
-                        const activityDate = new Date(activity.startTime);
-                        const endDate = activity.endTime ? new Date(activity.endTime) : null;
-                        
-                        const isSameDay = activityDate.toDateString() === date.toDateString();
-                        const isInRange = endDate && activityDate <= date && date <= endDate;
-                        
-                        return isSameDay || isInRange;
-                    } catch (error) {
-                        console.error('日期處理錯誤:', error);
-                        return false;
-                    }
+                    const activityDate = new Date(activity.startTime);
+                    const endDate = activity.endTime ? new Date(activity.endTime) : null;
+                    
+                    const isSameDay = activityDate.toDateString() === date.toDateString();
+                    const isInRange = endDate && activityDate <= date && date <= endDate;
+                    
+                    return isSameDay || isInRange;
                 });
 
                 return `
@@ -804,16 +999,13 @@
                 `;
             }).join('');
 
-            console.log('時間軸已渲染，顯示', days.length, '天');
+            console.log('時間軸已渲染');
         }
 
         // 渲染活動卡片
         function renderActivities() {
             const grid = document.getElementById('activityGrid');
-            if (!grid) {
-                console.error('找不到活動網格元素');
-                return;
-            }
+            if (!grid) return;
 
             const filteredActivities = currentFilter === 'all' 
                 ? activities 
@@ -830,63 +1022,58 @@
 
         // 創建活動卡片
         function createActivityCard(activity) {
-            try {
-                const startDate = new Date(activity.startTime);
-                const endDate = activity.endTime ? new Date(activity.endTime) : null;
-                const now = new Date();
-                
-                let status = 'active';
-                if (endDate && endDate < now) {
-                    status = 'ended';
-                } else if (endDate && (endDate - now) < 7 * 24 * 60 * 60 * 1000) {
-                    status = 'ending-soon';
-                }
-
-                const formatDateTime = (dateTime) => {
-                    const date = new Date(dateTime);
-                    return date.toLocaleDateString('zh-TW') + ' ' + 
-                           date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-                };
-
-                const timeRange = activity.endTime 
-                    ? `${formatDateTime(activity.startTime)} ~ ${formatDateTime(activity.endTime)}`
-                    : `${formatDateTime(activity.startTime)} 起`;
-
-                return `
-                    <div class="activity-card ${activity.type}">
-                        <div class="status ${status}"></div>
-                        <div class="activity-type ${activity.type}">
-                            ${activity.type === 'store-activity' ? '門市活動' : '商品促銷'}
-                        </div>
-                        <div class="activity-name">${activity.name}</div>
-                        <div class="activity-details">
-                            <div class="detail-row">
-                                <div class="detail-label">時間：</div>
-                                <div class="detail-value">
-                                    <div class="date-range">${timeRange}</div>
-                                </div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">內容：</div>
-                                <div class="detail-value">${activity.description}</div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">店別：</div>
-                                <div class="detail-value">
-                                    <div class="store-tags">
-                                        ${activity.stores.map(store => `<span class="store-tag">${store}</span>`).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="edit-btn" data-edit-id="${activity.id}">編輯</button>
-                        <button class="delete-btn" data-delete-id="${activity.id}">刪除</button>
-                    </div>
-                `;
-            } catch (error) {
-                console.error('創建活動卡片時發生錯誤:', error);
-                return '<div class="activity-card"><div class="activity-name">活動資料錯誤</div></div>';
+            const startDate = new Date(activity.startTime);
+            const endDate = activity.endTime ? new Date(activity.endTime) : null;
+            const now = new Date();
+            
+            let status = 'active';
+            if (endDate && endDate < now) {
+                status = 'ended';
+            } else if (endDate && (endDate - now) < 7 * 24 * 60 * 60 * 1000) {
+                status = 'ending-soon';
             }
+
+            const formatDateTime = (dateTime) => {
+                const date = new Date(dateTime);
+                return date.toLocaleDateString('zh-TW') + ' ' + 
+                       date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            };
+
+            const timeRange = activity.endTime 
+                ? `${formatDateTime(activity.startTime)} ~ ${formatDateTime(activity.endTime)}`
+                : `${formatDateTime(activity.startTime)} 起`;
+
+            return `
+                <div class="activity-card ${activity.type}">
+                    <div class="status ${status}"></div>
+                    <div class="activity-type ${activity.type}">
+                        ${activity.type === 'store-activity' ? '門市活動' : '商品促銷'}
+                    </div>
+                    <div class="activity-name">${activity.name}</div>
+                    <div class="activity-details">
+                        <div class="detail-row">
+                            <div class="detail-label">時間：</div>
+                            <div class="detail-value">
+                                <div class="date-range">${timeRange}</div>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">內容：</div>
+                            <div class="detail-value">${activity.description}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">店別：</div>
+                            <div class="detail-value">
+                                <div class="store-tags">
+                                    ${activity.stores.map(store => `<span class="store-tag">${store}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="edit-btn" data-edit-id="${activity.id}">編輯</button>
+                    <button class="delete-btn" data-delete-id="${activity.id}">刪除</button>
+                </div>
+            `;
         }
 
         // 彈窗相關函數
@@ -903,8 +1090,6 @@
                 modalTitle.textContent = '新增活動';
                 modalTitle.classList.remove('edit-mode');
                 console.log('彈窗已開啟 - 新增模式');
-            } else {
-                console.error('無法找到彈窗元素');
             }
         }
 
@@ -920,10 +1105,7 @@
 
         function editActivity(id) {
             const activity = activities.find(a => a.id === id);
-            if (!activity) {
-                console.error('找不到活動 ID:', id);
-                return;
-            }
+            if (!activity) return;
 
             const modal = document.getElementById('activityModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -931,39 +1113,29 @@
             isEditMode = true;
             editingActivityId = id;
             
-            try {
-                // 填入現有資料
-                document.getElementById('activityType').value = activity.type;
-                document.getElementById('activityName').value = activity.name;
-                document.getElementById('startTime').value = activity.startTime;
-                document.getElementById('endTime').value = activity.endTime;
-                document.getElementById('description').value = activity.description;
-                document.getElementById('stores').value = activity.stores.join('、');
-                
-                // 更新標題
-                modalTitle.textContent = '編輯活動';
-                modalTitle.classList.add('edit-mode');
-                
-                modal.style.display = 'block';
-                console.log('彈窗已開啟 - 編輯模式:', activity.name);
-            } catch (error) {
-                console.error('編輯活動時發生錯誤:', error);
-                alert('編輯活動時發生錯誤，請重試');
-            }
+            // 填入現有資料
+            document.getElementById('activityType').value = activity.type;
+            document.getElementById('activityName').value = activity.name;
+            document.getElementById('startTime').value = activity.startTime;
+            document.getElementById('endTime').value = activity.endTime;
+            document.getElementById('description').value = activity.description;
+            document.getElementById('stores').value = activity.stores.join('、');
+            
+            // 更新標題
+            modalTitle.textContent = '編輯活動';
+            modalTitle.classList.add('edit-mode');
+            
+            modal.style.display = 'block';
+            console.log('彈窗已開啟 - 編輯模式:', activity.name);
         }
 
         function deleteActivity(id) {
             if (confirm('確定要刪除這個活動嗎？')) {
-                try {
-                    activities = activities.filter(activity => activity.id !== id);
-                    saveToStorage();
-                    renderActivities();
-                    renderTimeline();
-                    console.log('活動已刪除, ID:', id);
-                } catch (error) {
-                    console.error('刪除活動時發生錯誤:', error);
-                    alert('刪除失敗，請重試');
-                }
+                activities = activities.filter(activity => activity.id !== id);
+                saveToStorage();
+                renderActivities();
+                renderTimeline();
+                console.log('活動已刪除, ID:', id);
             }
         }
 
@@ -971,281 +1143,295 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             
-            try {
-                const activityData = {
-                    type: document.getElementById('activityType').value,
-                    name: document.getElementById('activityName').value,
-                    startTime: document.getElementById('startTime').value,
-                    endTime: document.getElementById('endTime').value,
-                    description: document.getElementById('description').value,
-                    stores: document.getElementById('stores').value.split('、').map(s => s.trim()).filter(s => s)
-                };
+            const activityData = {
+                type: document.getElementById('activityType').value,
+                name: document.getElementById('activityName').value,
+                startTime: document.getElementById('startTime').value,
+                endTime: document.getElementById('endTime').value,
+                description: document.getElementById('description').value,
+                stores: document.getElementById('stores').value.split('、').map(s => s.trim()).filter(s => s)
+            };
 
-                // 簡單驗證
-                if (!activityData.type || !activityData.name || !activityData.startTime) {
-                    alert('請填寫必要欄位：活動類型、活動名稱、開始時間');
-                    return;
-                }
-
-                if (isEditMode && editingActivityId) {
-                    // 編輯模式
-                    const activityIndex = activities.findIndex(a => a.id === editingActivityId);
-                    if (activityIndex !== -1) {
-                        activities[activityIndex] = {
-                            ...activities[activityIndex],
-                            ...activityData
-                        };
-                        console.log('活動已更新:', activities[activityIndex]);
-                    }
-                } else {
-                    // 新增模式
-                    const newActivity = {
-                        id: nextId++,
+            if (isEditMode && editingActivityId) {
+                // 編輯模式
+                const activityIndex = activities.findIndex(a => a.id === editingActivityId);
+                if (activityIndex !== -1) {
+                    activities[activityIndex] = {
+                        ...activities[activityIndex],
                         ...activityData
                     };
-                    activities.push(newActivity);
-                    console.log('新活動已新增:', newActivity);
+                    console.log('活動已更新:', activities[activityIndex]);
                 }
-
-                saveToStorage();
-                renderActivities();
-                renderTimeline();
-                closeModal();
-                
-                const actionText = isEditMode ? '更新' : '新增';
-                alert(`活動已成功${actionText}！\n\n活動名稱：${activityData.name}`);
-            } catch (error) {
-                console.error('表單提交時發生錯誤:', error);
-                alert('儲存失敗，請檢查輸入內容並重試');
+            } else {
+                // 新增模式
+                const newActivity = {
+                    id: nextId++,
+                    ...activityData
+                };
+                activities.push(newActivity);
+                console.log('新活動已新增:', newActivity);
             }
+
+            saveToStorage();
+            renderActivities();
+            renderTimeline();
+            closeModal();
+            
+            const actionText = isEditMode ? '更新' : '新增';
+            alert(`活動已成功${actionText}！\n\n活動名稱：${activityData.name}`);
         }
 
         // 日期篩選
         function filterByDate(dateStr) {
-            try {
-                const selectedDate = new Date(dateStr);
-                const filteredActivities = activities.filter(activity => {
-                    const activityDate = new Date(activity.startTime);
-                    const endDate = activity.endTime ? new Date(activity.endTime) : null;
-                    
-                    const isSameDay = activityDate.toDateString() === selectedDate.toDateString();
-                    const isInRange = endDate && activityDate <= selectedDate && selectedDate <= endDate;
-                    
-                    return isSameDay || isInRange;
-                });
+            const selectedDate = new Date(dateStr);
+            const filteredActivities = activities.filter(activity => {
+                const activityDate = new Date(activity.startTime);
+                const endDate = activity.endTime ? new Date(activity.endTime) : null;
+                
+                const isSameDay = activityDate.toDateString() === selectedDate.toDateString();
+                const isInRange = endDate && activityDate <= selectedDate && selectedDate <= endDate;
+                
+                return isSameDay || isInRange;
+            });
 
-                const grid = document.getElementById('activityGrid');
-                if (filteredActivities.length === 0) {
-                    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #716E6E; font-size: 1.1em;">該日期沒有活動安排</div>';
-                } else {
-                    grid.innerHTML = filteredActivities.map(activity => createActivityCard(activity)).join('');
-                }
-                
-                console.log('日期篩選:', dateStr, '找到', filteredActivities.length, '個活動');
-                
-                // 3秒後恢復原本篩選
-                setTimeout(() => {
-                    renderActivities();
-                }, 3000);
-            } catch (error) {
-                console.error('日期篩選時發生錯誤:', error);
+            const grid = document.getElementById('activityGrid');
+            if (filteredActivities.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #716E6E; font-size: 1.1em;">該日期沒有活動安排</div>';
+            } else {
+                grid.innerHTML = filteredActivities.map(activity => createActivityCard(activity)).join('');
             }
+            
+            console.log('日期篩選:', dateStr, '找到', filteredActivities.length, '個活動');
+            
+            // 3秒後恢復原本篩選
+            setTimeout(() => {
+                renderActivities();
+            }, 3000);
         }
 
         // 設置所有事件監聽器
         function setupEventListeners() {
-            try {
-                // 新增活動按鈕
-                const addBtn = document.getElementById('addActivityBtn');
-                if (addBtn) {
-                    addBtn.addEventListener('click', openModal);
-                    console.log('新增活動按鈕事件已綁定');
-                } else {
-                    console.error('找不到新增活動按鈕');
-                }
+            // 新增活動按鈕
+            const addBtn = document.getElementById('addActivityBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', openModal);
+                console.log('新增活動按鈕事件已綁定');
+            }
 
-                // 取消按鈕
-                const cancelBtn = document.getElementById('cancelBtn');
-                if (cancelBtn) {
-                    cancelBtn.addEventListener('click', closeModal);
-                    console.log('取消按鈕事件已綁定');
-                }
+            // 取消按鈕
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closeModal);
+                console.log('取消按鈕事件已綁定');
+            }
 
-                // 篩選標籤
-                document.querySelectorAll('.filter-tab').forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                        this.classList.add('active');
-                        currentFilter = this.dataset.filter;
-                        renderActivities();
-                        console.log('篩選切換:', currentFilter);
-                    });
+            // 篩選標籤
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    renderActivities();
+                    console.log('篩選切換:', currentFilter);
                 });
+            });
 
-                // 時間軸點擊事件
-                const timeline = document.getElementById('timeline');
-                if (timeline) {
-                    timeline.addEventListener('click', function(e) {
-                        const timelineDay = e.target.closest('.timeline-day');
-                        if (timelineDay) {
-                            const dateStr = timelineDay.getAttribute('data-date');
-                            if (dateStr) {
-                                filterByDate(dateStr);
-                            }
+            // 時間軸點擊事件
+            const timeline = document.getElementById('timeline');
+            if (timeline) {
+                timeline.addEventListener('click', function(e) {
+                    const timelineDay = e.target.closest('.timeline-day');
+                    if (timelineDay) {
+                        const dateStr = timelineDay.getAttribute('data-date');
+                        if (dateStr) {
+                            filterByDate(dateStr);
                         }
-                    });
-                    console.log('時間軸點擊事件已綁定');
-                } else {
-                    console.error('找不到時間軸元素');
-                }
+                    }
+                });
+                console.log('時間軸點擊事件已綁定');
+            }
 
-                // 活動卡片按鈕事件
-                const activityGrid = document.getElementById('activityGrid');
-                if (activityGrid) {
-                    activityGrid.addEventListener('click', function(e) {
-                        const editBtn = e.target.closest('.edit-btn');
-                        const deleteBtn = e.target.closest('.delete-btn');
-                        
-                        if (editBtn) {
-                            const activityId = parseInt(editBtn.getAttribute('data-edit-id'));
-                            editActivity(activityId);
-                        } else if (deleteBtn) {
-                            const activityId = parseInt(deleteBtn.getAttribute('data-delete-id'));
-                            deleteActivity(activityId);
-                        }
-                    });
-                    console.log('活動卡片按鈕事件已綁定');
-                } else {
-                    console.error('找不到活動網格元素');
-                }
+            // 活動卡片按鈕事件
+            const activityGrid = document.getElementById('activityGrid');
+            if (activityGrid) {
+                activityGrid.addEventListener('click', function(e) {
+                    const editBtn = e.target.closest('.edit-btn');
+                    const deleteBtn = e.target.closest('.delete-btn');
+                    
+                    if (editBtn) {
+                        const activityId = parseInt(editBtn.getAttribute('data-edit-id'));
+                        editActivity(activityId);
+                    } else if (deleteBtn) {
+                        const activityId = parseInt(deleteBtn.getAttribute('data-delete-id'));
+                        deleteActivity(activityId);
+                    }
+                });
+                console.log('活動卡片按鈕事件已綁定');
+            }
 
-                // 表單提交
-                const form = document.getElementById('activityForm');
-                if (form) {
-                    form.addEventListener('submit', handleFormSubmit);
-                    console.log('表單提交事件已綁定');
-                } else {
-                    console.error('找不到表單元素');
-                }
+            // 表單提交
+            const form = document.getElementById('activityForm');
+            if (form) {
+                form.addEventListener('submit', handleFormSubmit);
+                console.log('表單提交事件已綁定');
+            }
 
-                // 匯出按鈕
-                const exportBtn = document.getElementById('exportBtn');
-                if (exportBtn) {
-                    exportBtn.addEventListener('click', exportData);
-                    console.log('匯出按鈕事件已綁定');
-                }
+            // 同步模式切換按鈕
+            const toggleSyncBtn = document.getElementById('toggleSyncBtn');
+            if (toggleSyncBtn) {
+                toggleSyncBtn.addEventListener('click', toggleSyncMode);
+                console.log('同步切換按鈕事件已綁定');
+            }
 
-                // 匯入檔案
-                const importFile = document.getElementById('importFile');
-                if (importFile) {
-                    importFile.addEventListener('change', importData);
-                    console.log('匯入檔案事件已綁定');
-                }
+            // 匯出按鈕
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportData);
+                console.log('匯出按鈕事件已綁定');
+            }
 
-                // 清除按鈕
-                const clearBtn = document.getElementById('clearBtn');
-                if (clearBtn) {
-                    clearBtn.addEventListener('click', clearAllData);
-                    console.log('清除按鈕事件已綁定');
-                }
+            // 匯入檔案
+            const importFile = document.getElementById('importFile');
+            if (importFile) {
+                importFile.addEventListener('change', importData);
+                console.log('匯入檔案事件已綁定');
+            }
 
-                // 彈窗外部點擊關閉
-                const modal = document.getElementById('activityModal');
-                if (modal) {
-                    modal.addEventListener('click', function(e) {
-                        if (e.target === this) {
-                            closeModal();
-                        }
-                    });
-                    console.log('彈窗關閉事件已綁定');
-                }
+            // 清除按鈕
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearAllData);
+                console.log('清除按鈕事件已綁定');
+            }
 
-                console.log('所有事件監聽器設置完成');
-            } catch (error) {
-                console.error('設置事件監聽器時發生錯誤:', error);
+            // 彈窗外部點擊關閉
+            const modal = document.getElementById('activityModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal();
+                    }
+                });
+                console.log('彈窗關閉事件已綁定');
             }
         }
 
-        // 初始化函數
-        function init() {
-            try {
-                console.log('開始初始化應用程式...');
-                
-                // 檢測環境
-                const isLocalFile = window.location.protocol === 'file:';
-                const environmentNotice = document.getElementById('environmentNotice');
-                
-                if (isLocalFile) {
-                    environmentNotice.textContent = '📱 本機模式：資料儲存在瀏覽器本地，重新整理不會消失';
-                    environmentNotice.classList.add('local');
-                } else {
-                    environmentNotice.textContent = '🌐 網頁模式：支援完整功能包含雲端同步';
+        // 切換同步模式
+        function toggleSyncMode() {
+            if (isOnlineMode) {
+                // 從線上模式切換到離線模式
+                isOnlineMode = false;
+                updateSyncStatus();
+                alert('已切換到離線模式');
+            } else {
+                // 從離線模式切換到線上模式
+                if (GOOGLE_SHEETS_CONFIG.apiKey === 'YOUR_API_KEY_HERE') {
+                    alert('請先設定 Google Sheets API 金鑰才能使用雲端同步功能！');
+                    return;
                 }
-                
-                // 載入資料
-                loadFromStorage();
-                
-                // 設置事件監聽器
-                setupEventListeners();
-                
-                // 渲染內容
-                renderActivities();
-                renderTimeline();
-                
-                console.log('應用程式初始化完成！');
-                console.log('活動總數:', activities.length);
-                console.log('下一個ID:', nextId);
-                console.log('環境:', isLocalFile ? '本機檔案' : '網頁伺服器');
-            } catch (error) {
-                console.error('初始化時發生錯誤:', error);
-                alert('系統初始化失敗，請重新載入頁面');
+                enableOnlineMode();
             }
+        }
+
+        // 更新同步狀態顯示
+        function updateSyncStatus() {
+            const syncStatus = document.getElementById('syncStatus');
+            const toggleBtn = document.getElementById('toggleSyncBtn');
+            
+            if (syncStatus && toggleBtn) {
+                if (isOnlineMode) {
+                    syncStatus.textContent = '🌐 雲端同步';
+                    syncStatus.style.color = '#28a745';
+                    toggleBtn.textContent = '📱 切換離線';
+                } else {
+                    syncStatus.textContent = '📱 離線模式';
+                    syncStatus.style.color = '#666';
+                    toggleBtn.textContent = '🌐 切換雲端';
+                }
+            }
+        }
+        // 初始化函數
+        async function init() {
+            console.log('開始初始化應用程式...');
+            console.log('同步模式:', isOnlineMode ? '雲端同步' : '離線模式');
+            
+            // 載入資料
+            await loadFromStorage();
+            
+            // 設置事件監聽器
+            setupEventListeners();
+            
+            // 更新同步狀態顯示
+            updateSyncStatus();
+            
+            // 渲染內容
+            renderActivities();
+            renderTimeline();
+            
+            console.log('應用程式初始化完成！');
+            console.log('活動總數:', activities.length);
+            console.log('下一個ID:', nextId);
         }
 
         // 當DOM準備好時執行初始化
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM載入完成，開始初始化...');
+                // 先初始化 Google API（如果可用）
+                if (typeof gapi !== 'undefined') {
+                    console.log('Google API 可用，開始載入...');
+                    initializeGoogleAPI();
+                } else {
+                    console.log('Google API 不可用，使用離線模式');
+                    // 沒有 Google API，直接使用離線模式
+                    isOnlineMode = false;
+                    init();
+                }
+            });
         } else {
-            init();
+            console.log('DOM已載入，立即初始化...');
+            if (typeof gapi !== 'undefined') {
+                console.log('Google API 可用，開始載入...');
+                initializeGoogleAPI();
+            } else {
+                console.log('Google API 不可用，使用離線模式');
+                isOnlineMode = false;
+                init();
+            }
         }
 
         // 測試用：新增今日活動的函數
         function addTodayTestActivity() {
-            try {
-                const today = new Date();
-                const tomorrow = new Date(today);
-                tomorrow.setDate(today.getDate() + 1);
-                
-                const formatForInput = (date) => {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const hours = String(date.getHours()).padStart(2, '0');
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                    return `${year}-${month}-${day}T${hours}:${minutes}`;
-                };
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            
+            const formatForInput = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
 
-                const testActivity = {
-                    id: nextId++,
-                    type: 'store-activity',
-                    name: '今日測試活動',
-                    startTime: formatForInput(today),
-                    endTime: formatForInput(tomorrow),
-                    description: '這是一個測試活動，驗證時間軸功能',
-                    stores: ['測試店']
-                };
+            const testActivity = {
+                id: nextId++,
+                type: 'store-activity',
+                name: '今日測試活動',
+                startTime: formatForInput(today),
+                endTime: formatForInput(tomorrow),
+                description: '這是一個測試活動，驗證時間軸功能',
+                stores: ['測試店']
+            };
 
-                activities.push(testActivity);
-                saveToStorage();
-                renderActivities();
-                renderTimeline();
-                
-                console.log('測試活動已新增:', testActivity);
-                alert('測試活動已新增！請查看時間軸上今天的日期。');
-            } catch (error) {
-                console.error('新增測試活動時發生錯誤:', error);
-                alert('新增測試活動失敗');
-            }
+            activities.push(testActivity);
+            saveToStorage();
+            renderActivities();
+            renderTimeline();
+            
+            console.log('測試活動已新增:', testActivity);
+            alert('測試活動已新增！請查看時間軸上今天的日期。');
         }
 
         // 暴露測試函數到全域（可在控制台使用）
