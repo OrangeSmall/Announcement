@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>活動檔期排程表 - 診斷版</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
   <style>
     body {
       font-family: 'Microsoft JhengHei', Arial, sans-serif;
@@ -13,36 +14,93 @@
       color: #2c3e50;
       margin: 0;
     }
-    .container { max-width: 800px; margin: 0 auto; background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; box-shadow: 0 8px 32px rgba(131, 59, 54, 0.15); }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(131, 59, 54, 0.15);
+    }
     .header { text-align: center; margin-bottom: 30px; }
     .header h1 { color: #833B36; margin-bottom: 10px; }
-    .diagnostic-panel, .config-panel { background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .diagnostic-panel, .config-panel {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
     .diagnostic-panel { border-left: 4px solid #007bff; }
-    .status-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #dee2e6; }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
     .status-label { font-weight: 600; color: #495057; }
-    .status-value { padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: 500; }
+    .status-value {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
     .status-success { background: #d4edda; color: #155724; }
     .status-error { background: #f8d7da; color: #721c24; }
     .status-warning { background: #fff3cd; color: #856404; }
     .status-info { background: #d1ecf1; color: #0c5460; }
-    .log-panel { background: #212529; color: #ffffff; border-radius: 10px; padding: 20px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 0.9em; max-height: 300px; overflow-y: auto; }
-    .button-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; font-size: 0.9em; }
+    .log-panel {
+      background: #212529;
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-size: 0.9em;
+    }
     .btn-primary { background: linear-gradient(135deg, #833B36, #AD9667); color: white; }
     .btn-success { background: #28a745; color: white; }
-    .btn-warning { background: #ffc107; color: #212529; }
     .btn-info { background: #17a2b8; color: white; }
     .btn:hover { transform: translateY(-2px); }
     .config-item { margin-bottom: 10px; font-size: 0.9em; }
-    .config-label { font-weight: 600; color: #495057; display: inline-block; width: 120px; }
-    .config-value { font-family: 'Courier New', monospace; background: white; padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+    .config-label {
+      font-weight: 600;
+      color: #495057;
+      display: inline-block;
+      width: 120px;
+    }
+    .config-value {
+      font-family: 'Courier New', monospace;
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>🔧 Google API 登入診斷工具（Popup 登入）</h1>
+      <h1>🔧 活動檔期排程表（Google Sheet 同步）</h1>
     </div>
+
     <div class="config-panel">
       <h3>📋 當前配置</h3>
       <div class="config-item"><span class="config-label">網站：</span><span class="config-value" id="currentDomain"></span></div>
@@ -51,6 +109,7 @@
       <div class="config-item"><span class="config-label">API 金鑰：</span><span class="config-value">AIzaSyAkJNxalxCSVuf5bqUg_vRyZJxvU_YFohM</span></div>
       <div class="config-item"><span class="config-label">用戶端 ID：</span><span class="config-value">930590768575-j1cutl028ggcl8lcplfrtnjnurne4dcm.apps.googleusercontent.com</span></div>
     </div>
+
     <div class="diagnostic-panel">
       <h3>🔍 登入測試</h3>
       <div class="status-item">
@@ -62,11 +121,13 @@
         <span class="status-value status-info" id="signInStatus">未登入</span>
       </div>
     </div>
+
     <div class="button-group">
       <button class="btn btn-primary" onclick="handleLogin()">🔐 登入 Google</button>
       <button id="fetchSheetBtn" class="btn btn-success">📄 讀取試算表</button>
       <button id="clearLogs" class="btn btn-info">🧹 清除日誌</button>
     </div>
+
     <div class="log-panel" id="logPanel">
       <div id="logContent">📝 準備就緒，請點擊登入</div>
     </div>
@@ -92,7 +153,6 @@
       const logPanel = document.getElementById('logContent');
       logPanel.appendChild(el);
       logPanel.scrollTop = logPanel.scrollHeight;
-      console.log('[Log]', message);
     }
 
     function updateStatus(id, state, text) {
@@ -106,7 +166,6 @@
         tokenClient = google.accounts.oauth2.initTokenClient({
           client_id: CONFIG.clientId,
           scope: CONFIG.scope,
-          redirect_uri: 'https://orangesmall.github.io/Announcement/diagnostic_scheduler.html',
           callback: (response) => {
             if (response && response.access_token) {
               accessToken = response.access_token;
@@ -137,7 +196,6 @@
       const data = await res.json();
       if (data.values) {
         log('📄 取得試算表資料：');
-        console.log(data.values);
         data.values.forEach(row => log(row.join(' | ')));
       } else {
         log('❌ 無法讀取試算表資料');
