@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>活動檔期排程表 - 診斷版</title>
-  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     body {
       font-family: 'Microsoft JhengHei', Arial, sans-serif;
@@ -55,7 +55,7 @@
       <h3>🔍 登入測試</h3>
       <div class="status-item">
         <span class="status-label">Google API 載入</span>
-        <span class="status-value status-info" id="gapiStatus">檢查中...</span>
+        <span class="status-value status-success" id="gapiStatus">✅ 已載入</span>
       </div>
       <div class="status-item">
         <span class="status-label">登入狀態</span>
@@ -75,9 +75,10 @@
     const CONFIG = {
       apiKey: 'AIzaSyAkJNxalxCSVuf5bqUg_vRyZJxvU_YFohM',
       clientId: '930590768575-j1cutl028ggcl8lcplfrtnjnurne4dcm.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/spreadsheets',
-      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"]
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly'
     };
+
+    let accessToken = null;
 
     function log(message) {
       const time = new Date().toLocaleTimeString();
@@ -96,44 +97,26 @@
       el.textContent = text;
     }
 
-    function initGoogleAuth() {
-      gapi.load('client:auth2', () => {
-        gapi.client.init({
-          apiKey: CONFIG.apiKey,
-          clientId: CONFIG.clientId,
-          scope: CONFIG.scope,
-          discoveryDocs: CONFIG.discoveryDocs
-        }).then(() => {
-          log('Google API 初始化完成');
-          updateStatus('gapiStatus', 'success', '✅ 已載入');
-
-          const auth = gapi.auth2.getAuthInstance();
-          updateLoginStatus(auth.isSignedIn.get());
-
-          auth.isSignedIn.listen(updateLoginStatus);
-
-          document.getElementById('googleLoginBtn').addEventListener('click', () => {
-            auth.signIn().then(() => {
-              log('✅ 使用者登入成功');
-            }).catch(err => {
-              log(`❌ 登入失敗: ${err.error}`);
-            });
-          });
-        }).catch(err => {
-          updateStatus('gapiStatus', 'error', '❌ 載入失敗');
-          log(`初始化失敗: ${JSON.stringify(err)}`);
-        });
+    function initGsiAuth() {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: CONFIG.clientId,
+        scope: CONFIG.scope,
+        callback: (response) => {
+          if (response && response.access_token) {
+            accessToken = response.access_token;
+            updateStatus('signInStatus', 'success', '✅ 已登入');
+            log('✅ 取得 Access Token：' + accessToken);
+          } else {
+            updateStatus('signInStatus', 'error', '❌ 登入失敗');
+            log('❌ 未取得 Access Token');
+          }
+        }
       });
-    }
 
-    function updateLoginStatus(isSignedIn) {
-      if (isSignedIn) {
-        updateStatus('signInStatus', 'success', '✅ 已登入');
-        log('使用者已登入，可使用 API');
-      } else {
-        updateStatus('signInStatus', 'warning', '⚠️ 未登入');
-        log('尚未登入，請點擊登入按鈕');
-      }
+      document.getElementById('googleLoginBtn').addEventListener('click', () => {
+        client.requestAccessToken();
+        log('🔐 開始進行 Google 登入');
+      });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -143,7 +126,7 @@
       document.getElementById('clearLogs').addEventListener('click', () => {
         document.getElementById('logContent').innerHTML = '📝 日誌已清除';
       });
-      initGoogleAuth();
+      initGsiAuth();
     });
   </script>
 </body>
