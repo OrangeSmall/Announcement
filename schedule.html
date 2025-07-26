@@ -393,6 +393,23 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
+        .activity-note {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+            line-height: 1.4;
+            min-height: 20px;
+        }
+
+        .activity-note:empty {
+            display: none;
+        }
+
         .date-range {
             color: white;
             padding: 10px 15px;
@@ -519,13 +536,13 @@
         <!-- 使用說明 -->
         <div class="info-panel">
             <h4>📋 使用說明</h4>
-            <p>此為活動瀏覽專用頁面。如需新增或編輯活動，請直接在後台操作，然後點擊「同步資料」按鈕更新顯示。</p>
+            <p>此為活動瀏覽專用頁面。如需新增或編輯活動，請直接在後台系統中操作，然後點擊「同步資料」按鈕更新顯示。</p>
         </div>
 
         <!-- 同步狀態指示器 -->
         <div class="sync-status">
             <div class="sync-indicator" id="syncIndicator"></div>
-            <span id="syncStatus">🌐 已連接同步至後台</span>
+            <span id="syncStatus">🌐 已連接至後台</span>
         </div>
 
         <!-- 一周時間軸 -->
@@ -543,7 +560,7 @@
         <div class="controls">
             <a href="https://docs.google.com/spreadsheets/d/1Oy8m425d6vuiX2QiqZJN1PH_b4_TTi6j_qE54lNJZWs/edit" 
                target="_blank" class="sheets-link-btn">
-                📝 後臺編輯（限活動課使用)
+                📝 後台編輯（限活動課使用）
             </a>
             <button class="sync-btn" id="syncBtn" onclick="syncWithGoogleSheets()">🔄 同步資料</button>
             <div class="filter-tabs">
@@ -614,7 +631,9 @@
                             headers.forEach((header, index) => {
                                 let value = values[index] ? values[index].replace(/"/g, '').trim() : '';
                                 // 處理換行符號，將其轉換為 HTML 換行
-                                value = value.replace(/\n/g, '<br>').replace(/\r/g, '');
+                                if (header === 'description' || header === 'note') {
+                                    value = value.replace(/\n/g, '<br>').replace(/\r/g, '');
+                                }
                                 row[header] = value;
                             });
                             if (row.name) { // 只有名稱不為空的才加入
@@ -645,6 +664,7 @@
                         startTime: activity.startTime || '',
                         endTime: activity.endTime || '',
                         description: activity.description || '',
+                        note: activity.note || '',
                         stores: activity.stores ? 
                             activity.stores.split(/[、,，]/).map(s => s.trim()).filter(s => s) : []
                     };
@@ -653,7 +673,7 @@
                 renderActivities();
                 renderTimeline();
                 
-                updateSyncStatus('', '🌐 已從後台同步');
+                updateSyncStatus('', '🌐 已從 Google Sheets 同步');
                 
             } catch (error) {
                 console.error('讀取資料失敗:', error);
@@ -883,6 +903,12 @@
                             <div class="detail-label">內容：</div>
                             <div class="detail-value">
                                 <div style="line-height: 1.6;">${activity.description}</div>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">備註：</div>
+                            <div class="detail-value">
+                                <div class="activity-note">${activity.note || ''}</div>
                             </div>
                         </div>
                         <div class="detail-row">
