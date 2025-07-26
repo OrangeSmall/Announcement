@@ -1,217 +1,303 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>活動檔期排程表 - 診斷版</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://apis.google.com/js/api.js"></script>
-  <style>
-    body {
-      font-family: 'Microsoft JhengHei', Arial, sans-serif;
-      background: linear-gradient(135deg, #833B36 0%, #AD9667 100%);
-      min-height: 100vh;
-      padding: 20px;
-      color: #2c3e50;
-      margin: 0;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 8px 32px rgba(131, 59, 54, 0.15);
-    }
-    .header { text-align: center; margin-bottom: 30px; }
-    .header h1 { color: #833B36; margin-bottom: 10px; }
-    .diagnostic-panel, .config-panel {
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .diagnostic-panel { border-left: 4px solid #007bff; }
-    .status-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #dee2e6;
-    }
-    .status-label { font-weight: 600; color: #495057; }
-    .status-value {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.9em;
-      font-weight: 500;
-    }
-    .status-success { background: #d4edda; color: #155724; }
-    .status-error { background: #f8d7da; color: #721c24; }
-    .status-warning { background: #fff3cd; color: #856404; }
-    .status-info { background: #d1ecf1; color: #0c5460; }
-    .log-panel {
-      background: #212529;
-      color: #ffffff;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      font-size: 0.9em;
-    }
-    .btn-primary { background: linear-gradient(135deg, #833B36, #AD9667); color: white; }
-    .btn-success { background: #28a745; color: white; }
-    .btn-info { background: #17a2b8; color: white; }
-    .btn:hover { transform: translateY(-2px); }
-    .config-item { margin-bottom: 10px; font-size: 0.9em; }
-    .config-label {
-      font-weight: 600;
-      color: #495057;
-      display: inline-block;
-      width: 120px;
-    }
-    .config-value {
-      font-family: 'Courier New', monospace;
-      background: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      word-break: break-all;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清酒講座課程大綱</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="3" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .session {
+            margin-bottom: 35px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+        
+        .session:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .session-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .session-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .topics {
+            list-style: none;
+            text-align: center;
+        }
+        
+        .topics li {
+            margin-bottom: 12px;
+            padding-left: 0;
+            position: relative;
+            color: #4a5568;
+            line-height: 1.6;
+            list-style: none;
+        }
+        
+        .sub-topics {
+            margin-top: 8px;
+            padding-left: 0;
+            text-align: center;
+            list-style: none;
+        }
+        
+        .sub-topics li {
+            font-size: 0.95rem;
+            color: #718096;
+            margin-bottom: 6px;
+            list-style: none;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            border-left-color: #e17055;
+        }
+        
+        .highlight .session-title {
+            color: #2d3748;
+        }
+        
+        .tasting-session {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-left-color: #00b894;
+        }
+        
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .sake-icon {
+            font-size: 1.5rem;
+            margin: 0 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🔧 活動檔期排程表（Google Sheet 同步）</h1>
+    <div class="container">
+        <div class="header">
+            <h1>清酒品飲講座</h1>
+            <div class="subtitle">從基礎到實踐的完整學習體驗</div>
+        </div>
+        
+        <div class="content">
+            <div class="session">
+                <div class="session-title">
+                    <div class="session-number">1</div>
+                    講座開場與基本概念
+                </div>
+                <ul class="topics">
+                    <li><strong>清酒的定義與重要性</strong>
+                        <ul class="sub-topics">
+                            <li>什麼是清酒？</li>
+                            <li>清酒在日本文化中的地位</li>
+                        </ul>
+                    </li>
+                    <li><strong>清酒品飲系統介紹</strong>
+                        <ul class="sub-topics">
+                            <li>四大象限品飲系統簡述</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="session">
+                <div class="session-title">
+                    <div class="session-number">2</div>
+                    清酒種類與釀造工藝
+                </div>
+                <ul class="topics">
+                    <li><strong>精米步合概念</strong>
+                        <ul class="sub-topics">
+                            <li>酒米的特性與心白</li>
+                            <li>精米步合的目的與意義</li>
+                        </ul>
+                    </li>
+                    <li><strong>釀造方法分類</strong>
+                        <ul class="sub-topics">
+                            <li>純米、大吟釀、本釀造等</li>
+                            <li>各類型的口感與風味差異</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="session tasting-session">
+                <div class="session-title">
+                    <div class="session-number">3</div>
+                    第一輪試飲體驗
+                </div>
+                <ul class="topics">
+                    <li><strong>實際品飲與解說</strong>
+                        <ul class="sub-topics">
+                            <li>品飲技巧指導</li>
+                            <li>風味識別練習</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="session">
+                <div class="session-title">
+                    <div class="session-number">4</div>
+                    清酒深度知識
+                </div>
+                <ul class="topics">
+                    <li><strong>清酒與其他酒類的差異</strong>
+                        <ul class="sub-topics">
+                            <li>發酵過程簡述</li>
+                            <li>保存方式與注意事項</li>
+                        </ul>
+                    </li>
+                    <li><strong>清酒歷史與文化</strong>
+                        <ul class="sub-topics">
+                            <li>清酒在日本的發展歷程</li>
+                            <li>地方飲酒文化介紹</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="session highlight">
+                <div class="session-title">
+                    <div class="session-number">5</div>
+                    酒標解讀技巧
+                </div>
+                <ul class="topics">
+                    <li><strong>酒標關鍵資訊</strong>
+                        <ul class="sub-topics">
+                            <li>酒精度、精米步合、產區等</li>
+                            <li>術語解釋：大吟釀、純米等</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="session tasting-session">
+                <div class="session-title">
+                    <div class="session-number">6</div>
+                    第二輪試飲體驗
+                </div>
+                <ul class="topics">
+                    <li><strong>進階品飲練習</strong>
+                        <ul class="sub-topics">
+                            <li>運用所學知識品飲</li>
+                            <li>風味比較與討論</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="session">
+                <div class="session-title">
+                    <div class="session-number">7</div>
+                    總結與回顧
+                </div>
+                <ul class="topics">
+                    <li><strong>本日學習重點回顧</strong>
+                        <ul class="sub-topics">
+                            <li>知識要點整理</li>
+                            <li>Q&A 問答時間</li>
+
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <span class="sake-icon">🍶</span>
+            感謝參與清酒品飲講座
+            <span class="sake-icon">🍶</span>
+        </div>
     </div>
-
-    <div class="config-panel">
-      <h3>📋 當前配置</h3>
-      <div class="config-item"><span class="config-label">網站：</span><span class="config-value" id="currentDomain"></span></div>
-      <div class="config-item"><span class="config-label">協定：</span><span class="config-value" id="currentProtocol"></span></div>
-      <div class="config-item"><span class="config-label">完整網址：</span><span class="config-value" id="currentUrl"></span></div>
-      <div class="config-item"><span class="config-label">API 金鑰：</span><span class="config-value">AIzaSyAkJNxalxCSVuf5bqUg_vRyZJxvU_YFohM</span></div>
-      <div class="config-item"><span class="config-label">用戶端 ID：</span><span class="config-value">930590768575-j1cutl028ggcl8lcplfrtnjnurne4dcm.apps.googleusercontent.com</span></div>
-    </div>
-
-    <div class="diagnostic-panel">
-      <h3>🔍 登入測試</h3>
-      <div class="status-item">
-        <span class="status-label">Google API 載入</span>
-        <span class="status-value status-success" id="gapiStatus">✅ 已載入</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">登入狀態</span>
-        <span class="status-value status-info" id="signInStatus">未登入</span>
-      </div>
-    </div>
-
-    <div class="button-group">
-      <button class="btn btn-primary" onclick="handleLogin()">🔐 登入 Google</button>
-      <button id="fetchSheetBtn" class="btn btn-success">📄 讀取試算表</button>
-      <button id="clearLogs" class="btn btn-info">🧹 清除日誌</button>
-    </div>
-
-    <div class="log-panel" id="logPanel">
-      <div id="logContent">📝 準備就緒，請點擊登入</div>
-    </div>
-  </div>
-
-  <script>
-    const CONFIG = {
-      apiKey: 'AIzaSyAkJNxalxCSVuf5bqUg_vRyZJxvU_YFohM',
-      clientId: '930590768575-j1cutl028ggcl8lcplfrtnjnurne4dcm.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-      sheetId: '1Oy8m425d6vuiX2QiqZJN1PH_b4_TTi6j_qE54lNJZWs',
-      sheetRange: 'A1:H10'
-    };
-
-    let accessToken = null;
-    let tokenClient = null;
-
-    function log(message) {
-      const time = new Date().toLocaleTimeString();
-      const el = document.createElement('div');
-      el.style.color = '#17a2b8';
-      el.textContent = `[${time}] ${message}`;
-      const logPanel = document.getElementById('logContent');
-      logPanel.appendChild(el);
-      logPanel.scrollTop = logPanel.scrollHeight;
-    }
-
-    function updateStatus(id, state, text) {
-      const el = document.getElementById(id);
-      el.className = `status-value status-${state}`;
-      el.textContent = text;
-    }
-
-    function handleLogin() {
-      if (!tokenClient) {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: CONFIG.clientId,
-          scope: CONFIG.scope,
-          callback: (response) => {
-            if (response && response.access_token) {
-              accessToken = response.access_token;
-              updateStatus('signInStatus', 'success', '✅ 已登入');
-              log('✅ 取得 Access Token：' + accessToken);
-            } else {
-              updateStatus('signInStatus', 'error', '❌ 登入失敗');
-              log('❌ 未取得 Access Token');
-            }
-          }
-        });
-      }
-      tokenClient.requestAccessToken();
-      log('🔐 開始進行 Google 登入');
-    }
-
-    async function fetchSheetData() {
-      if (!accessToken) {
-        log('⚠️ 請先登入 Google');
-        return;
-      }
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.sheetId}/values/${CONFIG.sheetRange}?key=${CONFIG.apiKey}`;
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-      const data = await res.json();
-      if (data.values) {
-        log('📄 取得試算表資料：');
-        data.values.forEach(row => log(row.join(' | ')));
-      } else {
-        log('❌ 無法讀取試算表資料');
-        console.error(data);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('currentDomain').textContent = window.location.hostname;
-      document.getElementById('currentProtocol').textContent = window.location.protocol;
-      document.getElementById('currentUrl').textContent = window.location.href;
-      document.getElementById('clearLogs').addEventListener('click', () => {
-        document.getElementById('logContent').innerHTML = '📝 日誌已清除';
-      });
-      document.getElementById('fetchSheetBtn').addEventListener('click', fetchSheetData);
-    });
-  </script>
 </body>
 </html>
