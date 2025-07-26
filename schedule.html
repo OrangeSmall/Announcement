@@ -616,15 +616,28 @@
                 
                 console.log('解析後的資料:', data);
                 
-                activities = data.map((activity, index) => ({
-                    id: index + 1,
-                    type: activity.type && activity.type.trim() === 'promotion' ? 'promotion' : 'store-activity',
-                    name: activity.name || '',
-                    startTime: activity.startTime || '',
-                    endTime: activity.endTime || '',
-                    description: activity.description || '',
-                    stores: activity.stores ? activity.stores.split('、').filter(s => s.trim()) : []
-                }));
+                activities = data.map((activity, index) => {
+                    // 處理中文和英文的活動類型
+                    let activityType = 'store-activity';
+                    if (activity.type) {
+                        const type = activity.type.trim();
+                        if (type === 'promotion' || type === '商品促銷') {
+                            activityType = 'promotion';
+                        } else if (type === 'store-activity' || type === '門市活動') {
+                            activityType = 'store-activity';
+                        }
+                    }
+                    
+                    return {
+                        id: index + 1,
+                        type: activityType,
+                        name: activity.name || '',
+                        startTime: activity.startTime || '',
+                        endTime: activity.endTime || '',
+                        description: activity.description || '',
+                        stores: activity.stores ? activity.stores.split('、').filter(s => s.trim()) : []
+                    };
+                });
                 
                 renderActivities();
                 renderTimeline();
