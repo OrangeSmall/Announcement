@@ -594,9 +594,9 @@
                 const csvText = await response.text();
                 console.log('收到 CSV 資料:', csvText);
                 
-                // 解析 CSV
-                const lines = csvText.split('\n');
-                const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+                // 使用改進的 CSV 解析
+                const lines = parseCSV(csvText);
+                const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, '').trim());
                 
                 const data = [];
                 for (let i = 1; i < lines.length; i++) {
@@ -605,7 +605,10 @@
                         if (values.length >= headers.length) {
                             const row = {};
                             headers.forEach((header, index) => {
-                                row[header] = values[index] ? values[index].replace(/"/g, '').trim() : '';
+                                let value = values[index] ? values[index].replace(/"/g, '').trim() : '';
+                                // 處理換行符號，將其轉換為 HTML 換行
+                                value = value.replace(/\n/g, '<br>').replace(/\r/g, '');
+                                row[header] = value;
                             });
                             if (row.name) { // 只有名稱不為空的才加入
                                 data.push(row);
@@ -655,7 +658,7 @@
             }
         }
 
-        // 簡單的 CSV 解析函數
+        // 改進的 CSV 解析函數，支援換行
         function parseCSVLine(line) {
             const result = [];
             let current = '';
@@ -676,6 +679,37 @@
             
             result.push(current);
             return result;
+        }
+
+        // 解析整個 CSV，正確處理多行內容
+        function parseCSV(csvText) {
+            const lines = [];
+            let currentLine = '';
+            let inQuotes = false;
+            
+            // 先將 CSV 文字分解成正確的行
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                    currentLine += char;
+                } else if (char === '\n' && !inQuotes) {
+                    if (currentLine.trim()) {
+                        lines.push(currentLine);
+                    }
+                    currentLine = '';
+                } else {
+                    currentLine += char;
+                }
+            }
+            
+            // 添加最後一行
+            if (currentLine.trim()) {
+                lines.push(currentLine);
+            }
+            
+            return lines;
         }
 
         function useBackupData() {
@@ -839,7 +873,9 @@
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">內容：</div>
-                            <div class="detail-value">${activity.description}</div>
+                            <div class="detail-value">
+                                <div style="line-height: 1.6;">${activity.description}</div>
+                            </div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">店別：</div>
