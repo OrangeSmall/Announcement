@@ -200,24 +200,6 @@
             align-items: center;
         }
 
-        .add-btn {
-            background: linear-gradient(135deg, #833B36, #AD9667);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(131, 59, 54, 0.2);
-        }
-
-        .add-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(131, 59, 54, 0.3);
-        }
-
         .sync-btn {
             background: #28a745;
             color: white;
@@ -240,6 +222,28 @@
             background: #6c757d;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .sheets-link-btn {
+            background: linear-gradient(135deg, #833B36, #AD9667);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(131, 59, 54, 0.2);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sheets-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(131, 59, 54, 0.3);
         }
 
         .filter-tabs {
@@ -401,141 +405,6 @@
             box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.2);
         }
 
-        .delete-btn {
-            background: #833B36;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 0.8em;
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .edit-btn {
-            background: #AD9667;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 0.8em;
-            position: absolute;
-            bottom: 15px;
-            right: 85px;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .activity-card:hover .delete-btn,
-        .activity-card:hover .edit-btn {
-            opacity: 1;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(131, 59, 54, 0.7);
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(131, 59, 54, 0.2);
-            backdrop-filter: blur(10px);
-        }
-
-        .modal h2 {
-            margin-bottom: 20px;
-            color: #833B36;
-            text-align: center;
-        }
-
-        .modal h2.edit-mode {
-            color: #AD9667;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #833B36;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid rgba(173, 150, 103, 0.3);
-            border-radius: 10px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-            color: #2c3e50;
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #AD9667;
-            background: rgba(255, 255, 255, 1);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #833B36, #AD9667);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #495057;
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -561,6 +430,25 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #833B36;
+        }
+
+        .info-panel h4 {
+            color: #833B36;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-panel p {
+            color: #495057;
+            line-height: 1.6;
         }
 
         @media (max-width: 768px) {
@@ -599,6 +487,12 @@
             <p>如有任何疑問，請聯絡門市活動課</p>
         </div>
 
+        <!-- 使用說明 -->
+        <div class="info-panel">
+            <h4>📋 使用說明</h4>
+            <p>此為活動瀏覽專用頁面。如需新增或編輯活動，請直接在 Google Sheets 中操作，然後點擊「同步資料」按鈕更新顯示。</p>
+        </div>
+
         <!-- 同步狀態指示器 -->
         <div class="sync-status">
             <div class="sync-indicator" id="syncIndicator"></div>
@@ -618,7 +512,10 @@
         </div>
 
         <div class="controls">
-            <button class="add-btn" onclick="openModal()">➕ 新增活動</button>
+            <a href="https://docs.google.com/spreadsheets/d/1Oy8m425d6vuiX2QiqZJN1PH_b4_TTi6j_qE54lNJZWs/edit" 
+               target="_blank" class="sheets-link-btn">
+                📝 開啟 Google Sheets 編輯
+            </a>
             <button class="sync-btn" id="syncBtn" onclick="syncWithGoogleSheets()">🔄 同步資料</button>
             <div class="filter-tabs">
                 <div class="filter-tab active" data-filter="all">全部</div>
@@ -637,62 +534,13 @@
         <div class="loading-spinner"></div>
     </div>
 
-    <!-- 新增/編輯活動的彈窗 -->
-    <div class="modal" id="activityModal">
-        <div class="modal-content">
-            <h2>新增活動</h2>
-            <form id="activityForm">
-                <div class="form-group">
-                    <label>活動類型</label>
-                    <select id="activityType" required>
-                        <option value="">請選擇活動類型</option>
-                        <option value="store-activity">門市活動</option>
-                        <option value="promotion">商品促銷</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>活動名稱</label>
-                    <input type="text" id="activityName" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>活動開始時間</label>
-                    <input type="datetime-local" id="startTime" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>活動結束時間</label>
-                    <input type="datetime-local" id="endTime">
-                </div>
-                
-                <div class="form-group">
-                    <label>內容大綱</label>
-                    <textarea id="description" placeholder="請描述活動內容..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>活動店別</label>
-                    <input type="text" id="stores" placeholder="例：北高店、全門市、官網">
-                </div>
-                
-                <div class="form-buttons">
-                    <button type="submit" class="btn btn-primary">儲存活動</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
-        // Google Sheets 連接設定
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw55wnva7CkjJ_xGCsf7F4AS6JFjulfGB0X8Fq1WtJ0JAZacNmEYX3ZSeMTsLMjMe2Q/exec";
+        // Google Sheets 連接設定 - 使用 CSV 匯出
+        const SHEET_ID = "1Oy8m425d6vuiX2QiqZJN1PH_b4_TTi6j_qE54lNJZWs";
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
         
         let activities = [];
         let currentFilter = 'all';
-        let nextId = 1;
-        let isEditMode = false;
-        let editingActivityId = null;
 
         // 同步狀態管理
         function updateSyncStatus(status, message) {
@@ -708,16 +556,43 @@
             overlay.style.display = show ? 'flex' : 'none';
         }
 
-        // 從 Google Sheets 讀取資料
+        // 從 Google Sheets CSV 讀取資料
         async function fetchActivitiesFromSheet() {
             try {
                 updateSyncStatus('syncing', '🔄 正在同步資料...');
                 showLoading(true);
                 
-                const response = await fetch(WEB_APP_URL);
-                if (!response.ok) throw new Error('網路連接失敗');
+                console.log('從 Google Sheets 讀取資料...');
                 
-                const data = await response.json();
+                const response = await fetch(CSV_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const csvText = await response.text();
+                console.log('收到 CSV 資料:', csvText);
+                
+                // 解析 CSV
+                const lines = csvText.split('\n');
+                const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+                
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) {
+                        const values = parseCSVLine(lines[i]);
+                        if (values.length >= headers.length) {
+                            const row = {};
+                            headers.forEach((header, index) => {
+                                row[header] = values[index] ? values[index].replace(/"/g, '').trim() : '';
+                            });
+                            if (row.name) { // 只有名稱不為空的才加入
+                                data.push(row);
+                            }
+                        }
+                    }
+                }
+                
+                console.log('解析後的資料:', data);
                 
                 activities = data.map((activity, index) => ({
                     id: index + 1,
@@ -729,107 +604,68 @@
                     stores: activity.stores ? activity.stores.split('、').filter(s => s.trim()) : []
                 }));
                 
-                nextId = activities.length + 1;
                 renderActivities();
                 renderTimeline();
                 
-                updateSyncStatus('', '🌐 已同步至 Google Sheets');
+                updateSyncStatus('', '🌐 已從 Google Sheets 同步');
                 
             } catch (error) {
                 console.error('讀取資料失敗:', error);
-                updateSyncStatus('error', '❌ 同步失敗，請檢查網路連接');
+                updateSyncStatus('error', '❌ 讀取失敗: ' + error.message);
                 
-                // 如果無法連接，使用本機資料
-                if (activities.length === 0) {
-                    activities = [
-                        {
-                            id: 1,
-                            type: 'store-activity',
-                            name: 'CODE:1939',
-                            startTime: '2024-08-02T19:00',
-                            endTime: '',
-                            description: '內用滿額贈啤酒，會員再加碼',
-                            stores: ['北高店']
-                        },
-                        {
-                            id: 2,
-                            type: 'promotion',
-                            name: '土用丑日鰻魚節',
-                            startTime: '2024-07-29T00:00',
-                            endTime: '2024-08-05T23:59',
-                            description: '針對節日與特定商品做促銷與組合販售',
-                            stores: ['全門市', '官網']
-                        }
-                    ];
-                    nextId = 3;
-                    renderActivities();
-                    renderTimeline();
-                }
+                // 使用本機備用資料
+                useBackupData();
             } finally {
                 showLoading(false);
             }
         }
 
-        // 儲存到 Google Sheets
-        async function saveToSheet(activity) {
-            try {
-                updateSyncStatus('syncing', '🔄 正在儲存資料...');
-                showLoading(true);
+        // 簡單的 CSV 解析函數
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
                 
-                const dataToSend = {
-                    ...activity,
-                    stores: Array.isArray(activity.stores) ? activity.stores.join('、') : activity.stores
-                };
-                
-                console.log('準備傳送的資料:', dataToSend);
-                
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dataToSend),
-                    mode: 'cors'
-                });
-                
-                console.log('回應狀態:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const result = await response.json();
-                console.log('伺服器回應:', result);
-                
-                if (result.status === 'success') {
-                    // 成功後重新讀取資料
-                    await fetchActivitiesFromSheet();
-                    updateSyncStatus('', '✅ 資料已儲存至 Google Sheets');
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
                 } else {
-                    throw new Error(result.message || '儲存失敗');
+                    current += char;
                 }
-                
-            } catch (error) {
-                console.error('儲存失敗:', error);
-                updateSyncStatus('error', '❌ 儲存失敗：' + error.message);
-                
-                // 即使無法同步，也更新本機資料
-                if (isEditMode && editingActivityId) {
-                    const activityIndex = activities.findIndex(a => a.id === editingActivityId);
-                    if (activityIndex !== -1) {
-                        activities[activityIndex] = { ...activities[activityIndex], ...activity };
-                    }
-                } else {
-                    activities.push(activity);
-                }
-                renderActivities();
-                renderTimeline();
-                
-                // 顯示詳細錯誤
-                alert('同步失敗：' + error.message + '\n請檢查網路連接或稍後重試');
-            } finally {
-                showLoading(false);
             }
+            
+            result.push(current);
+            return result;
+        }
+
+        function useBackupData() {
+            activities = [
+                {
+                    id: 1,
+                    type: 'store-activity',
+                    name: 'CODE:1939',
+                    startTime: '2024-08-02T19:00',
+                    endTime: '',
+                    description: '內用滿額贈啤酒，會員再加碼',
+                    stores: ['北高店']
+                },
+                {
+                    id: 2,
+                    type: 'promotion',
+                    name: '土用丑日鰻魚節',
+                    startTime: '2024-07-29T00:00',
+                    endTime: '2024-08-05T23:59',
+                    description: '針對節日與特定商品做促銷與組合販售',
+                    stores: ['全門市', '官網']
+                }
+            ];
+            renderActivities();
+            renderTimeline();
         }
 
         // 手動同步功能
@@ -967,8 +803,6 @@
                             </div>
                         </div>
                     </div>
-                    <button class="edit-btn" onclick="editActivity(${activity.id})">編輯</button>
-                    <button class="delete-btn" onclick="deleteActivity(${activity.id})">刪除</button>
                 </div>
             `;
         }
@@ -982,57 +816,6 @@
             grid.innerHTML = filteredActivities.map(activity => createActivityCard(activity)).join('');
         }
 
-        function openModal() {
-            isEditMode = false;
-            editingActivityId = null;
-            document.getElementById('activityModal').style.display = 'block';
-            document.getElementById('activityForm').reset();
-            document.querySelector('.modal h2').textContent = '新增活動';
-            document.querySelector('.modal h2').classList.remove('edit-mode');
-        }
-
-        function editActivity(id) {
-            const activity = activities.find(a => a.id === id);
-            if (!activity) return;
-
-            isEditMode = true;
-            editingActivityId = id;
-            
-            // 填入現有資料
-            document.getElementById('activityType').value = activity.type;
-            document.getElementById('activityName').value = activity.name;
-            document.getElementById('startTime').value = activity.startTime;
-            document.getElementById('endTime').value = activity.endTime;
-            document.getElementById('description').value = activity.description;
-            document.getElementById('stores').value = activity.stores.join('、');
-            
-            // 更新標題
-            document.querySelector('.modal h2').textContent = '編輯活動';
-            document.querySelector('.modal h2').classList.add('edit-mode');
-            
-            document.getElementById('activityModal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('activityModal').style.display = 'none';
-            isEditMode = false;
-            editingActivityId = null;
-        }
-
-        function deleteActivity(id) {
-            if (confirm('確定要刪除這個活動嗎？')) {
-                activities = activities.filter(activity => activity.id !== id);
-                renderActivities();
-                renderTimeline();
-                updateSyncStatus('syncing', '🔄 正在同步刪除...');
-                
-                // 這裡可以加入刪除到 Google Sheets 的邏輯
-                setTimeout(() => {
-                    updateSyncStatus('', '✅ 活動已刪除並同步');
-                }, 1000);
-            }
-        }
-
         // 篩選功能
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.addEventListener('click', function() {
@@ -1043,45 +826,13 @@
             });
         });
 
-        // 表單提交處理
-        document.getElementById('activityForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const activityData = {
-                type: document.getElementById('activityType').value,
-                name: document.getElementById('activityName').value,
-                startTime: document.getElementById('startTime').value,
-                endTime: document.getElementById('endTime').value,
-                description: document.getElementById('description').value,
-                stores: document.getElementById('stores').value.split('、').map(s => s.trim()).filter(s => s)
-            };
-
-            if (isEditMode && editingActivityId) {
-                // 編輯模式：更新現有活動
-                activityData.id = editingActivityId;
-            } else {
-                // 新增模式：創建新活動
-                activityData.id = nextId++;
-            }
-
-            saveToSheet(activityData);
-            closeModal();
-        });
-
-        // 點擊彈窗外部關閉
-        document.getElementById('activityModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
         // 初始化載入
         window.addEventListener('DOMContentLoaded', function() {
             fetchActivitiesFromSheet();
         });
 
-        // 定期自動同步（每5分鐘）
-        setInterval(fetchActivitiesFromSheet, 5 * 60 * 1000);
+        // 定期自動同步（每10分鐘）
+        setInterval(fetchActivitiesFromSheet, 10 * 60 * 1000);
     </script>
 </body>
 </html>
