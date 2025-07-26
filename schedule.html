@@ -774,28 +774,44 @@
         async function saveToSheet(activity) {
             try {
                 updateSyncStatus('syncing', '🔄 正在儲存資料...');
+                showLoading(true);
                 
                 const dataToSend = {
                     ...activity,
-                    stores: activity.stores.join('、')
+                    stores: Array.isArray(activity.stores) ? activity.stores.join('、') : activity.stores
                 };
+                
+                console.log('準備傳送的資料:', dataToSend);
                 
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(dataToSend)
+                    body: JSON.stringify(dataToSend),
+                    mode: 'cors'
                 });
                 
-                if (!response.ok) throw new Error('儲存失敗');
+                console.log('回應狀態:', response.status);
                 
-                await fetchActivitiesFromSheet();
-                updateSyncStatus('', '✅ 資料已儲存至 Google Sheets');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('伺服器回應:', result);
+                
+                if (result.status === 'success') {
+                    // 成功後重新讀取資料
+                    await fetchActivitiesFromSheet();
+                    updateSyncStatus('', '✅ 資料已儲存至 Google Sheets');
+                } else {
+                    throw new Error(result.message || '儲存失敗');
+                }
                 
             } catch (error) {
                 console.error('儲存失敗:', error);
-                updateSyncStatus('error', '❌ 儲存失敗，請稍後重試');
+                updateSyncStatus('error', '❌ 儲存失敗：' + error.message);
                 
                 // 即使無法同步，也更新本機資料
                 if (isEditMode && editingActivityId) {
@@ -808,6 +824,11 @@
                 }
                 renderActivities();
                 renderTimeline();
+                
+                // 顯示詳細錯誤
+                alert('同步失敗：' + error.message + '\n請檢查網路連接或稍後重試');
+            } finally {
+                showLoading(false);
             }
         }
 
@@ -1063,4 +1084,4 @@
         setInterval(fetchActivitiesFromSheet, 5 * 60 * 1000);
     </script>
 </body>
-</html> 
+</html>
