@@ -367,21 +367,43 @@
         }
 
         .store-tag {
-            background: rgba(173, 150, 103, 0.1);
-            color: #833B36;
-            padding: 4px 10px;
-            border-radius: 12px;
+            padding: 5px 12px;
+            border-radius: 15px;
             font-size: 0.8em;
             font-weight: 500;
+            border: 1px solid #dee2e6;
+        }
+
+        .activity-card.store-activity .store-tag {
+            background: rgba(231, 76, 60, 0.1);
+            color: #c0392b;
+            border-color: rgba(231, 76, 60, 0.2);
+        }
+
+        .activity-card.promotion .store-tag {
+            background: rgba(52, 152, 219, 0.1);
+            color: #2980b9;
+            border-color: rgba(52, 152, 219, 0.2);
         }
 
         .date-range {
-            background: linear-gradient(135deg, #833B36, #AD9667);
             color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
             font-weight: 600;
             display: inline-block;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
+        }
+
+        .activity-card.store-activity .date-range {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        .activity-card.promotion .date-range {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
         }
 
         .status {
@@ -596,7 +618,7 @@
                 
                 activities = data.map((activity, index) => ({
                     id: index + 1,
-                    type: activity.type || 'store-activity',
+                    type: activity.type && activity.type.trim() === 'promotion' ? 'promotion' : 'store-activity',
                     name: activity.name || '',
                     startTime: activity.startTime || '',
                     endTime: activity.endTime || '',
@@ -767,20 +789,32 @@
             }
 
             const formatDateTime = (dateTime) => {
+                if (!dateTime) return '';
                 const date = new Date(dateTime);
-                return date.toLocaleDateString('zh-TW') + ' ' + 
-                       date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+                // 檢查是否為有效日期
+                if (isNaN(date.getTime())) return dateTime;
+                
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                return `${month}/${day} ${hours}:${minutes}`;
             };
 
-            const timeRange = activity.endTime 
+            const timeRange = activity.endTime && activity.endTime.trim()
                 ? `${formatDateTime(activity.startTime)} ~ ${formatDateTime(activity.endTime)}`
                 : `${formatDateTime(activity.startTime)} 起`;
 
+            // 確保活動類型正確識別
+            const activityType = activity.type === 'promotion' ? 'promotion' : 'store-activity';
+            const activityTypeText = activityType === 'promotion' ? '商品促銷' : '門市活動';
+
             return `
-                <div class="activity-card ${activity.type}">
+                <div class="activity-card ${activityType}">
                     <div class="status ${status}"></div>
-                    <div class="activity-type ${activity.type}">
-                        ${activity.type === 'store-activity' ? '門市活動' : '商品促銷'}
+                    <div class="activity-type ${activityType}">
+                        ${activityTypeText}
                     </div>
                     <div class="activity-name">${activity.name}</div>
                     <div class="activity-details">
