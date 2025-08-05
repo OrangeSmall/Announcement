@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遠雄 x 平凡五金行講座結案報告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #3498db, #8e44ad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header .date {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 8px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .sales-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .sales-item {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .sales-item.positive { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .sales-item.negative { background: linear-gradient(135deg, #fc4a1a, #f7b733); }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .participant-chart {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .participant-item {
+            text-align: center;
+            flex: 1;
+            padding: 15px;
+            margin: 0 5px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .participant-item:nth-child(1) { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .participant-item:nth-child(2) { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .participant-item:nth-child(3) { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        
+        .roi-display {
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .roi-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .todo-list {
+            list-style: none;
+        }
+        
+        .todo-list li {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            transition: all 0.3s ease;
+        }
+        
+        .todo-list li:hover {
+            background: #ecf0f1;
+        }
+        
+        .feedback-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .feedback-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .participant-chart {
+                flex-direction: column;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍶 遠雄 x 平凡五金行講座結案報告</h1>
+            <div class="date">報告製作日期：2025年8月6日 | 製作人員：小橘</div>
+        </div>
+        
+        <div class="grid">
+            <!-- 活動概況 -->
+            <div class="card">
+                <h2>📊 活動概況</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">22</div>
+                        <div class="stat-label">實際出席</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">73.3%</div>
+                        <div class="stat-label">出席率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">6</div>
+                        <div class="stat-label">品飲酒款</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">240ml</div>
+                        <div class="stat-label">人均品飲</div>
+                    </div>
+                </div>
+                
+                <h3>👥 參與者分類</h3>
+                <div class="participant-chart">
+                    <div class="participant-item">
+                        <div style="font-size: 1.5rem; font-weight: bold;">5人</div>
+                        <div>平凡邀請</div>
+                        <div style="font-size: 0.9rem;">22.7%</div>
+                    </div>
+                    <div class="participant-item">
+                        <div style="font-size: 1.5rem; font-weight: bold;">9人</div>
+                        <div>遠雄邀請</div>
+                        <div style="font-size: 0.9rem;">40.9%</div>
+                    </div>
+                    <div class="participant-item">
+                        <div style="font-size: 1.5rem; font-weight: bold;">8人</div>
+                        <div>朋友邀請</div>
+                        <div style="font-size: 0.9rem;">36.4%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 銷售成效 -->
+            <div class="card">
+                <h2>💰 銷售成效</h2>
+                <div class="sales-grid">
+                    <div class="sales-item positive">
+                        <div style="font-size: 1.2rem; font-weight: bold;">NT$ 35,000</div>
+                        <div style="font-size: 0.9rem;">目標額</div>
+                    </div>
+                    <div class="sales-item positive">
+                        <div style="font-size: 1.2rem; font-weight: bold;">NT$ 34,581</div>
+                        <div style="font-size: 0.9rem;">活動消費收入</div>
+                    </div>
+                    <div class="sales-item positive">
+                        <div style="font-size: 1.2rem; font-weight: bold;">NT$ 15,000</div>
+                        <div style="font-size: 0.9rem;">活動費用收入</div>
+                    </div>
+                    <div class="sales-item positive">
+                        <div style="font-size: 1.2rem; font-weight: bold;">NT$ 49,581</div>
+                        <div style="font-size: 0.9rem;">總收入</div>
+                    </div>
+                    <div class="sales-item positive">
+                        <div style="font-size: 1.2rem; font-weight: bold;">141.7%</div>
+                        <div style="font-size: 0.9rem;">目標達成率</div>
+                    </div>
+                </div>
+                
+                <div class="highlight">
+                    <strong>備註：</strong>
+                    <br>• 活動消費收入 NT$ 34,581 其中酒水金額為 NT$ 33,184
+                    <br>• 總收入包含活動費、現場銷售額
+                </div>
+                
+                <div class="roi-display">
+                    <div class="roi-value">+61.2%</div>
+                    <div>投資報酬率 (ROI)</div>
+                    <div style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">
+                        總收入 NT$ 49,581 - 總成本 NT$ 30,769 = 淨利潤 NT$ 18,812
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 酒款銷售詳情 -->
+        <div class="card">
+            <h2>🍶 酒款銷售詳情</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>酒款</th>
+                        <th>數量</th>
+                        <th>售價</th>
+                        <th>總售價</th>
+                        <th>成本</th>
+                        <th>總成本</th>
+                        <th>毛利</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>獺祭 45 純米大吟釀 720ml</td>
+                        <td>2瓶</td>
+                        <td>$1,480</td>
+                        <td>$2,960</td>
+                        <td>$924</td>
+                        <td>$1,848</td>
+                        <td style="color: #27ae60; font-weight: bold;">$1,112</td>
+                    </tr>
+                    <tr>
+                        <td>小西濃上 生詰純米 綠 720ml</td>
+                        <td>2瓶</td>
+                        <td>$780</td>
+                        <td>$1,560</td>
+                        <td>$532</td>
+                        <td>$1,064</td>
+                        <td style="color: #27ae60; font-weight: bold;">$496</td>
+                    </tr>
+                    <tr>
+                        <td>小西 deAI 啤酒花氣泡清酒 720ml</td>
+                        <td>3瓶</td>
+                        <td>$880</td>
+                        <td>$2,640</td>
+                        <td>$630</td>
+                        <td>$1,890</td>
+                        <td style="color: #27ae60; font-weight: bold;">$750</td>
+                    </tr>
+                    <tr>
+                        <td>獨樂藏 玄 圓熟純米吟釀 720ml</td>
+                        <td>2瓶</td>
+                        <td>$1,280</td>
+                        <td>$2,560</td>
+                        <td>$840</td>
+                        <td>$1,680</td>
+                        <td style="color: #27ae60; font-weight: bold;">$880</td>
+                    </tr>
+                    <tr>
+                        <td>鍛高譚紫蘇梅酒 720ml</td>
+                        <td>4瓶</td>
+                        <td>$980</td>
+                        <td>$3,920</td>
+                        <td>$672</td>
+                        <td>$2,688</td>
+                        <td style="color: #27ae60; font-weight: bold;">$1,232</td>
+                    </tr>
+                    <tr>
+                        <td>八海山 特別本釀造 300ml（贈品）</td>
+                        <td>4瓶</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td>$322</td>
+                        <td>$1,288</td>
+                        <td style="color: #e74c3c; font-weight: bold;">-$1,288</td>
+                    </tr>
+                    <tr style="background: #f8f9fa;">
+                        <td><strong>獺祭39寒造早槽3入優惠</strong></td>
+                        <td><strong>3組</strong></td>
+                        <td><strong>$3,999</strong></td>
+                        <td><strong>$11,997</strong></td>
+                        <td><strong>$3,510</strong></td>
+                        <td><strong>$10,530</strong></td>
+                        <td style="color: #27ae60; font-weight: bold;"><strong>$1,467</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="grid">
+            <!-- 活動預算 -->
+            <div class="card">
+                <h2>💸 活動預算構成</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>項目</th>
+                            <th>預算金額</th>
+                            <th>實際支出</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>場地費用</td>
+                            <td>無</td>
+                            <td>無</td>
+                        </tr>
+                        <tr>
+                            <td>講師費</td>
+                            <td>無</td>
+                            <td>NT$ 1,020</td>
+                        </tr>
+                        <tr>
+                            <td>酒款成本</td>
+                            <td>NT$ 7,341</td>
+                            <td>NT$ 7,341</td>
+                        </tr>
+                        <tr>
+                            <td>餐食費用</td>
+                            <td>NT$ 1,320</td>
+                            <td>NT$ 1,320</td>
+                        </tr>
+                        <tr>
+                            <td>其他費用</td>
+                            <td>NT$ 500</td>
+                            <td>NT$ 100</td>
+                        </tr>
+                        <tr style="background: #f8f9fa;">
+                            <td><strong>總計</strong></td>
+                            <td><strong>NT$ 9,161</strong></td>
+                            <td><strong>NT$ 9,781</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 後續行動 -->
+            <div class="card">
+                <h2>📋 待完成事項</h2>
+                <ul class="todo-list">
+                    <li>追蹤後續取貨導客</li>
+                    <li>評估活動成效並規劃下次改善方向</li>
+                </ul>
+                
+                <h2 style="margin-top: 30px;">🗣️ 客戶回饋彙整</h2>
+                <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; color: #7f8c8d;">
+                    問卷統計與回饋資料
+                    <br>
+                    <a href="https://docs.google.com/spreadsheets/d/1FYF_qoH4Nk-0C8mVbdDpnv0QYA5fGwimflvXup8UshI/edit?usp=sharing" 
+                       target="_blank" 
+                       class="feedback-button">
+                        📊 查看詳細回饋資料
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 總計摘要 -->
+        <div class="card">
+            <h2>📊 總計摘要</h2>
+            <div class="stats-grid">
+                <div class="stat-item" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                    <div class="stat-value">20瓶</div>
+                    <div class="stat-label">總訂購數量</div>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <div class="stat-value">NT$ 49,581</div>
+                    <div class="stat-label">總收入</div>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
+                    <div class="stat-value">NT$ 30,769</div>
+                    <div class="stat-label">總成本</div>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                    <div class="stat-value">NT$ 18,812</div>
+                    <div class="stat-label">淨利潤</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 10px; border-left: 4px solid #27ae60;">
+                <h3>收入構成明細：</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                    <div>• 活動費用收入：NT$ 15,000</div>
+                    <div>• 活動消費收入：NT$ 34,581</div>
+                    <div style="margin-left: 20px; font-size: 0.9rem; color: #666;">└ 其中酒水：NT$ 33,184</div>
+                    <div><strong>• 總收入：NT$ 49,581</strong></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                <h3>各品項訂購數量明細：</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 10px;">
+                    <div>• 獺祭 45 純米大吟釀 720ml：2瓶</div>
+                    <div>• 小西濃上 生詰純米 綠 720ml：2瓶</div>
+                    <div>• 小西 deAI 啤酒花氣泡清酒 720ml：3瓶</div>
+                    <div>• 獨樂藏 玄 圓熟純米吟釀 720ml：2瓶</div>
+                    <div>• 鍛高譚紫蘇梅酒 720ml：4瓶</div>
+                    <div>• 八海山 特別本釀造 300ml（贈品）：4瓶</div>
+                    <div>• 獺祭39寒造早槽3入優惠：3組</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-container">
+            <div class="footer">
+                <div class="footer-content">
+                    <div class="footer-title">活動企劃課 - 陳光庭 | 2025年8月6日</div>
+                    <div class="footer-subtitle">品飲講座活動企劃結案報告</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
