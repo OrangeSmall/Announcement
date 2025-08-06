@@ -157,20 +157,19 @@
             display: flex;
             justify-content: space-around;
             margin: 20px 0;
+            gap: 15px;
         }
         
         .participant-item {
             text-align: center;
             flex: 1;
-            padding: 15px;
-            margin: 0 5px;
+            padding: 20px;
             border-radius: 10px;
             color: white;
         }
         
         .participant-item:nth-child(1) { background: linear-gradient(135deg, #667eea, #764ba2); }
         .participant-item:nth-child(2) { background: linear-gradient(135deg, #f093fb, #f5576c); }
-        .participant-item:nth-child(3) { background: linear-gradient(135deg, #4facfe, #00f2fe); }
         
         .roi-display {
             text-align: center;
@@ -222,13 +221,37 @@
             color: white;
             text-decoration: none;
         }
+        
+        .footer {
             text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            color: #7f8c8d;
+            margin: 40px auto 20px auto;
+            padding: 15px 30px;
+            background: #e8eaf6;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: #5c6bc0;
+            display: inline-block;
+            max-width: fit-content;
+        }
+        
+        .footer-content {
+            line-height: 1.4;
+        }
+        
+        .footer-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .footer-subtitle {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .footer-container {
+            text-align: center;
+            width: 100%;
         }
         
         @media (max-width: 768px) {
@@ -263,11 +286,11 @@
                 <h2>📊 活動概況</h2>
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <div class="stat-value">22</div>
+                        <div class="stat-value">27</div>
                         <div class="stat-label">實際出席</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">73.3%</div>
+                        <div class="stat-value">90%</div>
                         <div class="stat-label">出席率</div>
                     </div>
                     <div class="stat-item">
@@ -283,19 +306,14 @@
                 <h3>👥 參與者分類</h3>
                 <div class="participant-chart">
                     <div class="participant-item">
-                        <div style="font-size: 1.5rem; font-weight: bold;">5人</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;">12人</div>
                         <div>平凡邀請</div>
-                        <div style="font-size: 0.9rem;">22.7%</div>
+                        <div style="font-size: 1rem; margin-top: 5px;">44.4%</div>
                     </div>
                     <div class="participant-item">
-                        <div style="font-size: 1.5rem; font-weight: bold;">9人</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;">15人</div>
                         <div>遠雄邀請</div>
-                        <div style="font-size: 0.9rem;">40.9%</div>
-                    </div>
-                    <div class="participant-item">
-                        <div style="font-size: 1.5rem; font-weight: bold;">8人</div>
-                        <div>朋友邀請</div>
-                        <div style="font-size: 0.9rem;">36.4%</div>
+                        <div style="font-size: 1rem; margin-top: 5px;">55.6%</div>
                     </div>
                 </div>
             </div>
@@ -328,8 +346,10 @@
                 
                 <div class="highlight">
                     <strong>備註：</strong>
-                    <br>• 活動消費收入 NT$ 34,581 其中酒水金額為 NT$ 33,184
+                    <br>• 活動銷費收入 NT$ 34,581 ，包含酒類外商品
                     <br>• 總收入包含活動費、現場銷售額
+                    <br>• 尚有未回收訂購單，與其他商品銷售數據未確認，銷售成本後續會再上修
+                    <br>• 總收入為當日現場現金+刷卡金額
                 </div>
                 
                 <div class="roi-display">
