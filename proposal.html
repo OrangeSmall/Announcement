@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>父親節Facebook宣傳文案提案</title>
+    <title>父親節臨時活動企劃提案</title>
     <style>
         * {
             margin: 0;
@@ -12,11 +12,12 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: 'Times New Roman', 'Microsoft JhengHei', '微軟正黑體', serif;
+            line-height: 1.5;
+            color: #2c3e50;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
+            font-weight: 400;
         }
 
         .container {
@@ -39,6 +40,7 @@
             font-size: 2.5em;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
         }
 
         .header p {
@@ -62,9 +64,14 @@
             border-left: 6px solid #e17055;
         }
 
-        .menu-section {
-            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
-            border-left: 6px solid #00b894;
+        .add-on-section {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border-left: 6px solid #2d3436;
+            color: white;
+        }
+
+        .add-on-section h2, .add-on-section h3 {
+            color: white;
         }
 
         .promotion-section {
@@ -77,13 +84,29 @@
             border-left: 6px solid #e84393;
         }
 
+        .preparation-section {
+            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
+            border-left: 6px solid #00b894;
+        }
+
+        .target-section {
+            background: linear-gradient(135deg, #dda0dd, #9370db);
+            border-left: 6px solid #8a2be2;
+            color: white;
+        }
+
+        .target-section h2, .target-section h3 {
+            color: white;
+        }
+
         .section-title {
             font-size: 1.8em;
             margin-bottom: 20px;
-            color: #2d3436;
+            color: #2c3e50;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
         }
 
         .campaign-info {
@@ -91,44 +114,61 @@
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 25px;
+            line-height: 1.4;
         }
 
-        .menu-grid {
+        .add-on-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
 
-        .menu-item {
+        .add-on-item {
             background: rgba(255,255,255,0.9);
             padding: 25px;
             border-radius: 12px;
-            border-left: 4px solid #00b894;
+            border-left: 4px solid #0984e3;
             transition: transform 0.3s ease;
         }
 
-        .menu-item:hover {
+        .add-on-item:hover {
             transform: translateY(-5px);
         }
 
-        .menu-name {
+        .seafood-name {
             font-size: 1.3em;
             font-weight: bold;
-            color: #2d3436;
+            color: #2c3e50;
             margin-bottom: 10px;
         }
 
-        .price {
-            font-size: 1.5em;
+        .price-compare {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .original-price {
+            color: #636e72;
+            text-decoration: line-through;
+            font-size: 1.1em;
+        }
+
+        .add-on-price {
+            font-size: 1.8em;
             color: #d63031;
             font-weight: bold;
-            margin: 10px 0;
         }
 
-        .description {
-            color: #636e72;
-            margin-bottom: 10px;
+        .discount-badge {
+            background: #00b894;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
         }
 
         .highlight {
@@ -149,7 +189,7 @@
         .post-title {
             font-size: 1.2em;
             font-weight: bold;
-            color: #2d3436;
+            color: #2c3e50;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e84393;
@@ -167,21 +207,68 @@
 
         .info-box {
             background: rgba(255,255,255,0.8);
-            padding: 15px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin: 10px 0;
+            margin: 8px 0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .badge {
-            background: #d63031;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.9em;
+        .terms {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .terms ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .terms li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .terms li::before {
+            content: "※";
+            color: #d63031;
             font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .preparation-list {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .preparation-list ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .preparation-list li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0,184,148,0.1);
+            border-radius: 8px;
+            border-left: 3px solid #00b894;
+        }
+
+        .target-info {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #2c3e50;
         }
 
         @media (max-width: 768px) {
@@ -197,8 +284,14 @@
                 padding: 20px;
             }
             
-            .menu-grid {
+            .add-on-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .price-compare {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
             }
         }
 
@@ -217,13 +310,24 @@
         .copy-btn:hover {
             background: #74b9ff;
         }
+
+        .main-offer {
+            background: #d63031;
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🎯 父親節Facebook宣傳文案提案</h1>
-            <p>豪華海味上桌，是對爸爸最霸氣的敬意！</p>
+            <p>清庫存降本策略 | 目標客群：30-50歲家庭客人</p>
         </div>
 
         <div class="content">
@@ -244,53 +348,69 @@
                         豪華海味上桌，是對爸爸最霸氣的敬意！🔥
                     </div>
                 </div>
+                
+                <div class="main-offer">
+                    消費滿 $1,888 元，即可超體恤爸爸價格加購海鮮！
+                </div>
             </div>
 
-            <!-- 套餐組合 -->
-            <div class="section menu-section">
-                <h2 class="section-title">🛒 爸爸最爽的四大組合</h2>
-                <div class="menu-grid">
-                    <div class="menu-item">
-                        <div class="menu-name">💪 爸氣海霸王組</div>
-                        <div class="price">$1,088</div>
-                        <div class="description">波士頓龍蝦1隻 ＋ 平凡開鍋組</div>
-                        <div style="font-style: italic; color: #00b894;">招牌熱銷組，升級聚餐氣場</div>
+            <!-- 加購優惠 -->
+            <div class="section add-on-section">
+                <h2 class="section-title">🎯 超體恤爸爸加購價</h2>
+                <div class="add-on-grid">
+                    <div class="add-on-item">
+                        <div class="seafood-name">🦞 波士頓龍蝦</div>
+                        <div class="price-compare">
+                            <span class="original-price">原價 $499/隻</span>
+                            <span class="add-on-price">$88/隻</span>
+                            <span class="discount-badge">省$411</span>
+                        </div>
                     </div>
                     
-                    <div class="menu-item">
-                        <div class="menu-name">🌊 海味饗宴組</div>
-                        <div class="price">$1,288</div>
-                        <div class="description">波士頓龍蝦 ＋ 水姑娘龍蝦 ＋ 平凡開鍋組</div>
-                        <div style="font-style: italic; color: #00b894;">澎湃上桌，爸吃得超有感</div>
+                    <div class="add-on-item">
+                        <div class="seafood-name">🦐 水姑娘龍蝦</div>
+                        <div class="price-compare">
+                            <span class="original-price">原價 $699/隻</span>
+                            <span class="add-on-price">$288/隻</span>
+                            <span class="discount-badge">省$411</span>
+                        </div>
                     </div>
                     
-                    <div class="menu-item">
-                        <div class="menu-name">🦀 爸爸限定・鱈場蟹整隻組</div>
-                        <div class="price">$1,588 <span class="badge">限量</span></div>
-                        <div class="description">整隻鱈場蟹 ＋ 平凡開鍋組</div>
-                        <div style="font-style: italic; color: #00b894;">整桌主角，霸氣不解釋！</div>
+                    <div class="add-on-item">
+                        <div class="seafood-name">🦀 鱈場蟹</div>
+                        <div class="price-compare">
+                            <span class="original-price">原價 $2,888/隻</span>
+                            <span class="add-on-price">$888/隻</span>
+                            <span class="discount-badge">省$2,000</span>
+                        </div>
                     </div>
-                    
-                    <div class="menu-item">
-                        <div class="menu-name">👑 家庭豪海爸王盛宴組</div>
-                        <div class="price">$1,888 <span class="badge">限量</span></div>
-                        <div class="description">波士頓龍蝦 ＋ 水姑娘龍蝦 ＋ 鱈場蟹 ＋ 平凡開鍋組</div>
-                        <div style="font-style: italic; color: #00b894;">爸爸節最澎湃的一桌料理！</div>
+                </div>
+
+                <div class="terms">
+                    <h3 style="color: #ffffff; margin-bottom: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">📋 活動條款</h3>
+                    <div style="background: rgba(255,255,255,0.95); padding: 20px; border-radius: 10px; color: #2c3e50;">
+                        <ul>
+                            <li>加購活動數量以現場熟食區供應為主、恕不指定挑選</li>
+                            <li>優惠活動不限內用/外帶</li>
+                            <li>每筆滿額消費限加購「各品項一隻」，恕無法累加</li>
+                            <li>為節省您的寶貴時間，請於排隊結帳前確認消費金額，本活動恕不提供櫃檯拆單服務</li>
+                            <li>平凡五金行保留隨時變更、終止、修改本活動內容之權利，活動一切更動以公告為準</li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
-            <!-- 優惠方案 -->
+            <!-- 額外優惠 -->
             <div class="section promotion-section">
                 <h2 class="section-title">🎁 滿額加碼優惠</h2>
                 <div class="highlight">
                     <div class="info-box">
                         <span class="emoji">✨</span>
-                        <strong>會員限定</strong>｜單筆滿 $2,000 → 現折 $88
+                        單筆滿 $2,000 → 再折 $88
                     </div>
                     <div class="info-box">
                         <span class="emoji">🍻</span>
-                        單筆滿 $3,000 → 贈指定酒類 <strong>88 折購券</strong>（限隔日使用）
+                        單筆滿 $3,000 → 贈指定酒類 88 折購券（限隔日使用、效期至8/31止）
                     </div>
                 </div>
 
@@ -311,57 +431,109 @@
 
             <!-- 社群文案範例 -->
             <div class="section social-section">
-                <h2 class="section-title">📱 社群短文範例</h2>
+                <h2 class="section-title">📱 社群短文範例（強調超優惠價格）</h2>
                 
                 <div class="social-post">
                     <div class="post-title">【溫馨感人版】</div>
                     <p>你爸是不是也是這種人？<br>
-                    默默煮飯給你吃，不說累也不喊苦。</p>
+                    默默為家付出，從不計較得失。</p>
                     
-                    <p style="margin: 15px 0;">父親節，輪到我們請他吃點「海」的～<br>
-                    龍蝦、鱈場蟹直接上桌！🦞🦀</p>
+                    <p style="margin: 15px 0;">父親節，輪到我們寵寵他～<br>
+                    🦞龍蝦$88起、🦀鱈場蟹只要$888！</p>
                     
                     <p style="font-weight: bold; margin: 15px 0;"><strong>「爸」氣登場，這一桌我請！</strong><br>
-                    📅 8/8-8/17 旗艦店限定<br>
-                    🔥 四大霸氣組合等你選</p>
+                    💰 消費滾$1,888 海鮮超優惠加購<br>
+                    📅 8/8-8/17 北高旗艦店限定</p>
                     
-                    <div class="hashtags">#父親節 #龍蝦 #鱈場蟹 #家庭聚餐</div>
+                    <div class="hashtags">#父親節 #超優惠 #龍蝦88元 #家庭聚餐</div>
                     <button class="copy-btn" onclick="copyText(this.parentElement)">複製文案</button>
                 </div>
 
                 <div class="social-post">
                     <div class="post-title">【霸氣宣傳版】</div>
-                    <p>🔥 父親節霸氣登場！</p>
+                    <p>🔥 父親節超殺優惠來了！</p>
                     
-                    <p style="margin: 15px 0;">這次不只是吃飯，是給爸爸最頂級的享受！<br>
-                    波士頓龍蝦 ✕ 鱈場蟹 ✕ 水姑娘龍蝦</p>
+                    <p style="margin: 15px 0;">這個價格錯過絕對後悔！<br>
+                    🦞 波士頓龍蝦 原價$499 → 加購價$88<br>
+                    🦀 鱈場蟹 原價$2,888 → 加購價$888</p>
                     
-                    <p style="margin: 15px 0;">四大豪華組合 $1,088 起跳<br>
-                    滿額還有酒類折價券！🍻</p>
+                    <p style="margin: 15px 0;">消費滿$1,888就能用超優惠價加購！<br>
+                    滿$3,000還送酒類折價券！🍻</p>
                     
-                    <p style="font-weight: bold; margin: 15px 0;"><strong>爸爸辛苦一輩子，就這一次最霸氣！</strong></p>
+                    <p style="font-weight: bold; margin: 15px 0;"><strong>爸爸一年只過一次生日，這個優惠也是！</strong></p>
                     
                     <p>📍 北高旗艦店｜8/8-8/17<br>
-                    💥 部分組合限量供應，手刀預訂！</p>
+                    ⚡ 現場熟食區數量有限，要搶要快！</p>
                     
-                    <div class="hashtags">#父親節特餐 #海鮮盛宴 #爸氣登場</div>
+                    <div class="hashtags">#父親節超殺優惠 #龍蝦88元 #鱈場蟹888</div>
                     <button class="copy-btn" onclick="copyText(this.parentElement)">複製文案</button>
                 </div>
 
                 <div class="social-post">
                     <div class="post-title">【限時優惠版】</div>
-                    <p>⏰ 倒數提醒！父親節活動只到 8/17</p>
+                    <p>⏰ 最後倒數！父親節超優惠只到 8/17</p>
                     
-                    <p style="margin: 15px 0;">還沒帶爸爸來吃海鮮嗎？<br>
-                    錯過再等一年！😱</p>
+                    <p style="margin: 15px 0;">還在猶豫？龍蝦$88、鱈場蟹$888<br>
+                    這種價格一年只有一次！😱</p>
                     
-                    <p style="margin: 15px 0;">🦞 龍蝦、🦀 鱈場蟹現在最優惠<br>
-                    會員消費滿 $2,000 直接現折 $88</p>
+                    <p style="margin: 15px 0;">🎯 消費滿$1,888立刻享加購價<br>
+                    💰 滿$2,000再折$88</p>
                     
-                    <p>溫馨提醒：限量組合賣完就沒了～</p>
+                    <p>⚠️ 現場熟食數量有限，售完為止<br>
+                    爸爸的特別日子，別讓他失望！</p>
                     
-                    <div class="hashtags">#最後倒數 #父親節 #限量供應</div>
+                    <div class="hashtags">#最後倒數 #父親節 #限量供應 #超優惠</div>
                     <button class="copy-btn" onclick="copyText(this.parentElement)">複製文案</button>
+                </div>
+            </div>
+
+            <!-- 事前準備 -->
+            <div class="section preparation-section">
+                <h2 class="section-title">✅ 事前準備清單</h2>
+                <div class="preparation-list">
+                    <ul>
+                        <li><strong>庫存確認：</strong>需確認熟食數量庫存，建立每日庫存管理表</li>
+                        <li><strong>標籤準備：</strong>櫃台需先準備加購價之活動標籤，清楚標示原價與加購價</li>
+                        <li><strong>教育訓練：</strong>跟所有夥伴說明活動流程，確保服務一致性</li>
+                        <li><strong>系統測試：</strong>櫃台夥伴實際操作過測試，確保結帳流程順暢</li>
+                        <li><strong>宣傳準備：</strong>製作店內海報、立牌等宣傳物料</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 目標與策略 -->
+            <div class="section target-section">
+                <h2 class="section-title">🎯 活動目標與策略</h2>
+                <div class="target-info">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div>
+                            <h3 style="color: #8a2be2; margin-bottom: 10px;">🎪 主要目標</h3>
+                            <ul style="list-style-type: disc; padding-left: 20px;">
+                                <li>清空冷凍活體庫存</li>
+                                <li>降低庫存壓力與成本</li>
+                                <li>提升父親節業績</li>
+                                <li>增加客單價</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="color: #8a2be2; margin-bottom: 10px;">👥 目標客群</h3>
+                            <ul style="list-style-type: disc; padding-left: 20px;">
+                                <li>30-50歲家庭客人</li>
+                                <li>注重CP值的消費者</li>
+                                <li>有父親節聚餐需求</li>
+                                <li>平日消費能力中高</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="color: #8a2be2; margin-bottom: 10px;">💡 策略重點</h3>
+                            <ul style="list-style-type: disc; padding-left: 20px;">
+                                <li>強調超優惠價格差異</li>
+                                <li>不強調活體新鮮度</li>
+                                <li>營造限時限量急迫感</li>
+                                <li>搭配滿額優惠提升客單</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
