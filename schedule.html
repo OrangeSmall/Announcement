@@ -142,6 +142,7 @@
 
         .timeline-day.has-activity {
             border: 2px solid #AD9667;
+            box-shadow: 0 0 0 2px rgba(173, 150, 103, 0.2);
         }
 
         .timeline-day.has-activity::after {
@@ -153,10 +154,21 @@
             height: 8px;
             background: #AD9667;
             border-radius: 50%;
+            animation: activityPulse 2s infinite;
+        }
+
+        .timeline-day.today.has-activity {
+            border-color: rgba(255, 255, 255, 0.8);
         }
 
         .timeline-day.today.has-activity::after {
             background: white;
+        }
+
+        @keyframes activityPulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
         .day-name {
@@ -186,6 +198,8 @@
             padding: 2px 6px;
             border-radius: 10px;
             font-weight: 600;
+            min-width: 18px;
+            text-align: center;
         }
 
         .timeline-day.today .activity-count {
@@ -497,6 +511,18 @@
             line-height: 1.6;
         }
 
+        .debug-info {
+            background: rgba(240, 240, 240, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+
         @media (max-width: 768px) {
             .activity-grid {
                 grid-template-columns: 1fr;
@@ -573,6 +599,12 @@
         <div class="activity-grid" id="activityGrid">
             <!-- 活動卡片將由 JavaScript 動態生成 -->
         </div>
+
+        <!-- 調試信息（開發時使用） -->
+        <div class="debug-info" id="debugInfo" style="display: none;">
+            <strong>調試信息:</strong><br>
+            <div id="debugContent"></div>
+        </div>
     </div>
 
     <!-- 載入遮罩 -->
@@ -587,22 +619,198 @@
         
         let activities = [];
         let currentFilter = 'all';
+        let debugMode = false; // 設為 true 可啟用調試模式
+
+        // 調試函數
+        function debugLog(message, data = null) {
+            if (debugMode) {
+                console.log(message, data);
+                const debugContent = document.getElementById('debugContent');
+                if (debugContent) {
+                    debugContent.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${message}</div>`;
+                    if (data) {
+                        debugContent.innerHTML += `<div style="margin-left: 20px; color: #666;">${JSON.stringify(data, null, 2)}</div>`;
+                    }
+                }
+            }
+        }
+
+        // 啟用調試模式
+        function enableDebug() {
+            debugMode = true;
+            document.getElementById('debugInfo').style.display = 'block';
+            debugLog('調試模式已啟用');
+        }
+
+        // 強化的日期解析函數
+        function parseDateTime(dateTimeStr) {
+            if (!dateTimeStr || dateTimeStr.trim() === '') return null;
+            
+            let originalStr = dateTimeStr.trim();
+            debugLog(`解析日期: "${originalStr}"`);
+            
+            // 處理中文時間
+            let processedStr = originalStr
+                .replace(/上午/g, ' AM')
+                .replace(/下午/g, ' PM')
+                .replace(/晚上/g, ' PM')
+                .replace(/中午/g, ' PM');
+            
+            // 先嘗試直接解析
+            let date = new Date(originalStr);
+            if (!isNaN(date.getTime()) && originalStr.includes('-')) {
+                debugLog(`直接解析成功: ${date}`);
+                return date;
+            }
+            
+            // 處理各種格式
+            try {
+                // 處理 "2025/8/30 下午 9:30" 格式
+                let match = processedStr.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(AM|PM)\s*(\d{1,2}):(\d{2})$/);
+                if (match) {
+                    let hour = parseInt(match[5]);
+                    if (match[4] === 'PM' && hour !== 12) hour += 12;
+                    if (match[4] === 'AM' && hour === 12) hour = 0;
+                    date = new Date(parseInt(match[1]), parseInt(match[2])-1, parseInt(match[3]), hour, parseInt(match[6]));
+                    if (!isNaN(date.getTime())) {
+                        debugLog(`格式1解析成功: ${date}`);
+                        return date;
+                    }
+                }
+                
+                // 處理 "08/07 10:00" 格式
+                match = processedStr.match(/^(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+                if (match) {
+                    const currentYear = new Date().getFullYear();
+                    const currentDate = new Date();
+                    let testDate = new Date(currentYear, parseInt(match[1])-1, parseInt(match[2]), parseInt(match[3]), parseInt(match[4]));
+                    
+                    // 如果日期已過，使用明年
+                    if (testDate < currentDate) {
+                        testDate = new Date(currentYear + 1, parseInt(match[1])-1, parseInt(match[2]), parseInt(match[3]), parseInt(match[4]));
+                    }
+                    debugLog(`格式2解析成功: ${testDate}`);
+                    return testDate;
+                }
+                
+                // 處理其他格式
+                match = processedStr.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+                if (match) {
+                    date = new Date(parseInt(match[1]), parseInt(match[2])-1, parseInt(match[3]), parseInt(match[4]), parseInt(match[5]));
+                    if (!isNaN(date.getTime())) {
+                        debugLog(`格式3解析成功: ${date}`);
+                        return date;
+                    }
+                }
+                
+            } catch (e) {
+                debugLog(`日期解析錯誤: ${e.message}`);
+            }
+            
+            debugLog(`無法解析日期: ${originalStr}`);
+            return null;
+        }
+
+        // 檢查活動是否在指定日期進行
+        function isActivityOnDate(activity, targetDate) {
+            const startDate = parseDateTime(activity.startTime);
+            const endDate = parseDateTime(activity.endTime);
+            
+            if (!startDate) {
+                debugLog(`活動 ${activity.name} 開始時間解析失敗`);
+                return false;
+            }
+            
+            // 將日期標準化為當天
+            const targetDay = new Date(targetDate);
+            targetDay.setHours(0, 0, 0, 0);
+            
+            const startDay = new Date(startDate);
+            startDay.setHours(0, 0, 0, 0);
+            
+            let endDay = null;
+            if (endDate) {
+                endDay = new Date(endDate);
+                endDay.setHours(0, 0, 0, 0);
+            }
+            
+            // 檢查是否在活動期間
+            const result = endDay ? (targetDay >= startDay && targetDay <= endDay) : (targetDay.getTime() === startDay.getTime());
+            
+            if (result) {
+                debugLog(`✓ 活動 ${activity.name} 在 ${targetDate.toDateString()} 進行中`);
+            }
+            
+            return result;
+        }
 
         // 同步狀態管理
         function updateSyncStatus(status, message) {
             const indicator = document.getElementById('syncIndicator');
             const statusText = document.getElementById('syncStatus');
             
-            indicator.className = `sync-indicator ${status}`;
-            statusText.textContent = message;
+            if (indicator && statusText) {
+                indicator.className = `sync-indicator ${status}`;
+                statusText.textContent = message;
+            }
         }
 
         function showLoading(show) {
             const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = show ? 'flex' : 'none';
+            if (overlay) {
+                overlay.style.display = show ? 'flex' : 'none';
+            }
         }
 
-        // 從 Google Sheets CSV 讀取資料
+        // CSV 解析函數
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function parseCSV(csvText) {
+            const lines = [];
+            let currentLine = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                    currentLine += char;
+                } else if (char === '\n' && !inQuotes) {
+                    if (currentLine.trim()) {
+                        lines.push(currentLine);
+                    }
+                    currentLine = '';
+                } else {
+                    currentLine += char;
+                }
+            }
+            
+            if (currentLine.trim()) {
+                lines.push(currentLine);
+            }
+            
+            return lines;
+        }
+
+        // 從 Google Sheets 讀取資料
         async function fetchActivitiesFromSheet() {
             try {
                 updateSyncStatus('syncing', '🔄 正在同步資料...');
@@ -616,9 +824,8 @@
                 }
                 
                 const csvText = await response.text();
-                console.log('收到 CSV 資料:', csvText);
+                console.log('收到 CSV 資料');
                 
-                // 使用改進的 CSV 解析
                 const lines = parseCSV(csvText);
                 const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, '').trim());
                 
@@ -630,23 +837,19 @@
                             const row = {};
                             headers.forEach((header, index) => {
                                 let value = values[index] ? values[index].replace(/"/g, '').trim() : '';
-                                // 處理換行符號，將其轉換為 HTML 換行
                                 if (header === 'description' || header === 'note') {
                                     value = value.replace(/\n/g, '<br>').replace(/\r/g, '');
                                 }
                                 row[header] = value;
                             });
-                            if (row.name) { // 只有名稱不為空的才加入
+                            if (row.name) {
                                 data.push(row);
                             }
                         }
                     }
                 }
                 
-                console.log('解析後的資料:', data);
-                
                 activities = data.map((activity, index) => {
-                    // 處理中文和英文的活動類型
                     let activityType = 'store-activity';
                     if (activity.type) {
                         const type = activity.type.trim();
@@ -670,6 +873,8 @@
                     };
                 });
                 
+                console.log('活動資料處理完成:', activities);
+                
                 renderActivities();
                 renderTimeline();
                 
@@ -678,66 +883,10 @@
             } catch (error) {
                 console.error('讀取資料失敗:', error);
                 updateSyncStatus('error', '❌ 讀取失敗: ' + error.message);
-                
-                // 使用本機備用資料
                 useBackupData();
             } finally {
                 showLoading(false);
             }
-        }
-
-        // 改進的 CSV 解析函數，支援換行
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current);
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            
-            result.push(current);
-            return result;
-        }
-
-        // 解析整個 CSV，正確處理多行內容
-        function parseCSV(csvText) {
-            const lines = [];
-            let currentLine = '';
-            let inQuotes = false;
-            
-            // 先將 CSV 文字分解成正確的行
-            for (let i = 0; i < csvText.length; i++) {
-                const char = csvText[i];
-                
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                    currentLine += char;
-                } else if (char === '\n' && !inQuotes) {
-                    if (currentLine.trim()) {
-                        lines.push(currentLine);
-                    }
-                    currentLine = '';
-                } else {
-                    currentLine += char;
-                }
-            }
-            
-            // 添加最後一行
-            if (currentLine.trim()) {
-                lines.push(currentLine);
-            }
-            
-            return lines;
         }
 
         function useBackupData() {
@@ -749,6 +898,7 @@
                     startTime: '2024-08-02T19:00',
                     endTime: '',
                     description: '內用滿額贈啤酒，會員再加碼',
+                    note: '每日六點19:39開始',
                     stores: ['北高店']
                 },
                 {
@@ -758,6 +908,7 @@
                     startTime: '2024-07-29T00:00',
                     endTime: '2024-08-05T23:59',
                     description: '針對節日與特定商品做促銷與組合販售',
+                    note: '限量組合，售完為止',
                     stores: ['全門市', '官網']
                 }
             ];
@@ -768,23 +919,30 @@
         // 手動同步功能
         async function syncWithGoogleSheets() {
             const syncBtn = document.getElementById('syncBtn');
-            syncBtn.disabled = true;
-            syncBtn.textContent = '🔄 同步中...';
+            if (syncBtn) {
+                syncBtn.disabled = true;
+                syncBtn.textContent = '🔄 同步中...';
+            }
             
             await fetchActivitiesFromSheet();
             
             setTimeout(() => {
-                syncBtn.disabled = false;
-                syncBtn.textContent = '🔄 同步資料';
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '🔄 同步資料';
+                }
             }, 1000);
         }
 
+        // 時間軸渲染函數
         function renderTimeline() {
             const timeline = document.getElementById('timeline');
+            if (!timeline) return;
+            
             const today = new Date();
             const days = [];
 
-            // 生成一週的日期（從今天開始，向後7天）
+            // 生成一週的日期
             for (let i = 0; i < 7; i++) {
                 const date = new Date(today);
                 date.setDate(today.getDate() + i);
@@ -795,21 +953,12 @@
                 const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
                 const isToday = date.toDateString() === today.toDateString();
                 
-                // 計算當日活動數量
-                const dayActivities = activities.filter(activity => {
-                    const activityDate = new Date(activity.startTime);
-                    const endDate = activity.endTime ? new Date(activity.endTime) : null;
-                    
-                    // 檢查活動是否在當日進行
-                    const isSameDay = activityDate.toDateString() === date.toDateString();
-                    const isInRange = endDate && activityDate <= date && date <= endDate;
-                    
-                    return isSameDay || isInRange;
-                });
+                const dayActivities = activities.filter(activity => isActivityOnDate(activity, date));
 
                 return `
                     <div class="timeline-day ${isToday ? 'today' : ''} ${dayActivities.length > 0 ? 'has-activity' : ''}"
-                         onclick="filterByDate('${date.toISOString().split('T')[0]}')">
+                         onclick="filterByDate('${date.toISOString().split('T')[0]}')"
+                         title="${dayActivities.length > 0 ? '點擊查看當日活動' : '當日無活動'}">
                         <div class="day-name">週${dayNames[date.getDay()]}</div>
                         <div class="day-date">${date.getDate()}</div>
                         <div class="day-month">${date.getMonth() + 1}月</div>
@@ -821,20 +970,10 @@
 
         function filterByDate(dateStr) {
             const selectedDate = new Date(dateStr);
-            const filteredActivities = activities.filter(activity => {
-                const activityDate = new Date(activity.startTime);
-                const endDate = activity.endTime ? new Date(activity.endTime) : null;
-                
-                const isSameDay = activityDate.toDateString() === selectedDate.toDateString();
-                const isInRange = endDate && activityDate <= selectedDate && selectedDate <= endDate;
-                
-                return isSameDay || isInRange;
-            });
+            const filteredActivities = activities.filter(activity => isActivityOnDate(activity, selectedDate));
 
-            // 暫時顯示篩選結果
             renderFilteredActivities(filteredActivities);
             
-            // 3秒後恢復原本篩選
             setTimeout(() => {
                 renderActivities();
             }, 3000);
@@ -842,6 +981,7 @@
 
         function renderFilteredActivities(filteredActivities) {
             const grid = document.getElementById('activityGrid');
+            if (!grid) return;
             
             if (filteredActivities.length === 0) {
                 grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #495057; font-size: 1.1em;">該日期沒有活動安排</div>';
@@ -852,8 +992,8 @@
         }
 
         function createActivityCard(activity) {
-            const startDate = new Date(activity.startTime);
-            const endDate = activity.endTime ? new Date(activity.endTime) : null;
+            const startDate = parseDateTime(activity.startTime);
+            const endDate = parseDateTime(activity.endTime);
             const now = new Date();
             
             let status = 'active';
@@ -865,9 +1005,8 @@
 
             const formatDateTime = (dateTime) => {
                 if (!dateTime) return '';
-                const date = new Date(dateTime);
-                // 檢查是否為有效日期
-                if (isNaN(date.getTime())) return dateTime;
+                const date = parseDateTime(dateTime);
+                if (!date) return dateTime;
                 
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
@@ -881,7 +1020,6 @@
                 ? `${formatDateTime(activity.startTime)} ~ ${formatDateTime(activity.endTime)}`
                 : `${formatDateTime(activity.startTime)} 起`;
 
-            // 確保活動類型正確識別
             const activityType = activity.type === 'promotion' ? 'promotion' : 'store-activity';
             const activityTypeText = activityType === 'promotion' ? '商品促銷' : '門市活動';
 
@@ -926,6 +1064,8 @@
 
         function renderActivities() {
             const grid = document.getElementById('activityGrid');
+            if (!grid) return;
+            
             const filteredActivities = currentFilter === 'all' 
                 ? activities 
                 : activities.filter(activity => activity.type === currentFilter);
@@ -933,23 +1073,61 @@
             grid.innerHTML = filteredActivities.map(activity => createActivityCard(activity)).join('');
         }
 
-        // 篩選功能
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                currentFilter = this.dataset.filter;
-                renderActivities();
-            });
-        });
+        // 測試函數
+        function testDateParsing(testString) {
+            console.log(`測試日期解析: "${testString}"`);
+            const result = parseDateTime(testString);
+            console.log(`結果: ${result}`);
+            return result;
+        }
 
-        // 初始化載入
-        window.addEventListener('DOMContentLoaded', function() {
+        function debugCurrentActivities() {
+            console.log('=== 當前活動數據 ===');
+            console.log(`總共 ${activities.length} 個活動`);
+            
+            activities.forEach((activity, index) => {
+                console.log(`活動 ${index + 1}: "${activity.name}"`);
+                console.log(`  開始時間: "${activity.startTime}" -> ${parseDateTime(activity.startTime)}`);
+                console.log(`  結束時間: "${activity.endTime}" -> ${parseDateTime(activity.endTime)}`);
+                
+                // 檢查未來7天
+                const today = new Date();
+                for (let i = 0; i < 7; i++) {
+                    const testDate = new Date(today);
+                    testDate.setDate(today.getDate() + i);
+                    const isActive = isActivityOnDate(activity, testDate);
+                    if (isActive) {
+                        console.log(`  ✓ ${testDate.toDateString()}`);
+                    }
+                }
+            });
+        }
+
+        // 篩選功能
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    renderActivities();
+                });
+            });
+
+            // 初始化載入
             fetchActivitiesFromSheet();
         });
 
         // 定期自動同步（每10分鐘）
-        setInterval(fetchActivitiesFromSheet, 10 * 60 * 1000);
+        setInterval(() => {
+            fetchActivitiesFromSheet();
+        }, 10 * 60 * 1000);
+
+        // 全域函數
+        window.enableDebug = enableDebug;
+        window.syncWithGoogleSheets = syncWithGoogleSheets;
+        window.testDateParsing = testDateParsing;
+        window.debugCurrentActivities = debugCurrentActivities;
     </script>
 </body>
 </html>
