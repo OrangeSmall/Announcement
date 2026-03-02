@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>休假佈告欄</title>
+  
+  <!-- 引入 Tailwind CSS 來處理樣式 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 引入 Babel 讓瀏覽器可以讀懂 React/JSX 語法 -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#1a120b]">
+  
+  <!-- 這是 React 應用程式掛載的目標位置 -->
+  <div id="root"></div>
+
+  <!-- 主要程式碼：使用 text/babel 並指定為 module -->
+  <script type="text/babel" data-type="module">
+    // --- 1. 從 CDN 引入所有需要的套件 ---
+    import React, { useState, useEffect } from 'https://esm.sh/react@18.2.0';
+    import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    // --- 2. 你的雲端資料庫初始化 (Firebase Config) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAT9nmcxVI-1J4pTXMhvfXmFzYJlaQR3HM",
+      authDomain: "my-leave-calendar-50cfa.firebaseapp.com",
+      projectId: "my-leave-calendar-50cfa",
+      storageBucket: "my-leave-calendar-50cfa.firebasestorage.app",
+      messagingSenderId: "37489112070",
+      appId: "1:37489112070:web:3d68bb273b7ac438297f87"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const boardAppId = 'my-team-leave-calendar'; // 設定一個群組公用的佈告欄 ID
+
+    // --- 背景圖片網址 (使用轉換後的 Google Drive 連結確保能顯示與截圖) ---
+    const BACKGROUND_IMAGE_URL = 'https://lh3.googleusercontent.com/d/1EDYgJMhaola2xXPC7apBzQOKMO043qmY';
+
+    // --- 3. 輔助函數 ---
+    const formatDate = (year, month, day) => {
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    };
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+    const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+    // 根據名字產生固定的低對比柔和背景色 (莫蘭迪色系)
+    const PASTEL_COLORS = [
+      'bg-[#e6b8a2]', 'bg-[#b2c8b8]', 'bg-[#c5b9cd]', 'bg-[#b5c7d3]', 
+      'bg-[#e3cda4]', 'bg-[#c8d6b9]', 'bg-[#d9aeb4]', 'bg-[#d1bfae]',
+    ];
+    const getUserColorClass = (username) => {
+      let hash = 0;
+      for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return PASTEL_COLORS[Math.abs(hash) % PASTEL_COLORS.length];
+    };
+
+    // --- 4. React 主要元件 ---
+    function App() {
+      const [user, setUser] = useState(null);
+      const [isSyncing, setIsSyncing] = useState(true);
+
+      const [currentDate, setCurrentDate] = useState(new Date());
+      const [users, setUsers] = useState([]);
+      const [selectedUser, setSelectedUser] = useState(''); 
+      const [newUserName, setNewUserName] = useState('');
+      const [leaves, setLeaves] = useState({});
+      const [activeTab, setActiveTab] = useState('input');
+
+      // 處理雲端身份驗證
+      useEffect(() => {
+        const initAuth = async () => {
+          try {
+            await signInAnonymously(auth); 
+          } catch (error) {
+            console.error("驗證失敗:", error);
+          }
+        };
+        initAuth();
+        
+        const unsubscribe = onAuthStateChanged(auth, setUser);
+        return () => unsubscribe();
+      }, []);
+
+      // 監聽雲端資料庫變化 (即時同步) 與 自動清理舊資料
+      useEffect(() => {
+        if (!user) return;
+
+        const docRef = doc(db, 'artifacts', boardAppId, 'public', 'data', 'leave_calendar', 'shared_board');
+        
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+          setIsSyncing(false);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setUsers(data.users || []);
+            
+            // --- 自動清理一年以上的舊資料 ---
+            const rawLeaves = data.leaves || {};
+            let needsCleanup = false;
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+            const cleanedLeaves = {};
+            Object.keys(rawLeaves).forEach(usr => {
+              cleanedLeaves[usr] = rawLeaves[usr].filter(dateStr => {
+                if (new Date(dateStr) < oneYearAgo) {
+                  needsCleanup = true;
+                  return false; 
+                }
+                return true;
+              });
+            });
+
+            setLeaves(cleanedLeaves);
+            if (needsCleanup) {
+              setDoc(docRef, { users: data.users || [], leaves: cleanedLeaves }, { merge: true });
+            }
+            if (data.users && data.users.length > 0) {
+              setSelectedUser(prev => data.users.includes(prev) ? prev : '');
+            }
+          } else {
+            const defaultUsers = ['阿金', '小尾', '老飯', '橘子', '小虛'];
+            setDoc(docRef, { users: defaultUsers, leaves: {} });
+            setUsers(defaultUsers);
+            setSelectedUser(''); 
+          }
+        }, (error) => {
+          console.error("同步資料時發生錯誤:", error);
+        });
+
+        return () => unsubscribe();
+      }, [user]);
+
+      const updateCloudData = async (newUsers, newLeaves) => {
+        if (!user) return;
+        const docRef = doc(db, 'artifacts', boardAppId, 'public', 'data', 'leave_calendar', 'shared_board');
+        await setDoc(docRef, { users: newUsers, leaves: newLeaves });
+      };
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const daysInMonth = getDaysInMonth(year, month);
+      const firstDay = getFirstDayOfMonth(year, month);
+
+      const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+      const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+      const handleAddUser = () => {
+        if (newUserName.trim() && !users.includes(newUserName.trim())) {
+          const updatedUsers = [...users, newUserName.trim()];
+          setUsers(updatedUsers);
+          setSelectedUser(newUserName.trim());
+          setNewUserName('');
+          updateCloudData(updatedUsers, leaves);
+        }
+      };
+
+      const handleDeleteUser = (userToDelete) => {
+        if (window.confirm(`確定要刪除成員「${userToDelete}」及其所有休假紀錄嗎？\n(此動作將同步給所有人)`)) {
+          const updatedUsers = users.filter(u => u !== userToDelete);
+          const updatedLeaves = { ...leaves };
+          delete updatedLeaves[userToDelete];
+          setUsers(updatedUsers);
+          setLeaves(updatedLeaves);
+          setSelectedUser(''); 
+          updateCloudData(updatedUsers, updatedLeaves);
+        }
+      };
+
+      const toggleLeave = (dateStr) => {
+        if (!selectedUser) {
+          alert("👉 請先從上方的下拉選單「請選擇自己的名字填休假」！");
+          return;
+        }
+        const userLeaves = leaves[selectedUser] || [];
+        let newLeavesForUser;
+        if (userLeaves.includes(dateStr)) {
+          newLeavesForUser = userLeaves.filter(d => d !== dateStr);
+        } else {
+          newLeavesForUser = [...userLeaves, dateStr];
+        }
+        const newLeaves = { ...leaves, [selectedUser]: newLeavesForUser };
+        setLeaves(newLeaves);
+        updateCloudData(users, newLeaves);
+      };
+
+      const getPeopleOnLeave = (dateStr) => {
+        const people = [];
+        Object.keys(leaves).forEach(usr => {
+          if (leaves[usr] && leaves[usr].includes(dateStr)) {
+            people.push(usr);
+          }
+        });
+        return people;
+      };
+
+      const renderCalendarGrid = () => {
+        const cells = [];
+        for (let i = 0; i < firstDay; i++) {
+          cells.push(<div key={`empty-${i}`} className="bg-[#e8d5b5]/40 border-r border-b border-[#a67c52]"></div>);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = formatDate(year, month, day);
+          const isWeekend = (firstDay + day - 1) % 7 === 0 || (firstDay + day - 1) % 7 === 6;
+          
+          if (activeTab === 'input') {
+            const isSelected = leaves[selectedUser]?.includes(dateStr);
+            cells.push(
+              <div 
+                key={day} 
+                onClick={() => toggleLeave(dateStr)}
+                className={`min-h-[80px] p-2 border-r border-b border-[#a67c52] cursor-pointer transition-all duration-200
+                  ${isSelected ? 'bg-[#c15c5c] text-white shadow-inner' : 'hover:bg-[#f0e3ce] bg-[#f8f0e3]'}
+                `}
+              >
+                <div className={`text-lg font-bold ${isWeekend && !isSelected ? 'text-red-700' : ''}`}>{day}</div>
+                {isSelected && <div className="text-sm mt-1">✓ 已排休</div>}
+              </div>
+            );
+          } else {
+            const peopleOnLeave = getPeopleOnLeave(dateStr);
+            cells.push(
+              <div key={day} className="min-h-[100px] p-2 border-r border-b border-[#a67c52] bg-[#f8f0e3] flex flex-col">
+                <div className={`text-lg font-bold ${isWeekend ? 'text-red-700' : 'text-[#5a3a22]'}`}>{day}</div>
+                <div className="mt-1 flex-grow flex flex-wrap gap-1 content-start">
+                  {peopleOnLeave.map((person, idx) => (
+                    <span key={idx} className={`text-sm font-bold text-[#2c1e16] ${getUserColorClass(person)} px-1.5 py-0.5 rounded shadow-sm border border-black/10`}>
+                      {person}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+        }
+
+        const totalCells = cells.length;
+        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (let i = 0; i < remainingCells; i++) {
+          cells.push(<div key={`empty-end-${i}`} className="bg-[#e8d5b5]/40 border-r border-b border-[#a67c52]"></div>);
+        }
+        return cells;
+      };
+
+      return (
+        <div className="min-h-screen p-4 md:p-8 font-serif selection:bg-[#a67c52] selection:text-white relative overflow-hidden">
+          
+          {/* 全域背景圖 (讓整個網頁都有情境，這層不會被截圖) */}
+          <div className="fixed inset-0 z-0 pointer-events-none">
+            <img src={BACKGROUND_IMAGE_URL} crossOrigin="anonymous" className="w-full h-full object-cover opacity-30" />
+            <div className="absolute inset-0 bg-black/60"></div>
+          </div>
+
+          <div className="max-w-5xl mx-auto relative z-10 flex flex-col gap-6">
+            
+            {/* 頂部狀態與控制列 */}
+            <div className="bg-[#dfc4a4]/95 backdrop-blur-md rounded-xl p-4 border-4 border-[#8b5a2b] shadow-xl flex flex-col lg:flex-row justify-between items-center gap-4">
+              
+              <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => setActiveTab('input')}
+                    className={`px-6 py-2 rounded font-bold transition-colors border-2 border-[#8b5a2b] ${activeTab === 'input' ? 'bg-[#8b5a2b] text-[#f4e8d3]' : 'bg-[#f4e8d3] text-[#8b5a2b] hover:bg-[#e8d5b5]'}`}
+                  >
+                    ✍️ 填寫休假
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('view')}
+                    className={`px-6 py-2 rounded font-bold transition-colors border-2 border-[#8b5a2b] ${activeTab === 'view' ? 'bg-[#8b5a2b] text-[#f4e8d3]' : 'bg-[#f4e8d3] text-[#8b5a2b] hover:bg-[#e8d5b5]'}`}
+                  >
+                    📜 查看總表
+                  </button>
+                </div>
+                
+                {/* 雲端連線狀態指示燈 */}
+                <div className="flex items-center text-sm font-bold text-[#5a3a22] bg-[#f8f0e3] px-3 py-1.5 rounded-full border border-[#a67c52] shadow-inner">
+                  {isSyncing ? (
+                    <><span className="w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse"></span> 連線中...</>
+                  ) : (
+                    <><span className="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_5px_#22c55e]"></span> 線上即時同步中</>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
+                {/* 截圖提示文字 */}
+                <div className="px-3 md:px-4 py-2 rounded-lg font-bold shadow-sm border-2 flex items-center gap-2 bg-[#e8d5b5] border-[#a67c52] text-[#5a3a22] text-sm md:text-base whitespace-nowrap">
+                  📸 總表使用桌面截圖
+                </div>
+
+                <div className="flex items-center space-x-2 md:space-x-4 bg-[#f4e8d3] px-3 md:px-4 py-2 rounded-lg border-2 border-[#8b5a2b] shadow-inner">
+                  <button onClick={prevMonth} className="text-xl md:text-2xl hover:text-red-700 transition-colors">◀</button>
+                  <h2 className="text-xl md:text-2xl font-black text-[#5a3a22] tracking-widest px-2 md:px-4 whitespace-nowrap">
+                    {year}年 {month + 1}月
+                  </h2>
+                  <button onClick={nextMonth} className="text-xl md:text-2xl hover:text-red-700 transition-colors">▶</button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 主要內容區 (這是會被截圖保存的區塊) */}
+            <div id="export-area" className="relative rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/10">
+              
+              {/* 僅保留黑色半透明與模糊遮罩，維持乾淨的毛玻璃透明感 */}
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px] z-0"></div>
+
+              {/* 內部排版 Padding */}
+              <div className="relative z-10 p-6 md:p-12 lg:p-16">
+                
+                {/* 羊皮紙本體 */}
+                <div className="bg-[#f4e8d3]/95 backdrop-blur-sm border-4 border-[#8b5a2b] shadow-2xl relative max-w-4xl mx-auto rounded-sm">
+                  <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-b from-[#8b5a2b]/30 to-transparent"></div>
+
+                  <div className="p-4 md:p-8">
+                    <div className="text-center mb-8 relative">
+                      <h1 className="text-4xl md:text-5xl font-black text-[#4a2e15] drop-shadow-md pb-2 border-b-4 border-double border-[#8b5a2b] inline-block px-12">
+                        {activeTab === 'input' ? '個人休假劃記' : `${month + 1}月休假總表`}
+                      </h1>
+                    </div>
+
+                    {/* 填寫模式：使用者選擇器 (這段只在填寫時顯示，截圖時因為強迫切到view所以不會拍進去) */}
+                    {activeTab === 'input' && (
+                      <div className="mb-6 flex flex-wrap items-center gap-4 bg-[#e8d5b5] p-4 rounded-lg border border-[#a67c52]">
+                        <div className="flex items-center gap-2">
+                          <label className="font-bold text-[#5a3a22]">我是：</label>
+                          <select 
+                            value={selectedUser} 
+                            onChange={(e) => setSelectedUser(e.target.value)}
+                            className="p-2 bg-[#f8f0e3] border border-[#8b5a2b] rounded shadow-sm text-lg font-bold text-[#5a3a22] focus:outline-none focus:ring-2 focus:ring-[#8b5a2b]"
+                          >
+                            <option value="" disabled>請選擇自己的名字填休假</option>
+                            {users.map(user => (
+                              <option key={user} value={user}>{user}</option>
+                            ))}
+                          </select>
+                          {selectedUser !== '' && users.length > 0 && (
+                            <button onClick={() => handleDeleteUser(selectedUser)} className="text-red-700 hover:text-red-900 text-sm ml-2 underline">
+                              刪除此人
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="h-8 w-px bg-[#a67c52] hidden md:block mx-2"></div>
+                        
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={newUserName}
+                            onChange={(e) => setNewUserName(e.target.value)}
+                            placeholder="新增夥伴名稱..."
+                            className="p-2 bg-[#f8f0e3] border border-[#8b5a2b] rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-[#8b5a2b]"
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                          />
+                          <button 
+                            onClick={handleAddUser}
+                            className="px-4 py-2 bg-[#5a3a22] text-[#f4e8d3] rounded font-bold hover:bg-[#4a2e15] transition-colors whitespace-nowrap"
+                          >
+                            加入佈告欄
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-7 border-t border-l border-[#a67c52] bg-[#dcb897]">
+                      {WEEKDAYS.map((day, idx) => (
+                        <div key={day} className={`text-center py-3 font-bold text-xl border-r border-b border-[#a67c52] ${idx === 0 || idx === 6 ? 'text-red-800' : 'text-[#4a2e15]'}`}>
+                          {day}
+                        </div>
+                      ))}
+                      {renderCalendarGrid()}
+                    </div>
+                    
+                    <div className="mt-6 text-center text-[#5a3a22] font-medium flex justify-center items-center gap-4">
+                      {activeTab === 'input' ? (
+                        <p>✨ 請確認上方下拉選單為【<span className="font-bold text-red-700">{selectedUser || '尚未選擇'}</span>】後點擊日期劃記</p>
+                      ) : (
+                        <p>📜 此表由系統自動彙整，同步於雲端佈告欄</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 w-full h-3 bg-gradient-to-t from-[#8b5a2b]/30 to-transparent"></div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
