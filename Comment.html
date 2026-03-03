@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平凡內部意見調查系統工具</title>
+  <!-- 引入 Tailwind CSS (免安裝版本) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 React 和 ReactDOM (免安裝版本) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- 引入 Babel 用來解析 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- 引入 Lucide 圖示庫 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#F5EAE0]">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [currentView, setCurrentView] = useState('home');
+      const [loginRole, setLoginRole] = useState('');
+      const [passwordInput, setPasswordInput] = useState('');
+      const [errorMsg, setErrorMsg] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
+      const [records, setRecords] = useState([]);
+
+      // 👇 第一步：請將下方引號內的文字替換為你的 Google Apps Script 網址
+      const API_URL = "請在這裡填入你的 Web App URL";
+
+      const [formData, setFormData] = useState({ subject: '', problem: '', solution: '' });
+      const [editingRecord, setEditingRecord] = useState(null);
+      const [editorName, setEditorName] = useState('');
+      const [feedbackText, setFeedbackText] = useState('');
+
+      // 每次畫面渲染後，讓 Lucide 圖示生效
+      useEffect(() => {
+        lucide.createIcons();
+      });
+
+      const fetchRecords = async () => {
+        if (!API_URL || API_URL.includes('請在這裡填入')) return;
+        setIsLoading(true);
+        try {
+          const res = await fetch(API_URL);
+          const data = await res.json();
+          setRecords(data.reverse());
+        } catch (error) {
+          console.error("讀取資料失敗:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      useEffect(() => {
+        if (currentView === 'manager' || currentView === 'company') {
+          fetchRecords();
+        }
+      }, [currentView]);
+
+      const goHome = () => {
+        setCurrentView('home');
+        setPasswordInput('');
+        setErrorMsg('');
+        setFormData({ subject: '', problem: '', solution: '' });
+        setEditingRecord(null);
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (loginRole === 'manager' && passwordInput === '1234') {
+          setCurrentView('manager');
+        } else if (loginRole === 'company' && passwordInput === '5678') {
+          setCurrentView('company');
+        } else {
+          setErrorMsg('密碼錯誤，請重新輸入！');
+        }
+      };
+
+      const handleUserSubmit = async (e) => {
+        e.preventDefault();
+        if (!API_URL || API_URL.includes('請在這裡填入')) {
+          alert("請先在程式碼中填入 API_URL！");
+          return;
+        }
+        setIsLoading(true);
+        const newRecord = {
+          action: 'add',
+          id: Date.now().toString(),
+          date: new Date().toLocaleString(),
+          subject: formData.subject,
+          problem: formData.problem,
+          solution: formData.solution,
+          lastEditTime: new Date().toLocaleString()
+        };
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(newRecord)
+          });
+          alert('訊息建議已送出，待主管確認後回覆');
+          goHome();
+        } catch (error) {
+          alert('送出失敗，請檢查網路連線或 API 設定。');
+          console.error(error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const handleSaveEdit = async (role) => {
+        setIsLoading(true);
+        const now = new Date().toLocaleString();
+        const updateData = {
+          action: 'update',
+          id: editingRecord.id,
+          role: role,
+          lastEditTime: now
+        };
+        if (role === 'manager') {
+          updateData.managerThoughts = feedbackText;
+          updateData.managerEditor = editorName || '未具名';
+        } else {
+          updateData.companySuggestion = feedbackText;
+          updateData.companyEditor = editorName || '未具名';
+        }
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(updateData)
+          });
+          const updatedRecords = records.map(record => {
+            if (record.id === editingRecord.id) {
+              return { ...record, ...updateData };
+            }
+            return record;
+          });
+          setRecords(updatedRecords);
+          setEditingRecord(null);
+          setEditorName('');
+          setFeedbackText('');
+          alert('回覆已送出，請每週於主管群組回報進度');
+        } catch (error) {
+          alert('儲存失敗，請再試一次。');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const renderHome = () => (
+        <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
+          <a href="https://your-company-website.com" target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform duration-200">
+            <img 
+              src="https://lh3.googleusercontent.com/d/11MwXrPHDOjQWnUXap4CmZJJO_MogLe-F" 
+              alt="平凡 LOGO" 
+              onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/128x128/d4a373/ffffff?text=LOGO"; }}
+              className="w-32 h-32 object-contain drop-shadow-md"
+            />
+          </a>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">平凡內部意見調查系統工具</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl px-4">
+            <button onClick={() => setCurrentView('user')} className="flex flex-col items-center justify-center p-8 bg-blue-50 rounded-2xl shadow-sm hover:shadow-md hover:bg-blue-100 transition duration-200 border border-blue-200">
+              <i data-lucide="user" class="text-blue-600 mb-4 w-12 h-12"></i>
+              <span className="text-xl font-semibold text-blue-800">使用者填寫</span>
+              <span className="text-sm text-blue-600 mt-2">匿名提供意見與建議</span>
+            </button>
+            <button onClick={() => { setLoginRole('manager'); setCurrentView('login'); }} className="flex flex-col items-center justify-center p-8 bg-green-50 rounded-2xl shadow-sm hover:shadow-md hover:bg-green-100 transition duration-200 border border-green-200">
+              <i data-lucide="shield-check" class="text-green-600 mb-4 w-12 h-12"></i>
+              <span className="text-xl font-semibold text-green-800">主管端入口</span>
+              <span className="text-sm text-green-600 mt-2">查看意見與填寫主管想法</span>
+            </button>
+            <button onClick={() => { setLoginRole('company'); setCurrentView('login'); }} className="flex flex-col items-center justify-center p-8 bg-purple-50 rounded-2xl shadow-sm hover:shadow-md hover:bg-purple-100 transition duration-200 border border-purple-200">
+              <i data-lucide="building" class="text-purple-600 mb-4 w-12 h-12"></i>
+              <span className="text-xl font-semibold text-purple-800">公司端入口</span>
+              <span className="text-sm text-purple-600 mt-2">檢視總覽與填寫公司建議</span>
+            </button>
+          </div>
+        </div>
+      );
+
+      const renderLogin = () => (
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
+            <div className="flex items-center justify-center mb-6">
+              <i data-lucide="lock" class="text-gray-400 mr-2 w-6 h-6"></i>
+              <h2 className="text-2xl font-bold text-gray-800">
+                {loginRole === 'manager' ? '主管端登入' : '公司端登入'}
+              </h2>
+            </div>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">請輸入密碼</label>
+                <input 
+                  type="password" 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder={loginRole === 'manager' ? '提示: 1234' : '提示: 5678'}
+                  required
+                />
+              </div>
+              {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+              <div className="flex space-x-3 pt-4">
+                <button type="button" onClick={goHome} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">返回</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">登入</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+
+      const renderUserForm = () => (
+        <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">新增意見回饋</h2>
+            <button onClick={goHome} className="text-gray-500 hover:text-gray-700 flex items-center">
+              <i data-lucide="arrow-left" class="mr-1 w-4 h-4"></i> 返回首頁
+            </button>
+          </div>
+          <form onSubmit={handleUserSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">主旨</label>
+              <input 
+                type="text" 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                placeholder="請簡述您的問題或建議"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">遇到的問題說明</label>
+              <textarea 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                value={formData.problem}
+                onChange={(e) => setFormData({ ...formData, problem: e.target.value })}
+                placeholder="請詳細描述您遇到的狀況..."
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">自己認為的解決方式</label>
+              <textarea 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                value={formData.solution}
+                onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
+                placeholder="您認為可以怎麼改善呢？"
+                required
+              />
+            </div>
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className={`w-full flex items-center justify-center px-4 py-3 text-white rounded-lg transition font-medium text-lg ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            >
+              {isLoading ? '正在送出...' : <><i data-lucide="send" class="mr-2 w-5 h-5"></i> 匿名送出</>}
+            </button>
+          </form>
+        </div>
+      );
+
+      const renderDashboard = (role) => {
+        const isManager = role === 'manager';
+        const themeColor = isManager ? 'green' : 'purple';
+
+        return (
+          <div className="max-w-6xl mx-auto mt-8">
+            <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+              <h2 className={`text-2xl font-bold text-${themeColor}-800 flex items-center`}>
+                <i data-lucide={isManager ? "shield-check" : "building"} class="mr-2 w-6 h-6"></i>
+                {isManager ? '主管端管理面板' : '公司端管理面板'}
+              </h2>
+              <div className="flex space-x-3">
+                <button onClick={fetchRecords} disabled={isLoading} className="text-gray-500 hover:text-gray-700 bg-white border border-gray-200 px-4 py-2 rounded-lg flex items-center text-sm shadow-sm transition">
+                  {isLoading ? '讀取中...' : '重新整理'}
+                </button>
+                <button onClick={goHome} className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm transition">
+                  登出並返回
+                </button>
+              </div>
+            </div>
+
+            {isLoading && (
+              <div className="text-center py-8 text-gray-500 font-medium">
+                資料處理中，請稍候...
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {records.map(record => (
+                <div key={record.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">{record.subject}</h3>
+                        <span className="text-sm text-gray-500">建立時間: {record.date}</span>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setEditingRecord(record);
+                          setEditorName(isManager ? record.managerEditor : record.companyEditor);
+                          setFeedbackText(isManager ? record.managerThoughts : record.companySuggestion);
+                        }}
+                        className={`px-4 py-2 bg-${themeColor}-50 text-${themeColor}-700 rounded-lg hover:bg-${themeColor}-100 transition font-medium`}
+                      >
+                        編輯回覆
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-700 mb-2">問題說明</h4>
+                        <p className="text-gray-600 whitespace-pre-wrap">{record.problem}</p>
+                      </div>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-blue-800 mb-2">建議解決方式</h4>
+                        <p className="text-blue-700 whitespace-pre-wrap">{record.solution}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {(record.managerThoughts || !isManager) && (
+                        <div className="p-4 border-l-4 border-green-400 bg-green-50 rounded-r-lg">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-semibold text-green-800">主管想法</span>
+                            <span className="text-xs text-green-600">編輯者: {record.managerEditor || '未填寫'}</span>
+                          </div>
+                          <p className="text-green-700">{record.managerThoughts || '尚無回覆'}</p>
+                        </div>
+                      )}
+                      {record.companySuggestion && (
+                        <div className="p-4 border-l-4 border-purple-400 bg-purple-50 rounded-r-lg">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-semibold text-purple-800">公司建議</span>
+                            <span className="text-xs text-purple-600">編輯者: {record.companyEditor || '未填寫'}</span>
+                          </div>
+                          <p className="text-purple-700">{record.companySuggestion}</p>
+                        </div>
+                      )}
+                    </div>
+                    {record.lastEditTime && (
+                      <div className="mt-4 text-xs text-gray-400 text-right">
+                        最後編輯: {record.lastEditTime}
+                      </div>
+                    )}
+                  </div>
+
+                  {editingRecord?.id === record.id && (
+                    <div className={`p-6 border-t border-gray-100 bg-${themeColor}-50`}>
+                      <h4 className={`font-bold text-${themeColor}-800 mb-4 flex items-center`}>
+                        <i data-lucide="save" class="mr-2 w-5 h-5"></i>
+                        {isManager ? '編輯主管想法' : '編輯公司建議'}
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">編輯者姓名 (留白顯示為未具名)</label>
+                          <input 
+                            type="text" 
+                            className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg"
+                            value={editorName}
+                            onChange={(e) => setEditorName(e.target.value)}
+                            placeholder="請輸入您的姓名或職稱"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {isManager ? '主管想法內容' : '公司建議內容'}
+                          </label>
+                          <textarea 
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg min-h-[100px]"
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="請輸入您的想法..."
+                          />
+                        </div>
+                        <div className="flex space-x-3">
+                          <button 
+                            onClick={() => setEditingRecord(null)}
+                            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                          >
+                            取消
+                          </button>
+                          <button 
+                            onClick={() => handleSaveEdit(role)}
+                            disabled={isLoading}
+                            className={`px-6 py-2 text-white rounded-lg transition font-medium ${isLoading ? `bg-gray-400 cursor-not-allowed` : `bg-${themeColor}-600 hover:bg-${themeColor}-700`}`}
+                          >
+                            {isLoading ? '儲存中...' : '儲存變更'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {!isLoading && records.length === 0 && (
+                 <div className="text-center py-12 bg-white rounded-xl text-gray-500">
+                   目前還沒有任何意見調查紀錄。
+                 </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div className="min-h-screen font-sans p-4 md:p-8">
+          {currentView === 'home' && renderHome()}
+          {currentView === 'login' && renderLogin()}
+          {currentView === 'user' && renderUserForm()}
+          {currentView === 'manager' && renderDashboard('manager')}
+          {currentView === 'company' && renderDashboard('company')}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
