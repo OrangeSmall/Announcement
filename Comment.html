@@ -47,6 +47,7 @@
         try {
           const res = await fetch(API_URL);
           const data = await res.json();
+          // 將從 Google Sheet 取回的資料倒序排列 (最新的在最上面)
           setRecords(data.reverse());
         } catch (error) {
           console.error("讀取資料失敗:", error);
@@ -80,6 +81,27 @@
         }
       };
 
+      // 格式化日期的輔助函式 (處理 2026-03-03T...Z 這種格式)
+      const formatDate = (dateString) => {
+        if (!dateString) return '';
+        try {
+          const date = new Date(dateString);
+          // 檢查是否為有效的日期
+          if (isNaN(date.getTime())) return dateString; // 若無法解析，回傳原始字串
+          return date.toLocaleString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+        } catch (e) {
+          return dateString;
+        }
+      };
+
       const handleUserSubmit = async (e) => {
         e.preventDefault();
         if (!API_URL || API_URL.includes('請在這裡填入')) {
@@ -87,14 +109,16 @@
           return;
         }
         setIsLoading(true);
+        // 使用本地時間字串
+        const nowString = new Date().toLocaleString('zh-TW', { hour12: false });
         const newRecord = {
           action: 'add',
           id: Date.now().toString(),
-          date: new Date().toLocaleString(),
+          date: nowString,
           subject: formData.subject,
           problem: formData.problem,
           solution: formData.solution,
-          lastEditTime: new Date().toLocaleString()
+          lastEditTime: nowString
         };
         try {
           await fetch(API_URL, {
@@ -114,12 +138,13 @@
 
       const handleSaveEdit = async (role) => {
         setIsLoading(true);
-        const now = new Date().toLocaleString();
+        // 使用本地時間字串
+        const nowString = new Date().toLocaleString('zh-TW', { hour12: false });
         const updateData = {
           action: 'update',
           id: editingRecord.id,
           role: role,
-          lastEditTime: now
+          lastEditTime: nowString
         };
         if (role === 'manager') {
           updateData.managerThoughts = feedbackText;
@@ -154,13 +179,8 @@
 
       const renderHome = () => (
         <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
-          <a href="https://your-company-website.com" target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform duration-200">
-            <img 
-              src="https://lh3.googleusercontent.com/d/11MwXrPHDOjQWnUXap4CmZJJO_MogLe-F" 
-              alt="平凡 LOGO" 
-              onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/128x128/d4a373/ffffff?text=LOGO"; }}
-              className="w-32 h-32 object-contain drop-shadow-md"
-            />
+          <a href="https://your-company-website.com" target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform duration-200 text-6xl drop-shadow-md">
+            📄
           </a>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">平凡內部意見調查系統工具</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl px-4">
@@ -299,7 +319,7 @@
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-xl font-bold text-gray-800">{record.subject}</h3>
-                        <span className="text-sm text-gray-500">建立時間: {record.date}</span>
+                        <span className="text-sm text-gray-500">建立時間: {formatDate(record.date)}</span>
                       </div>
                       <button 
                         onClick={() => {
@@ -346,7 +366,7 @@
                     </div>
                     {record.lastEditTime && (
                       <div className="mt-4 text-xs text-gray-400 text-right">
-                        最後編輯: {record.lastEditTime}
+                        最後編輯: {formatDate(record.lastEditTime)}
                       </div>
                     )}
                   </div>
