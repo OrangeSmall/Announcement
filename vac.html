@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>檔期企劃｜至年底重點整理（可一鍵出圖）</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --ink:#111827;
+      --muted:#6b7280;
+      --paper:#f6f7fb;
+      --card:#ffffff;
+      --line:rgba(17,24,39,.10);
+      --shadow: 0 10px 28px rgba(17,24,39,.08);
+      --radius:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:"Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color:var(--ink);
+      background: var(--paper);
+    }
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 14px 12px 26px; }
+
+    /* 工具列（不會被出圖） */
+    .toolbar{
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(10px);
+      background: rgba(246,247,251,.86);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: 0 8px 22px rgba(17,24,39,.06);
+      margin-bottom: 12px;
+    }
+    .toolbarRow{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width: 240px; }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: rgba(17,24,39,.55);
+    }
+    .brand h1{ font-size: 14px; margin:0; letter-spacing:.2px; }
+    .brand p{ margin:0; font-size: 12px; color: var(--muted); }
+
+    .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    .btn, .seg button, select{
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(17,24,39,.04);
+    }
+    .btn.primary{
+      background: rgba(17,24,39,.92);
+      color:#fff;
+      border-color: rgba(17,24,39,.22);
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .seg{
+      display:flex; gap:6px; padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.7);
+    }
+    .seg button{
+      box-shadow:none;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      padding: 8px 10px;
+      background: transparent;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .seg button.active{
+      background: rgba(17,24,39,.06);
+      color: var(--ink);
+      border-color: rgba(17,24,39,.12);
+    }
+
+    /* 出圖區 */
+    #capture{
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .capHead{
+      padding: 16px 16px 12px;
+      background: rgba(17,24,39,.03);
+      border-bottom: 1px solid var(--line);
+    }
+    .capTitle{
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+    }
+    .capTitle h2{ margin:0; font-size: 18px; letter-spacing: .2px; }
+    .capTitle .sub{ margin-top: 4px; font-size: 12px; color: var(--muted); }
+
+    .capBody{ padding: 12px 12px 16px; }
+
+    .grid{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 860px){ .grid{ grid-template-columns: 1fr 1fr; } }
+
+    .card{
+      position:relative;
+      background: rgba(255,255,255,.98);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0; width: 6px;
+      background: rgba(17,24,39,.25);
+    }
+    .rowTop{
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+      padding-left: 6px;
+    }
+    .date{ font-weight: 800; letter-spacing: .2px; font-size: 14px; }
+    .tagline{ margin-top: 2px; font-size: 12px; color: var(--muted); }
+    .badge{
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(17,24,39,.16);
+      background: rgba(17,24,39,.05);
+      color: rgba(17,24,39,.82);
+      white-space:nowrap;
+      height: fit-content;
+    }
+    .title{ margin: 8px 0 6px 6px; font-size: 15px; font-weight: 800; letter-spacing: .2px; }
+
+    .meta{ margin-left: 6px; display:flex; flex-wrap:wrap; gap:6px; }
+    .pill{
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(17,24,39,.10);
+      background: rgba(17,24,39,.03);
+      color: #374151;
+    }
+
+    .bullets{
+      margin: 10px 0 0 6px;
+      padding: 0 0 0 18px;
+      color: #111827;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .bullets li{ margin: 4px 0; }
+
+    body.compact .bullets{ display:none; }
+    body.compact .tagline{ display:none; }
+
+    .toast{
+      position: fixed; left: 50%; bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(17,24,39,.92);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      opacity: 0; pointer-events:none;
+      transition: opacity .2s ease;
+    }
+    .toast.show{ opacity: 1; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="toolbar" aria-label="工具列">
+      <div class="toolbarRow">
+        <div class="brand">
+          <div class="dot" aria-hidden="true"></div>
+          <div>
+            <h1>檔期企劃備案｜台灣重點整理（可一鍵出圖）</h1>
+            <p>已排除：3/14、HBL、CPBL、TPBL</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="seg" role="tablist" aria-label="檔期切換">
+            <button id="tabA" class="active" type="button">上半段（3–5月）</button>
+            <button id="tabB" type="button">下半段（6–9月）</button>
+            <button id="tabC" type="button">中秋後（9/25–12月）</button>
+          </div>
+
+          <button id="toggleCompact" class="btn" type="button">切換：精簡/詳細</button>
+
+          <label>
+            <select id="scale">
+              <option value="1">出圖倍率：1x（檔案較小）</option>
+              <option value="2" selected>出圖倍率：2x（清晰推薦）</option>
+              <option value="3">出圖倍率：3x（更清晰）</option>
+            </select>
+          </label>
+
+          <button id="btnShot" class="btn primary" type="button">一鍵出圖（JPG）</button>
+        </div>
+      </div>
+    </div>
+
+    <section id="capture">
+      <div class="capHead">
+        <div class="capTitle">
+          <div>
+            <h2 id="capH2">上半段（3–5月）｜檔期重點與優惠方向</h2>
+            <div class="sub">資料範圍：2026/03/04 ～ 2026/12/31</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capBody">
+        <div id="panelA" class="grid"></div>
+        <div id="panelB" class="grid" style="display:none;"></div>
+        <div id="panelC" class="grid" style="display:none;"></div>
+      </div>
+    </section>
+
+    <div class="toast" id="toast">已產出</div>
+  </div>
+
+<script>
+  const dataA = [
+    {
+      date: "3/5（四）～3/17（二）",
+      badge: "賽事檔期",
+      title: "WBC 經典賽（應援話題檔）",
+      pills: ["指定品類", "滿額折抵", "互動領券"],
+      note: "非國定假日；可用『話題＋簡單機制』帶動來客與回購",
+      bullets: [
+        "指定品類活動：肉片/海鮮/酒類（擇 2–3 類）做「組合價 / 第二件加購價」",
+        "互動券：LINE 猜勝負/比分 → 發「下次折價券（短效 7 天）」",
+        "會員加碼：指定日點數加倍或滿額多送折抵（不走贈品也好控）"
+      ]
+    },
+    {
+      date: "4/3（五）～4/6（一）",
+      badge: "4 天連假",
+      title: "兒童節＋清明節（家庭採買主檔）",
+      pills: ["海陸組合", "預購取貨", "人力分流"],
+      note: "連假 4 天；家庭採買、聚餐備料需求高",
+      bullets: [
+        "海陸組合：設 2–3 種價位帶（例：999/1999/2999）清楚好選",
+        "預購早鳥：提早下單享折抵（或組合升級）→ 取貨時段分流",
+        "加價購：調味料/湯底/酒類搭配加購，提高客單但不擴品項"
+      ]
+    },
+    {
+      date: "5/1（五）～5/3（日）",
+      badge: "3 天檔期",
+      title: "勞動節（週末短檔）",
+      pills: ["快閃", "會員限定", "指定品項"],
+      note: "是否全員放假依產業別；但週末短檔適合做快閃引流",
+      bullets: [
+        "指定 3 品項快閃：用少品項做強訊息（避免全館折扣壓力）",
+        "會員限定：第二件加購價／任選多件折，帶動多帶一件",
+        "短效券回流：當日達門檻發 7 天折價券，串下一檔"
+      ]
+    },
+    {
+      date: "5/10（日）",
+      badge: "聚餐節點",
+      title: "母親節（孝親採買／禮組）",
+      pills: ["預購", "禮組", "滿額折抵"],
+      note: "非國定假日；建議提前 1–2 週預熱、以預購控量",
+      bullets: [
+        "孝親禮組：海鮮＋肉品＋酒類（可拆 2–3 種價位帶）",
+        "預購機制：早鳥折抵／組合升級（比送贈品更好控）",
+        "主推清單：做「店員推薦卡」與搭配建議，降低選擇成本"
+      ]
+    }
+  ];
+
+  const dataB = [
+    {
+      date: "6/18（四）",
+      badge: "促銷節點",
+      title: "618（短波促購）",
+      pills: ["組合價", "門市取貨", "短效券"],
+      note: "非假日；用「組合」與「短效券」最容易轉單與回購",
+      bullets: [
+        "組合價：固定組（好備貨）＋任選組（提高客單）二選一主打",
+        "門市取貨：線上下單到店取，導回門市其他加購",
+        "短效券：滿額發 7 天券，拉回流量"
+      ]
+    },
+    {
+      date: "6/19（五）～6/21（日）",
+      badge: "3 天連假",
+      title: "端午節連假（家庭採買＋送禮）",
+      pills: ["價位帶", "滿額折抵", "加價購"],
+      note: "連假 3 天；以『家庭採買』與『禮組』雙軸操作",
+      bullets: [
+        "家庭採買：海陸/火鍋備料組合（訊息清楚、轉換快）",
+        "禮組策略：酒類/調味料/肉品做 2–3 段價位帶",
+        "加價購：指定品項加購（湯底/調味/酒）拉高客單"
+      ]
+    },
+    {
+      date: "6/11（四）～7/19（日）",
+      badge: "長檔話題",
+      title: "FIFA 世界盃（話題帶動檔）",
+      pills: ["指定日", "互動領券", "週末加碼"],
+      note: "非假日；建議挑『週末/熱門場次』做指定日加碼",
+      bullets: [
+        "指定日加碼：週末熱門賽事日 → 指定品類折抵/點數加倍",
+        "互動券：猜賽果→發下次折價券（短效），增加回訪",
+        "預購備貨：熱門時段前先做預購/保留，避免現場爆量失控"
+      ]
+    },
+    {
+      date: "8/8（六）",
+      badge: "聚餐節點",
+      title: "父親節（肉品＋酒類主題）",
+      pills: ["禮組", "滿額折抵", "會員加碼"],
+      note: "不一定放假；但聚餐/送禮需求明確，適合做禮組",
+      bullets: [
+        "父親節禮組：肉品＋酒類＋調味料（2–3 段價位帶）",
+        "滿額折抵：用折抵取代贈品，成本更可控",
+        "會員加碼：指定日點數加倍或指定品類加購價"
+      ]
+    },
+    {
+      date: "8/19（三）",
+      badge: "民俗節日",
+      title: "七夕（雙人／送禮題材）",
+      pills: ["雙人組", "預購", "短效券"],
+      note: "不放假；適合用『雙人組合』與『預購』做小檔",
+      bullets: [
+        "雙人組合：酒類＋下酒品/小食材組（門檻清楚）",
+        "預購早鳥：提前下單享折抵或組合升級",
+        "短效券：當日達門檻發 7 天券，做回流"
+      ]
+    },
+    {
+      date: "8/27（四）",
+      badge: "民俗節日",
+      title: "中元節（普渡備貨檔）",
+      pills: ["普渡箱", "價位帶", "公告分流"],
+      note: "不放假；備貨需求明顯，主打普渡箱最有效率",
+      bullets: [
+        "普渡箱：常溫調味＋肉品/海鮮（依你貨型做固定組）",
+        "價位帶：設 3 段（例：999/1999/2999）好選好推",
+        "取貨分流：提早公告截止日/取貨時段，降低尖峰壓力"
+      ]
+    }
+  ];
+
+  const dataC = [
+    {
+      date: "9/25（五）～9/28（一）",
+      badge: "4 天連假",
+      title: "中秋節＋教師節（採買主檔）",
+      pills: ["預購", "組合價", "加價購"],
+      note: "連假 4 天；建議提前 2–3 週預購開跑",
+      bullets: [
+        "中秋採買組：肉品/海鮮/調味料做固定組（好備貨、訊息清楚）",
+        "預購節奏：早鳥折抵 → 最後一週主推現貨與加購",
+        "企業/團購：量價級距（多買多省）＋分批到貨/取貨"
+      ]
+    },
+    {
+      date: "10/1（四）",
+      badge: "節日",
+      title: "清酒日（10/1）",
+      pills: ["酒類主檔", "任選多件折", "會員加碼"],
+      note: "適合做『清酒主題小檔』，用簡單規則推多帶",
+      bullets: [
+        "任選多件折：清酒任 2/3/6 瓶折（或固定折抵）",
+        "搭配加購：清酒搭配下酒品/調味料做加購價（不擴餐點）",
+        "會員加碼：指定品牌/類型點數加倍或滿額折抵券"
+      ]
+    },
+    {
+      date: "10/9（五）～10/11（日）",
+      badge: "3 天連假",
+      title: "雙十國慶連假（短檔快閃）",
+      pills: ["指定品項", "快閃", "短效券"],
+      note: "連假 3 天；用少品項強訊息最有效",
+      bullets: [
+        "指定 3 品項快閃：肉品/海鮮/酒（擇 2 類＋1 爆品）",
+        "滿額折抵：設單一門檻（更好理解、更快成交）",
+        "短效券回流：當日達門檻發 7 天券承接下一波"
+      ]
+    },
+    {
+      date: "10/18（日）",
+      badge: "民俗節點",
+      title: "重陽節（敬老題材）",
+      pills: ["家庭客", "溫度主題", "小檔加碼"],
+      note: "不放假；適合溫度型文案＋家庭採買",
+      bullets: [
+        "敬老主題：長輩友善食材/補身食材（用推薦卡帶購）",
+        "家庭採買：小家庭組合價（不複雜）",
+        "會員關懷：長輩同行/長輩會員加碼點數（可選）"
+      ]
+    },
+    {
+      date: "10/24（六）～10/26（一）",
+      badge: "3 天連假",
+      title: "臺灣光復暨古寧頭大捷紀念日連假",
+      pills: ["連假小主檔", "組合價", "備貨控量"],
+      note: "連假 3 天；適合做『補貨/聚餐採買』小主檔",
+      bullets: [
+        "補貨組合：海陸/火鍋備料固定組（好備貨）",
+        "加價購：湯底/調味料/酒類（提高客單）",
+        "控量：固定組先卡量＋限量文案，避免失控"
+      ]
+    },
+    {
+      date: "10/31（六）",
+      badge: "主題節點",
+      title: "萬聖節（聚會採買題材）",
+      pills: ["派對採買", "組合價", "社群互動"],
+      note: "不放假；週末題材強，適合做輕量互動",
+      bullets: [
+        "聚會採買組：海鮮/肉品/零食類（依你現場品類）做組合價",
+        "打卡互動：完成任務領折價券（下次用）",
+        "視覺：主題貼文＋門市立牌即可，不必做重活動"
+      ]
+    },
+    {
+      date: "11/11（三）",
+      badge: "購物節點",
+      title: "雙11（年度促購點）",
+      pills: ["爆品", "任選多件折", "線上導店"],
+      note: "用 1–2 個爆品打穿訊息，轉換最快",
+      bullets: [
+        "爆品策略：限定數量／限定時段（製造決策速度）",
+        "任選多件折：任 2/3 件折抵（把客單往上推）",
+        "線上導店：LINE/社群領券→到店核銷"
+      ]
+    },
+    {
+      date: "11/27（五）～11/30（一）",
+      badge: "購物節點",
+      title: "黑五～網購週（短波連打）",
+      pills: ["指定品類", "加購", "短效券"],
+      note: "短波連打，建議用『指定品類』集中火力",
+      bullets: [
+        "指定品類：酒類/肉品/海鮮擇一主打（避免分散）",
+        "加購：搭配調味料/湯底做加購價（簡單有效）",
+        "短效券：達門檻送 7 天券，承接雙12"
+      ]
+    },
+    {
+      date: "12/12（六）",
+      badge: "購物節點",
+      title: "雙12（年末收斂檔）",
+      pills: ["組合升級", "清庫存", "回流券"],
+      note: "適合做『組合升級』或『清庫存』，不建議全館折扣",
+      bullets: [
+        "組合升級：同價升級（增加內容物）比降價更好控毛利",
+        "清庫存：指定品項限量折抵，快速清掉慢動品",
+        "回流：發跨到聖誕/行憲檔的短效券"
+      ]
+    },
+    {
+      date: "12/22（二）",
+      badge: "節氣節點",
+      title: "冬至（進補採買理由）",
+      pills: ["火鍋備料", "湯底加購", "家庭客"],
+      note: "不放假；但『想吃熱的』理由很強，適合做備料組合",
+      bullets: [
+        "冬至備料組：湯底＋肉品/海鮮（固定組最好推）",
+        "加購：調味料/配料（把客單往上推）",
+        "預購：提早預訂享折抵，備貨更穩"
+      ]
+    },
+    {
+      date: "12/25（五）～12/27（日）",
+      badge: "3 天連假",
+      title: "行憲紀念日連假（年末採買/送禮）",
+      pills: ["禮組", "企業量購", "滿額折抵"],
+      note: "連假 3 天；可做年末禮組與企業量購級距",
+      bullets: [
+        "年末禮組：酒＋肉品＋調味料（2–3 段價位帶）",
+        "企業/團購：量價級距＋分批到貨/取貨",
+        "滿額折抵：用折抵取代贈品，成本更穩"
+      ]
+    },
+    {
+      date: "12/31（四）",
+      badge: "年末節點",
+      title: "跨年（聚會採買收尾）",
+      pills: ["最後一波", "組合價", "短效券"],
+      note: "不放假；以『聚會採買』組合收尾最直接",
+      bullets: [
+        "聚會組合：海鮮/肉品/酒類做固定組（少品項、好備貨）",
+        "限時加碼：指定品類折抵（不做全館）",
+        "短效券：發跨到元旦後的短效券，延續回購"
+      ]
+    }
+  ];
+
+  function renderCards(targetId, items){
+    const el = document.getElementById(targetId);
+    el.innerHTML = items.map(it => `
+      <article class="card">
+        <div class="rowTop">
+          <div>
+            <div class="date">${it.date}</div>
+            <div class="tagline">假期/檔期說明：${it.note}</div>
+          </div>
+          <div class="badge">${it.badge}</div>
+        </div>
+
+        <div class="title">${it.title}</div>
+
+        <div class="meta">
+          ${it.pills.map(p => `<span class="pill">${p}</span>`).join("")}
+        </div>
+
+        <ul class="bullets">
+          ${it.bullets.map(b => `<li>${b}</li>`).join("")}
+        </ul>
+      </article>
+    `).join("");
+  }
+  renderCards("panelA", dataA);
+  renderCards("panelB", dataB);
+  renderCards("panelC", dataC);
+
+  // Tab
+  const tabA = document.getElementById("tabA");
+  const tabB = document.getElementById("tabB");
+  const tabC = document.getElementById("tabC");
+  const panelA = document.getElementById("panelA");
+  const panelB = document.getElementById("panelB");
+  const panelC = document.getElementById("panelC");
+  const capH2 = document.getElementById("capH2");
+
+  function setTab(which){
+    const isA = which === "A";
+    const isB = which === "B";
+    const isC = which === "C";
+    tabA.classList.toggle("active", isA);
+    tabB.classList.toggle("active", isB);
+    tabC.classList.toggle("active", isC);
+
+    panelA.style.display = isA ? "grid" : "none";
+    panelB.style.display = isB ? "grid" : "none";
+    panelC.style.display = isC ? "grid" : "none";
+
+    capH2.textContent = isA
+      ? "上半段（3–5月）｜檔期重點與優惠方向"
+      : isB
+        ? "下半段（6–9月）｜檔期重點與優惠方向"
+        : "中秋後（9/25–12月）｜檔期重點與優惠方向";
+  }
+  tabA.addEventListener("click", ()=>setTab("A"));
+  tabB.addEventListener("click", ()=>setTab("B"));
+  tabC.addEventListener("click", ()=>setTab("C"));
+
+  // Compact
+  document.getElementById("toggleCompact").addEventListener("click", ()=>{
+    document.body.classList.toggle("compact");
+  });
+
+  // Toast
+  const toast = document.getElementById("toast");
+  function showToast(msg){
+    toast.textContent = msg || "已產出";
+    toast.classList.add("show");
+    setTimeout(()=>toast.classList.remove("show"), 1400);
+  }
+
+  // Shot (JPG, smaller)
+  document.getElementById("btnShot").addEventListener("click", async ()=>{
+    const capture = document.getElementById("capture");
+    const scale = Number(document.getElementById("scale").value || 2);
+
+    showToast("出圖中…");
+    await new Promise(r=>requestAnimationFrame(r));
+
+    const canvas = await html2canvas(capture, {
+      backgroundColor: "#ffffff",
+      scale,
+      useCORS: true,
+      windowWidth: document.documentElement.clientWidth
+    });
+
+    const a = document.createElement("a");
+    const tabName =
+      tabA.classList.contains("active") ? "上半段_3-5月"
+      : tabB.classList.contains("active") ? "下半段_6-9月"
+      : "中秋後_9-12月";
+    const compact = document.body.classList.contains("compact") ? "精簡" : "詳細";
+
+    a.download = `檔期企劃_${tabName}_${compact}_${new Date().toISOString().slice(0,10)}.jpg`;
+    a.href = canvas.toDataURL("image/jpeg", 0.92);
+    a.click();
+
+    showToast("已下載 JPG");
+  });
+</script>
+</body>
+</html>
