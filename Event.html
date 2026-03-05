@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>門市活動排程</title>
+  
+  <!-- 引入 Tailwind CSS 來處理樣式 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 引入 Babel 讓瀏覽器可以讀懂 React/JSX 語法 -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- 引入 html-to-image 負責更精準的一鍵截圖功能 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+
+  <style>
+    /* 自訂和紙紋理與滾動條樣式 */
+    body {
+      background-color: #fdfbf7;
+      /* 使用輕柔的渲染漸層與和紙質感的疊加 */
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(192, 132, 138, 0.12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(191, 168, 146, 0.15), transparent 40%),
+        url('https://www.transparenttextures.com/patterns/rice-paper-2.png');
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .washi-shadow {
+      box-shadow: 0 4px 20px rgba(107, 76, 79, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body class="overflow-x-hidden text-[#4a3b31] font-serif">
+  
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect } from 'https://esm.sh/react@18.2.0';
+    import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    // --- 1. 雲端資料庫初始化 ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAT9nmcxVI-1J4pTXMhvfXmFzYJlaQR3HM",
+      authDomain: "my-leave-calendar-50cfa.firebaseapp.com",
+      projectId: "my-leave-calendar-50cfa",
+      storageBucket: "my-leave-calendar-50cfa.firebasestorage.app",
+      messagingSenderId: "37489112070",
+      appId: "1:37489112070:web:3d68bb273b7ac438297f87"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const boardAppId = 'store-tasting-events-board'; 
+
+    // --- 2. 輔助函數 ---
+    const formatDate = (year, month, day) => `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+    const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+    // 廠商專屬顏色 (莫蘭迪色系)
+    const PASTEL_COLORS = [
+      'bg-[#d4c3b3] text-[#4a3b31]', 'bg-[#e2c2c6] text-[#5e2f36]', 'bg-[#c0848a] text-[#ffffff]', 
+      'bg-[#bfa892] text-[#3a2818]', 'bg-[#e8d7d0] text-[#5c4a3d]', 'bg-[#c9b1bd] text-[#3a2835]', 
+    ];
+    const getVendorColorClass = (vendorName) => {
+      if (!vendorName) return 'bg-gray-200 text-gray-800';
+      let hash = 0;
+      for (let i = 0; i < vendorName.length; i++) hash = vendorName.charCodeAt(i) + ((hash << 5) - hash);
+      return PASTEL_COLORS[Math.abs(hash) % PASTEL_COLORS.length];
+    };
+
+    // --- 3. React 主要元件 ---
+    function App() {
+      const [user, setUser] = useState(null);
+      const [isSyncing, setIsSyncing] = useState(true);
+      const [isExporting, setIsExporting] = useState(false);
+
+      const [currentDate, setCurrentDate] = useState(new Date());
+      const [events, setEvents] = useState({}); 
+      
+      // 顯示模式：'mobile' (手機), 'desktop' (月曆), 'overview' (總覽)
+      const [viewMode, setViewMode] = useState('mobile');
+
+      const [selectedDate, setSelectedDate] = useState(null);
+      const [formData, setFormData] = useState({
+        id: '', vendor: '', store: '四維店', status: '洽談中', times: [''], desc: '', registrar: ''
+      });
+
+      // Firebase 驗證與同步
+      useEffect(() => {
+        const initAuth = async () => {
+          try { await signInAnonymously(auth); } catch (error) { console.error("驗證失敗:", error); }
+        };
+        initAuth();
+        const unsubscribe = onAuthStateChanged(auth, setUser);
+        return () => unsubscribe();
+      }, []);
+
+      useEffect(() => {
+        if (!user) return;
+        const docRef = doc(db, 'artifacts', boardAppId, 'public', 'data', 'tasting_calendar', 'shared_board');
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+          setIsSyncing(false);
+          if (docSnap.exists()) {
+            setEvents(docSnap.data().events || {});
+          } else {
+            setDoc(docRef, { events: {} });
+          }
+        });
+        return () => unsubscribe();
+      }, [user]);
+
+      const updateCloudData = async (newEvents) => {
+        if (!user) return;
+        const docRef = doc(db, 'artifacts', boardAppId, 'public', 'data', 'tasting_calendar', 'shared_board');
+        await setDoc(docRef, { events: newEvents }, { merge: true });
+      };
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const daysInMonth = getDaysInMonth(year, month);
+      const firstDay = getFirstDayOfMonth(year, month);
+
+      const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+      const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+      // --- 表單與事件處理 ---
+      const openModal = (dateStr) => {
+        setSelectedDate(dateStr);
+        setFormData({ id: '', vendor: '', store: '四維店', status: '洽談中', times: [''], desc: '', registrar: '' });
+      };
+      const closeModal = () => setSelectedDate(null);
+
+      const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
+
+      const handleSaveEvent = (e) => {
+        e.preventDefault();
+        if (!formData.vendor || !formData.registrar) {
+          alert("「活動廠商」與「登記人」為必填欄位！"); return;
+        }
+
+        const dateEvents = events[selectedDate] ? [...events[selectedDate]] : [];
+        const newEvent = { ...formData, id: formData.id || Date.now().toString() };
+
+        if (formData.id) {
+          const index = dateEvents.findIndex(ev => ev.id === formData.id);
+          if (index > -1) dateEvents[index] = newEvent;
+        } else {
+          dateEvents.push(newEvent);
+        }
+
+        const newEventsState = { ...events, [selectedDate]: dateEvents };
+        setEvents(newEventsState);
+        updateCloudData(newEventsState);
+        setFormData({ id: '', vendor: '', store: '四維店', status: '洽談中', times: [''], desc: '', registrar: '' }); 
+      };
+
+      const handleEditEvent = (event) => {
+        setFormData({
+          ...event,
+          times: event.times && event.times.length > 0 ? event.times : (event.time ? [event.time] : [''])
+        });
+      };
+
+      const handleDeleteEvent = (eventId) => {
+        if (!window.confirm("確定要刪除這筆活動排程嗎？")) return;
+        const dateEvents = events[selectedDate].filter(ev => ev.id !== eventId);
+        const newEventsState = { ...events, [selectedDate]: dateEvents };
+        if (dateEvents.length === 0) delete newEventsState[selectedDate]; 
+        setEvents(newEventsState);
+        updateCloudData(newEventsState);
+        setFormData({ id: '', vendor: '', store: '四維店', status: '洽談中', times: [''], desc: '', registrar: '' });
+      };
+
+      // --- 處理多重時段 ---
+      const handleTimeChange = (index, value) => {
+        const newTimes = [...formData.times];
+        newTimes[index] = value;
+        setFormData(prev => ({ ...prev, times: newTimes }));
+      };
+      const addTimeSlot = () => {
+        if (formData.times.length < 3) {
+          setFormData(prev => ({ ...prev, times: [...prev.times, ''] }));
+        }
+      };
+      const removeTimeSlot = (index) => {
+        const newTimes = formData.times.filter((_, i) => i !== index);
+        setFormData(prev => ({ ...prev, times: newTimes }));
+      };
+
+      // --- 新增：一鍵清除當月資料 ---
+      const handleClearMonth = () => {
+        const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const hasData = Object.keys(events).some(date => date.startsWith(monthPrefix));
+        
+        if (!hasData) {
+          alert("當月目前無任何排程可清除！");
+          return;
+        }
+
+        if (!window.confirm(`⚠️ 警告！確定要「清空」 ${year}年${month + 1}月 的所有活動排程嗎？\n\n(此動作會立刻同步並刪除，無法復原！)`)) return;
+        
+        const newEvents = { ...events };
+        Object.keys(newEvents).forEach(date => {
+          if (date.startsWith(monthPrefix)) {
+            delete newEvents[date];
+          }
+        });
+        
+        setEvents(newEvents);
+        updateCloudData(newEvents);
+      };
+
+      // --- 新增：總覽圖一鍵出圖 ---
+      const exportOverviewImage = async () => {
+        setIsExporting(true);
+        try {
+          // 確保 DOM 已經更新
+          await new Promise(resolve => setTimeout(resolve, 300)); 
+          const element = document.getElementById('overview-export-area');
+          if (!element) return;
+          
+          const dataUrl = await window.htmlToImage.toPng(element, {
+            pixelRatio: 2,
+            backgroundColor: '#fdfbf7', // 套用背景色避免透明導致發黑
+            style: { transform: 'scale(1)', transformOrigin: 'top left' }
+          });
+          
+          const link = document.createElement('a');
+          link.download = `門市活動排程_${year}年${month + 1}月.png`;
+          link.href = dataUrl;
+          link.click();
+        } catch (error) {
+          console.error("產生圖片時發生錯誤:", error);
+          alert("圖片產生失敗，請稍後再試。");
+        } finally {
+          setIsExporting(false);
+        }
+      };
+
+      // --- 匯出 CSV ---
+      const exportToCSV = () => {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+        csvContent += "活動日期,店別,活動廠商,活動狀態,活動時間,活動內容大綱,登記人\n";
+        const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const monthEvents = [];
+
+        Object.keys(events).forEach(date => {
+          if (date.startsWith(monthPrefix)) {
+            events[date].forEach(ev => { monthEvents.push({ date, ...ev }); });
+          }
+        });
+        monthEvents.sort((a, b) => a.date.localeCompare(b.date));
+        monthEvents.forEach(ev => {
+          const timeString = ev.times && ev.times.length > 0 
+            ? ev.times.filter(t => t.trim() !== '').join(' / ') 
+            : (ev.time || '');
+
+          const row = [
+            ev.date, ev.store, ev.vendor, ev.status, timeString, 
+            (ev.desc || '').replace(/\n/g, ' '), ev.registrar
+          ].map(field => `"${field}"`).join(","); 
+          csvContent += row + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `門市活動排程統計_${year}年${month + 1}月.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      // --- 渲染：電腦版 (月曆網格) ---
+      const renderDesktopGrid = () => {
+        const cells = [];
+        for (let i = 0; i < firstDay; i++) {
+          cells.push(<div key={`empty-${i}`} className="bg-[#f2efe9]/50 border-r border-b border-[#d4c3b3]"></div>);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = formatDate(year, month, day);
+          const isWeekend = (firstDay + day - 1) % 7 === 0 || (firstDay + day - 1) % 7 === 6;
+          const dayEvents = events[dateStr] || [];
+          
+          cells.push(
+            <div 
+              key={day} 
+              onClick={() => openModal(dateStr)}
+              className="min-h-[120px] p-2 border-r border-b border-[#d4c3b3] bg-white/60 backdrop-blur-sm hover:bg-[#faeef0] cursor-pointer transition-colors flex flex-col relative group"
+            >
+              <div className="flex justify-between items-start mb-1">
+                <span className={`text-lg font-bold ${isWeekend ? 'text-[#c0848a]' : 'text-[#6b4c4f]'}`}>{day}</span>
+                <span className="opacity-0 group-hover:opacity-100 text-xs text-[#a6636a] bg-[#faeef0] border border-[#e2c2c6] px-1.5 py-0.5 rounded transition-opacity shadow-sm">+ 新增</span>
+              </div>
+              
+              <div className="flex-grow flex flex-wrap gap-1 content-start overflow-y-auto max-h-[90px] no-scrollbar">
+                {dayEvents.map((ev) => (
+                  <div key={ev.id} className={`text-[11px] px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1 ${getVendorColorClass(ev.vendor)} border border-white/40 max-w-full`}>
+                    <span className="font-bold opacity-80 whitespace-nowrap">[{ev.store === '四維店' ? '四' : '北'}]</span>
+                    <span className="font-bold truncate">{ev.vendor}</span>
+                    {ev.status === '洽談中' && <span className="w-1.5 h-1.5 rounded-full bg-white/70 flex-shrink-0" title="洽談中"></span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        const totalCells = cells.length;
+        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (let i = 0; i < remainingCells; i++) {
+          cells.push(<div key={`empty-end-${i}`} className="bg-[#f2efe9]/50 border-r border-b border-[#d4c3b3]"></div>);
+        }
+
+        return (
+          <div className="overflow-x-auto pb-4">
+            <div className="bg-[#fdfbf7] border-2 border-[#d4c3b3] rounded-xl overflow-hidden shadow-sm min-w-[800px]">
+              <div className="grid grid-cols-7 border-b-2 border-[#d4c3b3] bg-[#f2efe9]">
+                {WEEKDAYS.map((day, idx) => (
+                  <div key={day} className={`text-center py-4 font-bold text-lg border-r last:border-r-0 border-[#d4c3b3] ${idx === 0 || idx === 6 ? 'text-[#c0848a]' : 'text-[#6b4c4f]'}`}>
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {cells}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // --- 渲染：手機版 (直向條列) ---
+      const renderMobileList = () => {
+        const days = [];
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = formatDate(year, month, day);
+          const dateObj = new Date(year, month, day);
+          const dayOfWeek = WEEKDAYS[dateObj.getDay()];
+          const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+          const dayEvents = events[dateStr] || [];
+
+          days.push(
+            <div 
+              key={day} 
+              onClick={() => openModal(dateStr)} 
+              className="border-b last:border-b-0 border-[#d4c3b3] p-4 flex flex-col gap-3 hover:bg-[#faeef0] cursor-pointer transition-colors bg-white/40 backdrop-blur-sm"
+            >
+              <div className="flex justify-between items-center border-b border-[#d4c3b3]/50 pb-2">
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-black ${isWeekend ? 'text-[#c0848a]' : 'text-[#6b4c4f]'}`}>
+                    {month + 1}/{day}
+                  </span>
+                  <span className={`text-sm font-bold ${isWeekend ? 'text-[#c0848a]' : 'text-[#bfa892]'}`}>
+                    ({dayOfWeek})
+                  </span>
+                </div>
+                {dayEvents.length > 0 ? (
+                  <span className="text-xs font-bold text-[#6b4c4f] bg-[#e8d7d0] px-2.5 py-1 rounded-full shadow-sm">
+                    {dayEvents.length} 場活動
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold text-[#bfa892] px-2 py-1 border border-dashed border-[#d4c3b3] rounded-full">
+                    ＋ 新增排程
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {dayEvents.length === 0 ? (
+                  <div className="text-sm text-[#bfa892] italic px-2 py-3 text-center bg-white/30 rounded-lg">
+                    本日無排程
+                  </div>
+                ) : (
+                  dayEvents.map(ev => {
+                    const displayTimes = ev.times && ev.times.length > 0 ? ev.times.filter(t => t.trim() !== '') : (ev.time ? [ev.time] : []);
+                    return (
+                      <div key={ev.id} className={`p-3 rounded-xl shadow-sm border border-white/60 ${getVendorColorClass(ev.vendor)}`}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="font-bold text-base tracking-wide">[{ev.store === '四維店' ? '四維' : '北高'}] {ev.vendor}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${ev.status === '洽談中' ? 'bg-white/60' : 'bg-[#8fb397]/50 text-white'}`}>
+                            {ev.status === '洽談中' ? '洽談中' : '已確認'}
+                          </span>
+                        </div>
+                        {displayTimes.length > 0 && (
+                          <div className="text-xs font-medium opacity-90 mb-1 flex flex-wrap gap-2">
+                            {displayTimes.map((t, idx) => <span key={idx} className="bg-white/30 px-1.5 py-0.5 rounded inline-block">🕒 {t}</span>)}
+                          </div>
+                        )}
+                        <div className="text-[10px] opacity-75 mt-2 flex justify-end">
+                          登記: {ev.registrar}
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="bg-[#fdfbf7] border-2 border-[#d4c3b3] rounded-2xl overflow-hidden shadow-md">
+            {days}
+          </div>
+        );
+      };
+
+      // --- 渲染：當月排程總覽 (專供閱讀與一鍵出圖) ---
+      const renderOverviewList = () => {
+        const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const monthDates = Object.keys(events).filter(date => date.startsWith(monthPrefix)).sort();
+
+        // 檢查當月是否真的有資料
+        const hasData = monthDates.some(date => events[date] && events[date].length > 0);
+
+        if (!hasData) {
+          return (
+            <div className="text-center py-16 bg-white/50 border-2 border-dashed border-[#d4c3b3] rounded-2xl">
+              <p className="text-xl text-[#bfa892] font-bold">當月目前尚無任何活動排程 🌸</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="relative">
+            <div className="flex justify-end mb-4 relative z-10">
+              <button 
+                onClick={exportOverviewImage} 
+                disabled={isExporting} 
+                className={`px-5 py-2.5 rounded-xl font-bold transition-all border-2 flex items-center justify-center gap-2 shadow-sm ${isExporting ? 'bg-gray-400 border-gray-500 text-white cursor-not-allowed' : 'bg-[#8fb397] border-[#6b8c72] text-white hover:bg-[#7a9e82]'}`}
+              >
+                {isExporting ? '📸 處理中...' : '📸 一鍵產生總覽圖檔'}
+              </button>
+            </div>
+            
+            {/* 這是會被擷取的畫面區域 */}
+            <div id="overview-export-area" className="bg-[#fdfbf7] border-2 border-[#d4c3b3] p-6 md:p-10 rounded-2xl shadow-sm relative overflow-hidden">
+              
+              <div className="text-center mb-8 border-b-2 border-dashed border-[#c0848a] pb-6 relative z-10">
+                <h2 className="text-3xl font-black text-[#5e2f36] tracking-widest">{year}年 {month + 1}月 門市活動總覽</h2>
+              </div>
+              
+              <div className="space-y-6 relative z-10">
+                {monthDates.map(date => {
+                  const dateObj = new Date(date);
+                  const dayOfWeek = WEEKDAYS[dateObj.getDay()];
+                  const dayEvents = events[date] || [];
+                  const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                  
+                  if(dayEvents.length === 0) return null; // 雙重保險
+                  
+                  return (
+                    <div key={date} className="flex flex-col md:flex-row gap-4 border-b border-[#e8d7d0] pb-6 last:border-0 last:pb-0">
+                      
+                      {/* 左側：日期標示 */}
+                      <div className="w-full md:w-28 lg:w-32 flex-shrink-0 flex items-center md:items-start gap-3 md:flex-col md:gap-1 border-l-4 border-[#c0848a] pl-3">
+                        <span className={`text-2xl font-black ${isWeekend ? 'text-[#c0848a]' : 'text-[#6b4c4f]'}`}>{month + 1}/{dateObj.getDate()}</span>
+                        <span className="text-sm font-bold text-[#bfa892]">星期{dayOfWeek}</span>
+                      </div>
+                      
+                      {/* 右側：當天活動卡片群 */}
+                      <div className="flex-grow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {dayEvents.map(ev => {
+                          const displayTimes = ev.times && ev.times.length > 0 ? ev.times.filter(t => t.trim() !== '') : (ev.time ? [ev.time] : []);
+                          return (
+                            <div key={ev.id} className={`p-4 rounded-xl border border-white/60 shadow-sm ${getVendorColorClass(ev.vendor)} relative`}>
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-bold text-[15px] pr-2 leading-tight">[{ev.store === '四維店' ? '四' : '北'}] {ev.vendor}</span>
+                                <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-1 rounded-md ${ev.status === '洽談中' ? 'bg-white/60 text-[#4a3b31]' : 'bg-[#8fb397] text-white'}`}>{ev.status}</span>
+                              </div>
+                              {displayTimes.length > 0 && (
+                                <div className="text-xs font-medium opacity-90 mb-2 flex flex-col gap-1">
+                                  {displayTimes.map((t, idx) => <span key={idx} className="bg-white/40 px-2 py-0.5 rounded-md inline-block w-fit">🕒 {t}</span>)}
+                                </div>
+                              )}
+                              {ev.desc && <div className="text-xs mt-2 opacity-80 pt-2 border-t border-black/10">{ev.desc}</div>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div className="min-h-screen p-4 md:p-8 relative">
+          
+          <div className="max-w-6xl mx-auto relative z-10 flex flex-col gap-6">
+            
+            {/* 手機版 LOGO (在上方獨立顯示) */}
+            <div className="lg:hidden flex justify-center mb-1 drop-shadow-sm">
+               <img src="https://raw.githubusercontent.com/OrangeSmall/seafood-menu-app/main/logo.png" crossOrigin="anonymous" alt="Logo" className="h-12 object-contain" />
+            </div>
+
+            {/* 頂部控制列 */}
+            <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-[#e8d7d0] washi-shadow flex flex-col lg:flex-row justify-between items-center gap-4">
+              
+              <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4 w-full lg:w-auto">
+                {/* 顯示模式切換按鈕群 */}
+                <div className="flex bg-[#faeef0] p-1.5 rounded-xl border border-[#e2c2c6] shadow-sm w-full lg:w-auto justify-center">
+                  <button onClick={() => setViewMode('mobile')} className={`flex-1 lg:flex-none px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'mobile' ? 'bg-[#c0848a] text-white shadow' : 'text-[#a6636a] hover:bg-white'}`}>📱 手機版</button>
+                  <button onClick={() => setViewMode('desktop')} className={`flex-1 lg:flex-none px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'desktop' ? 'bg-[#c0848a] text-white shadow' : 'text-[#a6636a] hover:bg-white'}`}>💻 電腦版</button>
+                  <button onClick={() => setViewMode('overview')} className={`flex-1 lg:flex-none px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'overview' ? 'bg-[#c0848a] text-white shadow' : 'text-[#a6636a] hover:bg-white'}`}>📝 總覽</button>
+                </div>
+
+                <div className="flex items-center space-x-2 bg-[#fdfbf7] px-3 py-2 rounded-xl border border-[#d4c3b3] shadow-sm w-full justify-center md:w-auto">
+                  <button onClick={prevMonth} className="text-2xl text-[#bfa892] hover:text-[#c0848a] transition-colors px-2">◀</button>
+                  <h2 className="text-xl font-black text-[#6b4c4f] tracking-widest px-2 whitespace-nowrap">
+                    {year}年 {month + 1}月
+                  </h2>
+                  <button onClick={nextMonth} className="text-2xl text-[#bfa892] hover:text-[#c0848a] transition-colors px-2">▶</button>
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-center gap-3 w-full lg:w-auto">
+                <div className="flex items-center text-sm font-bold text-[#6b4c4f] bg-[#faeef0] px-3 py-2.5 rounded-xl border border-[#e2c2c6] w-full md:w-auto justify-center shadow-sm">
+                  {isSyncing ? (
+                    <><span className="w-2 h-2 rounded-full bg-[#c0848a] mr-2 animate-pulse"></span> 連線中...</>
+                  ) : (
+                    <><span className="w-2 h-2 rounded-full bg-[#8fb397] mr-2 shadow-[0_0_5px_#8fb397]"></span> 即時同步</>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 w-full md:w-auto">
+                  <button 
+                    onClick={exportToCSV}
+                    className="flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold transition-all border border-[#bfa892] bg-[#fdfbf7] text-[#6b4c4f] hover:bg-[#f2efe9] hover:border-[#c0848a] shadow-sm text-sm"
+                  >
+                    📊 匯出 CSV
+                  </button>
+                  <button 
+                    onClick={handleClearMonth}
+                    className="flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold transition-all border border-[#e2c2c6] bg-white text-[#c0848a] hover:bg-[#faeef0] shadow-sm text-sm"
+                  >
+                    🗑️ 清除當月
+                  </button>
+                </div>
+
+                {/* 電腦版 LOGO (安插在導覽列最右側) */}
+                <div className="hidden lg:block border-l-2 border-[#e8d7d0] pl-4 ml-1 drop-shadow-sm">
+                  <img src="https://raw.githubusercontent.com/OrangeSmall/seafood-menu-app/main/logo.png" crossOrigin="anonymous" alt="Logo" className="h-9 object-contain" />
+                </div>
+              </div>
+            </div>
+
+            {/* 主體區塊 */}
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl overflow-hidden washi-shadow border border-[#e8d7d0] p-4 md:p-6 lg:p-8">
+              {viewMode !== 'overview' && (
+                <div className="text-center mb-6 relative">
+                  <h1 className="text-3xl md:text-4xl font-black text-[#5e2f36] drop-shadow-sm pb-3 border-b-2 border-dashed border-[#c0848a] inline-block px-4 md:px-12 tracking-wider">
+                    🌸 門市活動排程表
+                  </h1>
+                </div>
+              )}
+
+              {/* 根據 viewMode 渲染不同佈局 */}
+              {viewMode === 'desktop' && renderDesktopGrid()}
+              {viewMode === 'mobile' && renderMobileList()}
+              {viewMode === 'overview' && renderOverviewList()}
+
+            </div>
+          </div>
+
+          {/* 活動編輯彈跳視窗 (Modal) */}
+          {selectedDate && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#4a3b31]/40 backdrop-blur-sm">
+              <div className="bg-[#fdfbf7] border border-[#d4c3b3] rounded-2xl washi-shadow w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative">
+                
+                <button onClick={closeModal} className="absolute top-4 right-5 text-2xl font-bold text-[#bfa892] hover:text-[#c0848a] z-10 transition-colors">✕</button>
+
+                {/* 左側：當日活動列表 */}
+                <div className="w-full md:w-1/3 bg-[#f2efe9] border-b md:border-b-0 md:border-r border-[#d4c3b3] p-6 overflow-y-auto">
+                  <h3 className="text-xl font-black text-[#5e2f36] mb-5 border-b-2 border-[#e2c2c6] pb-2">
+                    📅 {selectedDate} 排程
+                  </h3>
+                  
+                  {(!events[selectedDate] || events[selectedDate].length === 0) ? (
+                    <div className="text-center mt-12 bg-white/50 p-4 rounded-xl border border-dashed border-[#d4c3b3]">
+                      <p className="text-[#a6636a] font-bold">當日目前無活動</p>
+                      <p className="text-sm text-[#bfa892] mt-1">請在右側表單新增排程</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {events[selectedDate].map(ev => {
+                        const displayTimes = ev.times && ev.times.length > 0 
+                          ? ev.times.filter(t => t.trim() !== '') 
+                          : (ev.time ? [ev.time] : []);
+
+                        return (
+                          <div 
+                            key={ev.id} 
+                            onClick={() => handleEditEvent(ev)}
+                            className={`p-4 rounded-xl border border-white/60 cursor-pointer transition-all hover:scale-[1.02] shadow-sm ${formData.id === ev.id ? 'ring-2 ring-[#c0848a] shadow-md' : ''} ${getVendorColorClass(ev.vendor)}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="font-bold text-base">{ev.vendor}</span>
+                              <span className={`text-xs px-2 py-1 rounded-md bg-white/60 text-black/70 font-bold`}>{ev.store}</span>
+                            </div>
+                            
+                            {displayTimes.length > 0 ? (
+                              <div className="text-[11px] font-medium opacity-90 mb-3 flex flex-col gap-0.5">
+                                {displayTimes.map((t, idx) => <span key={idx}>🕒 {t}</span>)}
+                              </div>
+                            ) : (
+                              <div className="text-[11px] font-medium opacity-90 mb-3">🕒 未定時間</div>
+                            )}
+
+                            <div className="flex justify-between items-center mt-2 border-t border-black/10 pt-2">
+                              <span className={`text-xs font-bold px-2 py-1 rounded-md ${ev.status === '洽談中' ? 'bg-white/50' : 'bg-[#8fb397]/40'}`}>
+                                {ev.status === '洽談中' ? '💬 洽談中' : '✅ 已確認'}
+                              </span>
+                              <span className="text-xs opacity-80 font-medium">📝 {ev.registrar}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* 右側：編輯/新增表單 */}
+                <div className="w-full md:w-2/3 p-6 md:p-8 overflow-y-auto bg-white/50">
+                  <h3 className="text-2xl font-black text-[#6b4c4f] mb-6 flex items-center gap-3 flex-wrap">
+                    {formData.id ? '✏️ 編輯活動' : '✨ 新增活動排程'}
+                    {formData.id && (
+                      <button onClick={() => setFormData({ id: '', vendor: '', store: '四維店', status: '洽談中', times: [''], desc: '', registrar: '' })} className="text-sm bg-[#faeef0] text-[#c0848a] border border-[#e2c2c6] px-3 py-1 rounded-lg font-bold hover:bg-[#e2c2c6] hover:text-white transition-colors ml-auto shadow-sm">
+                        + 改為新增
+                      </button>
+                    )}
+                  </h3>
+
+                  <form onSubmit={handleSaveEvent} className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-bold text-[#8a6b5c] mb-1.5">活動廠商 <span className="text-[#c0848a]">*</span></label>
+                        <input type="text" name="vendor" value={formData.vendor} onChange={handleFormChange} required placeholder="如：統一企業" className="w-full p-2.5 border border-[#d4c3b3] rounded-xl bg-white focus:ring-2 focus:ring-[#c0848a] focus:border-transparent focus:outline-none transition-shadow" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-[#8a6b5c] mb-1.5">登記人 <span className="text-[#c0848a]">*</span></label>
+                        <input type="text" name="registrar" value={formData.registrar} onChange={handleFormChange} required placeholder="您的姓名" className="w-full p-2.5 border border-[#d4c3b3] rounded-xl bg-white focus:ring-2 focus:ring-[#c0848a] focus:border-transparent focus:outline-none transition-shadow" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-bold text-[#8a6b5c] mb-1.5">活動店別</label>
+                        <select name="store" value={formData.store} onChange={handleFormChange} className="w-full p-2.5 border border-[#d4c3b3] rounded-xl bg-white font-bold text-[#6b4c4f] focus:ring-2 focus:ring-[#c0848a] focus:outline-none cursor-pointer">
+                          <option value="四維店">四維店</option>
+                          <option value="北高店">北高店</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-[#8a6b5c] mb-1.5">活動狀態</label>
+                        <select name="status" value={formData.status} onChange={handleFormChange} className="w-full p-2.5 border border-[#d4c3b3] rounded-xl bg-white font-bold text-[#6b4c4f] focus:ring-2 focus:ring-[#c0848a] focus:outline-none cursor-pointer">
+                          <option value="洽談中">💬 洽談中</option>
+                          <option value="已確認">✅ 已確認</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#fdfbf7]/50 p-4 rounded-xl border border-[#d4c3b3]/50">
+                      <div className="flex justify-between items-end mb-3">
+                        <label className="block text-sm font-bold text-[#8a6b5c]">活動時間 (最多3個時段)</label>
+                        {formData.times.length < 3 && (
+                          <button type="button" onClick={addTimeSlot} className="text-xs text-[#6b4c4f] font-bold hover:text-[#c0848a] transition-colors flex items-center gap-1 bg-white px-2 py-1 border border-[#d4c3b3] rounded-md shadow-sm">
+                            ➕ 新增時段
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        {formData.times.map((timeValue, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <span className="text-[#bfa892] text-xs font-bold w-4">{index + 1}.</span>
+                            <input 
+                              type="text" 
+                              value={timeValue} 
+                              onChange={(e) => handleTimeChange(index, e.target.value)} 
+                              placeholder={index === 0 ? "例: 11:00-13:00 或 11:00-結束" : "新增其他時段..."} 
+                              className="w-full p-2 border border-[#d4c3b3] rounded-lg bg-white focus:ring-2 focus:ring-[#c0848a] focus:outline-none text-sm" 
+                            />
+                            {formData.times.length > 1 && (
+                              <button 
+                                type="button" 
+                                onClick={() => removeTimeSlot(index)} 
+                                className="p-1.5 text-[#c0848a] hover:bg-[#faeef0] rounded-md transition-colors"
+                                title="移除此時段"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-[#8a6b5c] mb-1.5">活動內容大綱</label>
+                      <textarea name="desc" value={formData.desc} onChange={handleFormChange} rows="3" placeholder="簡述試吃品項或活動優惠..." className="w-full p-2.5 border border-[#d4c3b3] rounded-xl bg-white focus:ring-2 focus:ring-[#c0848a] focus:outline-none resize-none transition-shadow"></textarea>
+                    </div>
+
+                    <div className="pt-6 mt-2 flex justify-between items-center border-t border-[#d4c3b3] flex-wrap gap-4">
+                      {formData.id ? (
+                        <button type="button" onClick={() => handleDeleteEvent(formData.id)} className="px-4 py-2.5 bg-white text-[#c0848a] border border-[#c0848a] rounded-xl font-bold hover:bg-[#faeef0] transition-colors shadow-sm w-full md:w-auto">
+                          刪除此活動
+                        </button>
+                      ) : <div className="hidden md:block"></div>}
+                      
+                      <div className="flex gap-3 w-full md:w-auto">
+                        <button type="button" onClick={closeModal} className="w-1/3 md:w-auto px-5 py-2.5 bg-white border border-[#d4c3b3] text-[#8a6b5c] rounded-xl font-bold hover:bg-[#f2efe9] transition-colors shadow-sm">取消</button>
+                        <button type="submit" className="w-2/3 md:w-auto px-6 py-2.5 bg-[#bfa892] text-white rounded-xl font-bold hover:bg-[#a68f7b] shadow-md transition-colors flex items-center justify-center gap-2">
+                          {formData.id ? '💾 儲存修改' : '➕ 新增排程'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
