@@ -68,9 +68,9 @@
 
       const handleLogin = (e) => {
         e.preventDefault();
-        if (loginRole === 'manager' && passwordInput === '1234') {
+        if (loginRole === 'manager' && passwordInput === 'heibonn') {
           setCurrentView('manager');
-        } else if (loginRole === 'company' && passwordInput === '5678') {
+        } else if (loginRole === 'company' && passwordInput === 'heibonn') {
           setCurrentView('company');
         } else {
           setErrorMsg('密碼錯誤，請重新輸入！');
@@ -224,7 +224,7 @@
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder={loginRole === 'manager' ? '提示: 1234' : '提示: 5678'}
+                  placeholder={loginRole === 'manager' ? '提示: -' : '提示: -'}
                   required
                 />
               </div>
