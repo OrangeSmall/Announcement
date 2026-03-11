@@ -49,7 +49,7 @@
 
         // === 核心資料：25頁簡報內容 ===
         const CHAPTERS = [
-          { id: 'intro', title: '上課筆記內容統整', icon: <IconBookOpen className="w-4 h-4" /> },
+          { id: 'intro', title: '開場與導論', icon: <IconBookOpen className="w-4 h-4" /> },
           { id: 'mindset', title: '經營與主管心法', icon: <IconTarget className="w-4 h-4" /> },
           { id: 'system', title: '系統與競爭策略', icon: <IconLayoutDashboard className="w-4 h-4" /> },
           { id: 'brand', title: '品牌與流量佈局', icon: <IconZap className="w-4 h-4" /> },
@@ -58,8 +58,8 @@
         ];
 
         const SLIDES = [
-          { id: 1, chapter: 'intro', title: "企業經營與品牌行銷思維", subtitle: "從主管認知、策略布局到品牌循環的教育式整理", content: ["以課堂筆記為核心整理", "適合教育訓練與內部分享", "主軸包含：認知、系統、品牌、流量、價格、會員、推薦"], ext: "此內容為「新商業奇點課程整理筆記！點擊箭頭或使用鍵盤左右鍵開始探索。筆記內容主要為分享主管思維，大多為課程筆記碎片。" },
-          { id: 2, chapter: 'mindset', title: "建立 CEO 視野，站在更高的位置看企業", content: ["一句話主軸：先想才會像，先像才會是。", "建立 CEO 視野，讓自己站在更高的位置看企業。", "危機：危險中的機會。未來隱藏在不說出的野心中。", "機會往往是給準備好接受的人。凡是需要先有給予，才會有回報（成果）。"], ext: "這一頁要帶出經營者不能只看眼前作業，而要看整體方向、未來可能性與資源配置。真正的主管，不只是處理事情，而是提前看到問題、機會與布局。" },
+          { id: 1, chapter: 'intro', title: "企業經營與品牌行銷思維", subtitle: "從主管認知、策略布局到品牌循環的教育式整理", content: ["以課堂筆記為核心整理", "適合教育訓練與內部分享", "主軸包含：認知、系統、品牌、流量、價格、會員、推薦"], ext: "歡迎來到互動式學習頁面！點擊下方「下一頁」或使用鍵盤左右鍵開始探索。這份教材旨在協助企業內部建立一致的經營語言與品牌認知。" },
+          { id: 2, chapter: 'mindset', title: "建立 CEO 視野，站在更高的位置看企業", content: ["先想才會像，先像才會是。", "建立 CEO 視野，讓自己站在更高的位置看企業。", "危機：危險中的機會。未來隱藏在不說出的野心中。", "機會往往是給準備好接受的人。凡是需要先有給予，才會有回報（成果）。"], ext: "這一頁要帶出經營者不能只看眼前作業，而要看整體方向、未來可能性與資源配置。真正的主管，不只是處理事情，而是提前看到問題、機會與布局。" },
           { id: 3, chapter: 'mindset', title: "主管不只是管理，是帶動結果", content: ["勇於主動爭取，做別人想聽的，隨時保持正面態度。", "主管需要有的五大維度：職能、教育、管理、領導、經營。", "強將手下無弱兵，霸王身邊盡豪傑。"], ext: "主管不是只有「做事能力」，而是能不能把標準、方向與士氣帶起來。從個人表現走到團隊成果，是主管角色最大的轉換。" },
           { id: 4, chapter: 'mindset', title: "認知決定選擇，選擇決定運氣", content: ["認知 ＝ 知道 ＋ 認同。", "一命二運三風水，四積陰德五讀書。", "運氣是果、選擇是因；選擇是果、認知是因。", "眼界決定心界，心界決定世界。現在由過去累積，而現在創造未來。"], ext: "很多人以為結果靠運氣，但其實運氣背後是選擇，而選擇背後是認知。當一個人的認知提升，看事情的角度不同，做出的判斷與行動就不同，結果自然會改變。" },
           { id: 5, chapter: 'mindset', title: "把公司做成有價值的產品", content: ["創業不是只為賺錢，而是讓生命與時間更有價值。", "創業的目的在於把生命贖回來。", "創業的第一天就需要思考「如何把公司賣掉」。", "核心觀念：把公司經營成一個有價值的產品。"], ext: "這裡的「賣掉」不一定是真的出售，而是用更高標準思考：這家公司是否有制度、品牌、流程、人才與獲利模型，足以被外部認可、複製或接手。" },
@@ -153,7 +153,8 @@
               : "w-full h-full max-w-[1400px] mx-auto bg-[#fcfbfa] flex relative overflow-hidden shadow-2xl md:rounded-2xl border border-[#dfd9cc] transition-all duration-500";
 
           return (
-            <div className={`h-screen w-screen bg-[#e5e1d8] flex flex-col items-center justify-center relative font-sans text-[#5c564d] ${isActualMobile ? 'p-0' : 'p-4 md:p-8'}`}>
+            // 更新：使用 h-[100dvh] 解決手機網址列縮放高度問題
+            <div className={`h-[100dvh] w-screen bg-[#e5e1d8] flex flex-col items-center justify-center relative font-sans text-[#5c564d] ${isActualMobile ? 'p-0' : 'p-4 md:p-8'}`}>
               
               {/* 電腦與手機版切換按鈕 (只在非真實手機上顯示) */}
               {!isActualMobile && (
@@ -285,12 +286,14 @@
                     />
                   </div>
 
-                  {/* 內容滑動區 */}
-                  <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col items-center justify-start pb-16">
-                    <div className="w-full max-w-2xl bg-white rounded-xl shadow-sm border border-[#eae6d9] overflow-hidden flex flex-col transition-all duration-300">
+                  {/* 內容滑動區 (加入 pb-24 確保手機版滑到最底時有足夠空間) */}
+                  <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col items-center justify-start pb-24 w-full">
+                    
+                    {/* 更新：加入 shrink-0 確保在 Flexbox 中不會被擠壓截斷 */}
+                    <div className="w-full max-w-2xl bg-white rounded-xl shadow-sm border border-[#eae6d9] overflow-hidden flex flex-col transition-all duration-300 shrink-0">
                       
                       {/* 卡片標題區 */}
-                      <div className="bg-[#fcfbfa] px-6 py-8 md:px-8 relative overflow-hidden border-b border-[#eae6d9]">
+                      <div className="bg-[#fcfbfa] px-6 py-8 md:px-8 relative overflow-hidden border-b border-[#eae6d9] shrink-0">
                         <div className="relative z-10">
                           <div className="inline-block px-3 py-1 bg-[#8e4a49]/10 text-[#8e4a49] text-xs font-semibold rounded-full mb-4 border border-[#8e4a49]/20">
                             {CHAPTERS.find(c => c.id === currentSlide.chapter)?.title}
@@ -307,7 +310,7 @@
                       </div>
 
                       {/* 卡片內文區 */}
-                      <div className="p-6 md:p-8 flex-1 flex flex-col justify-center bg-white">
+                      <div className="p-6 md:p-8 flex-1 flex flex-col justify-center bg-white shrink-0">
                         <ul className="space-y-5 text-base md:text-lg text-[#5c564d] font-medium">
                           {currentSlide.content.map((point, i) => (
                             <li key={i} className="flex items-start gap-3">
@@ -318,8 +321,8 @@
                         </ul>
                       </div>
 
-                      {/* 延伸說明區 */}
-                      <div className="bg-[#fcfbfa] p-5 md:p-6 border-t border-[#eae6d9]">
+                      {/* 延伸說明區 (加入 shrink-0) */}
+                      <div className="bg-[#fcfbfa] p-5 md:p-6 border-t border-[#eae6d9] shrink-0">
                         {!showExplanation ? (
                           <button
                             onClick={() => setShowExplanation(true)}
@@ -343,8 +346,8 @@
 
                     </div>
 
-                    {/* 版權宣告與提示底色 */}
-                    <div className="mt-8 text-center text-[#9c968c] text-xs px-4">
+                    {/* 版權宣告與提示底色 (加入 shrink-0) */}
+                    <div className="mt-8 text-center text-[#9c968c] text-xs px-4 shrink-0">
                       本資料為「久沃商學院 新商業奇點」課程筆記整理，僅供複習與內部分享
                     </div>
 
@@ -360,4 +363,3 @@
     </script>
 </body>
 </html>
-
