@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企業經營與品牌行銷思維</title>
+    <!-- 引入 Tailwind CSS (用於快速排版與美化) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 與 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 以便在瀏覽器中編譯 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* 隱藏滾動條但保留滾動功能，讓畫面更簡潔 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // --- 替換原本的 Lucide Icons 為內聯 SVG，確保單一檔案完美運行 ---
+        const IconChevronLeft = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 18-6-6 6-6"/></svg>;
+        const IconChevronRight = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>;
+        const IconMenu = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
+        const IconX = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+        const IconCheckCircle2 = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
+        const IconLightbulb = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>;
+        const IconBookOpen = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+        const IconTarget = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+        const IconZap = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+        const IconLayoutDashboard = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
+        const IconFlag = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>;
+
+        // === 核心資料：25頁簡報內容 ===
+        const CHAPTERS = [
+          { id: 'intro', title: '開場與導論', icon: <IconBookOpen className="w-5 h-5" /> },
+          { id: 'mindset', title: '經營與主管心法', icon: <IconTarget className="w-5 h-5" /> },
+          { id: 'system', title: '系統與競爭策略', icon: <IconLayoutDashboard className="w-5 h-5" /> },
+          { id: 'brand', title: '品牌與流量佈局', icon: <IconZap className="w-5 h-5" /> },
+          { id: 'price', title: '價格與會員回購', icon: <IconFlag className="w-5 h-5" /> },
+          { id: 'action', title: '總結與落地', icon: <IconCheckCircle2 className="w-5 h-5" /> }
+        ];
+
+        const SLIDES = [
+          {
+            id: 1, chapter: 'intro',
+            title: "企業經營與品牌行銷思維",
+            subtitle: "從主管認知、策略布局到品牌循環的教育式整理",
+            content: [
+              "以課堂筆記為核心整理",
+              "適合教育訓練與內部分享",
+              "主軸包含：認知、系統、品牌、流量、價格、會員、推薦"
+            ],
+            ext: "歡迎來到互動式學習頁面！點擊下方「下一頁」或使用鍵盤左右鍵開始探索。這份教材旨在協助企業內部建立一致的經營語言與品牌認知。"
+          },
+          {
+            id: 2, chapter: 'mindset',
+            title: "建立 CEO 視野，站在更高的位置看企業",
+            content: [
+              "先想才會像，先像才會是。",
+              "建立 CEO 視野，讓自己站在更高的位置看企業。",
+              "危機：危險中的機會。未來隱藏在不說出的野心中。",
+              "機會往往是給準備好接受的人。凡是需要先有給予，才會有回報（成果）。"
+            ],
+            ext: "這一頁要帶出經營者不能只看眼前作業，而要看整體方向、未來可能性與資源配置。真正的主管，不只是處理事情，而是提前看到問題、機會與布局。"
+          },
+          {
+            id: 3, chapter: 'mindset',
+            title: "主管不只是管理，是帶動結果",
+            content: [
+              "勇於主動爭取，做別人想聽的，隨時保持正面態度。",
+              "主管需要有的五大維度：職能、教育、管理、領導、經營。",
+              "強將手下無弱兵，霸王身邊盡豪傑。"
+            ],
+            ext: "主管不是只有「做事能力」，而是能不能把標準、方向與士氣帶起來。從個人表現走到團隊成果，是主管角色最大的轉換。"
+          },
+          {
+            id: 4, chapter: 'mindset',
+            title: "認知決定選擇，選擇決定運氣",
+            content: [
+              "認知 ＝ 知道 ＋ 認同。",
+              "一命二運三風水，四積陰德五讀書。",
+              "運氣是果、選擇是因；選擇是果、認知是因。",
+              "眼界決定心界，心界決定世界。現在由過去累積，而現在創造未來。"
+            ],
+            ext: "很多人以為結果靠運氣，但其實運氣背後是選擇，而選擇背後是認知。當一個人的認知提升，看事情的角度不同，做出的判斷與行動就不同，結果自然會改變。"
+          },
+          {
+            id: 5, chapter: 'mindset',
+            title: "把公司做成有價值的產品",
+            content: [
+              "創業不是只為賺錢，而是讓生命與時間更有價值。",
+              "創業的目的在於把生命贖回來。",
+              "創業的第一天就需要思考「如何把公司賣掉」。",
+              "核心觀念：把公司經營成一個有價值的產品。"
+            ],
+            ext: "這裡的「賣掉」不一定是真的出售，而是用更高標準思考：這家公司是否有制度、品牌、流程、人才與獲利模型，足以被外部認可、複製或接手。"
+          },
+          {
+            id: 6, chapter: 'system',
+            title: "企業內耗循環的形成邏輯",
+            subtitle: "企業為什麼越做越累？",
+            content: [
+              "認知缺陷 → 定位模糊",
+              "定位模糊 → 產品平庸",
+              "產品平庸 → 削價競爭",
+              "削價競爭 → 獲利下降 → 人才流失 → 執行低效 → 親力親為"
+            ],
+            ext: "企業內耗通常不是從執行端開始，而是從認知與定位就出現問題。當定位不清、產品沒有特色，就只能打價格戰；價格戰又會壓縮獲利，最後讓團隊、效率與管理一起失衡。"
+          },
+          {
+            id: 7, chapter: 'system',
+            title: "企業不能只靠人撐：系統化經營方程式",
+            content: [
+              "系統 ＝ 標準 × 流程 × 數據",
+              "進化路徑：被記錄 ＞ 被量化 ＞ 被進化。",
+              "能複製才能被量化，能量化才能被進化。"
+            ],
+            ext: "經營不能只靠經驗、感覺或某一個關鍵人物。當事情被記錄，才能變成資料；當資料被量化，才能持續修正；當修正可累積，企業才會進化。"
+          },
+          {
+            id: 8, chapter: 'system',
+            title: "品質不是成本，而是基本盤 (品管 3Q)",
+            content: [
+              "品管不佳就像是錢包破洞，會持續漏掉信任、效率與利潤。",
+              "【QC 品質控制】：對象為產品/結果。事後發現並篩選瑕疵 (攔住壞東西)。",
+              "【QA 品質保證】：對象為流程/過程。事前預防瑕疵發生 (確保做對的事)。",
+              "【QM 品質管理】：對象為組織/體系。全面性持續改進 (讓公司變得更好)。"
+            ],
+            ext: "真正成熟的企業，不只是事後抓錯，而是把錯誤發生機率降到最低，最後變成一整套組織能力。"
+          },
+          {
+            id: 9, chapter: 'system',
+            title: "經營不是單點能力，而是整體配置",
+            subtitle: "經營五字訣",
+            content: [
+              "道（願景）：公司要往哪裡去",
+              "天（趨勢）：是否看懂時代與市場趨勢",
+              "地（專業）：是否具備專業與落地能力",
+              "將（團隊、人脈）：是否有可用的人才、團隊與協作資源",
+              "法（方法、產品）：是否有可執行的方法、產品與商業模式"
+            ],
+            ext: "企業經營需要面面俱到，檢視這五個面向可以幫助我們找出目前的短板並進行資源配置。"
+          },
+          {
+            id: 10, chapter: 'mindset',
+            title: "為何而戰？長期戰鬥力來自心態進化",
+            content: [
+              "心態進化公式：",
+              "心態進化 ＝ 錢 × 成長 × 意義 × 有趣",
+              "團隊與個人都需要深刻理解「為何而戰」。"
+            ],
+            ext: "單靠薪資很難支撐長期投入。真正能讓人持續成長與投入的，是金錢、成長感、意義感與有趣感同時存在。企業帶團隊，也要思考如何讓成員知道自己為何而戰。"
+          },
+          {
+            id: 11, chapter: 'system',
+            title: "策略不是猜，而是預估與修正",
+            content: [
+              "向前推演：預估銷量、備料、人力。",
+              "向後歸納：未達標如何調整。"
+            ],
+            ext: "策略要同時兼顧兩件事：第一，事前推演，避免資源錯配；第二，事後歸納，從結果反推原因。這樣企業才會越做越準，而不是一直重複犯錯。"
+          },
+          {
+            id: 12, chapter: 'brand',
+            title: "品牌不是名字，是顧客唯一的選擇",
+            content: [
+              "品牌循環：",
+              "定位 → 引流 → 升單 → 會員 → 推薦 → (回到引流)",
+              "終極目標：成為顧客唯一的選擇（品牌辨識）。"
+            ],
+            ext: "品牌不是「有 logo、有名稱」就成立。品牌的核心在於，顧客想到某個需求時，是否第一時間想到你，而且願意反覆回來。"
+          },
+          {
+            id: 13, chapter: 'brand',
+            title: "品牌的關鍵是確定性，確定性越多越無法被取代",
+            content: [
+              "定義競爭對手，創造專屬賽道，尋找市場縫隙。",
+              "確定性方向：價格、品質、制度、時間、品味、頻率。",
+              "信任堆疊 ＝ 形成顧客依賴 ＝ 打造優勢。",
+              "確定性 ＝ 品牌保證。與其更好，不如不同（不用）。"
+            ],
+            ext: "這一頁核心不是「做得比較好」而已，而是讓顧客感覺：只要想到這件事，就知道你比較穩、比較可信、比較不用擔心。這就是確定性帶來的品牌力量。"
+          },
+          {
+            id: 14, chapter: 'system',
+            title: "競爭策略：不是跟所有人一樣",
+            content: [
+              "對標並非成為別人，是找出沒辦法發現的捷徑。",
+              "競爭路線：",
+              "1. 人無我有（成為唯一／第一）",
+              "2. 人有我優（CP值）",
+              "3. 人優我貴（品牌）",
+              "4. 人貴我走（機會成本高，尋找新藍海）"
+            ],
+            ext: "競爭不是只有比價格，還要思考自己該站在哪一層：是做第一個、做更划算、做更有品牌感，還是乾脆離開擁擠賽道，找新的空間。"
+          },
+          {
+            id: 15, chapter: 'system',
+            title: "補短板重要，但做強長板更可能形成護城河",
+            subtitle: "木桶理論 vs 反木桶理論",
+            content: [
+              "木桶理論：一只木桶能裝多少水，取決於最短的那塊木板。",
+              "反木桶理論：把木桶斜著放！",
+              "與其花大量精力補齊所有短處，不如集中火力把強項做到極致。",
+              "目標：形成競爭對手無法超越的護城河。"
+            ],
+            ext: "傳統管理強調補短板，但資源有限時，更需要判斷：什麼短板一定得補，什麼強項值得加碼。有時候，真正的勝負在於能否把強項做到不可取代。"
+          },
+          {
+            id: 16, chapter: 'brand',
+            title: "不吸引即死亡：引流是讓人停下來",
+            content: [
+              "來客不定、客單過低？在資訊爆炸時代，不吸引即死亡。",
+              "文案心法：不明說、引發好奇。停止說明，引導想像。",
+              "流量鉤子公式：場景 × 強烈對比 × 意外結果。",
+              "常見形式：疑問式、對比式、體驗式、承諾式、獨特式。"
+            ],
+            ext: "現在的內容競爭不是資訊不夠，而是注意力太稀缺。因此文案不是把事情講完，而是讓人想繼續看、願意點進來、願意停留。"
+          },
+          {
+            id: 17, chapter: 'brand',
+            title: "流量是經過，存量才是資產",
+            content: [
+              "流量是經過，存量是資產。",
+              "顧客路徑：引流 → 沉澱 (信任) → 轉化 (回購) → 推薦 (再引流)。",
+              "傳播節點：KOL (意見領袖) → KOC (意見消費者) → KOS (意見傳播)。",
+              "AI 時代新戰場：GEO，讓 AI 主動找到你。"
+            ],
+            ext: "曝光不是終點，能不能把流量留下來、累積成信任與回購，才是經營價值。而在 AI 時代，品牌也需要讓自己更容易被 AI 檢索、理解與推薦。"
+          },
+          {
+            id: 18, chapter: 'price',
+            title: "價格訂定的心理學：賣的不是價格，是感知價值",
+            content: [
+              "價格訂定核心：價值感 ＋ 定錨效應。顧客買的是感知的價格。",
+              "價格對比的目的是誘餌，創造「自願選擇」的感覺。",
+              "套餐設計：基礎產品單薄，套餐划算。升級套餐建立定錨點。",
+              "定價心理學：定錨效應、損失規避、羊群效應。"
+            ],
+            ext: "顧客通常不是用絕對價格做判斷，而是看比較、感受與選項設計。好的價格架構，會讓顧客覺得是自己做出聰明選擇。"
+          },
+          {
+            id: 19, chapter: 'price',
+            title: "打造顧客無法拒絕的價格階梯",
+            content: [
+              "低價商品（負責引流）",
+              "主銷商品（負責營收）",
+              "溢價商品（負責提升主銷、品牌質感）",
+              "舉例：鼎泰豐小籠包 5P (140) → 10P (280) → 松露小籠包 5P (250，定錨與質感)。"
+            ],
+            ext: "價格階梯的重點不是賣最便宜，而是讓顧客自然往更高價值的選項移動。每一層商品都應有任務：吸引、成交、拉高質感、推升客單。"
+          },
+          {
+            id: 20, chapter: 'price',
+            title: "會員制度與顧客回流閉環",
+            content: [
+              "回購機制核心：讓消費 ＝ 享受。",
+              "打造顧客回流閉環：定位 → 引流 → 升單 → 會員 → 推薦。",
+              "會員設計要素：集點 (多巴胺獎勵)、階梯式 (身分與綁定)、專屬權益 (損失規避、稀缺性)。",
+              "善用「峰終效應」創造美好回憶。"
+            ],
+            ext: "回購不是偶然，而是設計。只要把顧客回來的理由、身份感、獎勵感與失去感安排好，回購率就會提升。"
+          },
+          {
+            id: 21, chapter: 'price',
+            title: "讓顧客帶顧客：分享與推薦的三大心理",
+            content: [
+              "分享三大心理：社交貨幣、信任機制、損失規避。",
+              "實踐方式：設計「打卡點」，過程「展演化」（如：活體拍照、現場切肉）。",
+              "客人無法推薦 ＝ 無法引流。核心問題出在「確定性不明確」。"
+            ],
+            ext: "顧客願不願意分享，不只看產品好不好，還看這件事值不值得講、方不方便講、講了有沒有面子。推薦要被設計，而不是被期待。"
+          },
+          {
+            id: 22, chapter: 'price',
+            title: "鳥籠效應：創造推薦理由與行動誘因",
+            content: [
+              "好的行銷不是要求分享，而是讓分享變合理。",
+              "行銷應用：發放高價值贈品券，給客人推薦的理由與誘因。",
+              "設計一個「鳥籠」給顧客與其朋友使用（例如：高價值同品項買一送一，限不同人使用）。"
+            ],
+            ext: "鳥籠效應可理解為：先給一個框架，讓顧客更容易產生下一步行動。當優惠本身就設計成適合分享，推薦自然會增加。"
+          },
+          {
+            id: 23, chapter: 'price',
+            title: "產品結構與品牌任務分配",
+            subtitle: "產品不只要賣，還要分工",
+            content: [
+              "引流產品：降低門檻，帶來客流。",
+              "主銷產品：創造穩定營收。",
+              "副銷產品：搭配銷售，提高客單價。",
+              "利潤產品：支撐公司獲利空間。",
+              "形象產品：拉高品牌高度與市場認知。"
+            ],
+            ext: "每一種商品不一定都要扛獲利。重點是整體組合分工，而不是將單一品項孤立看待。"
+          },
+          {
+            id: 24, chapter: 'action',
+            title: "從認知到落地的三個方向",
+            content: [
+              "1. 找出「確定性」（顧客為何相信你）",
+              "2. 搭建「行銷矩陣」（你如何持續被看見）",
+              "3. 創造「一句話」文案（你如何用一句話讓人記住你）"
+            ],
+            ext: "這是整份教材的行動收束。所有經營與行銷的偉大概念，最後都要踏實落地到這三件事上，形成可執行的方案。"
+          },
+          {
+            id: 25, chapter: 'action',
+            title: "企業成長，不只是做更多，而是做得更準",
+            subtitle: "結語與反思",
+            content: [
+              "認知高，選擇才會更準。",
+              "有系統，執行才不會失控。",
+              "有品牌，競爭才不只剩價格。",
+              "有設計，流量才能沉澱成資產。",
+              "有機制，顧客才會回購與推薦。"
+            ],
+            ext: "真正的經營，不是拼命做事，而是把視野、系統、品牌與顧客路徑，做成可持續放大的模型。"
+          }
+        ];
+
+        function App() {
+          const [currentIndex, setCurrentIndex] = useState(0);
+          const [showExplanation, setShowExplanation] = useState(false);
+          const [sidebarOpen, setSidebarOpen] = useState(false);
+
+          const currentSlide = SLIDES[currentIndex];
+
+          const handleKeyDown = useCallback((e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+              e.preventDefault();
+              nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              prevSlide();
+            }
+          }, [currentIndex]);
+
+          useEffect(() => {
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+          }, [handleKeyDown]);
+
+          const nextSlide = () => {
+            if (currentIndex < SLIDES.length - 1) {
+              setCurrentIndex(prev => prev + 1);
+              setShowExplanation(false);
+            }
+          };
+
+          const prevSlide = () => {
+            if (currentIndex > 0) {
+              setCurrentIndex(prev => prev - 1);
+              setShowExplanation(false);
+            }
+          };
+
+          const goToSlide = (index) => {
+            setCurrentIndex(index);
+            setShowExplanation(false);
+            setSidebarOpen(false);
+          };
+
+          const progress = ((currentIndex + 1) / SLIDES.length) * 100;
+
+          return (
+            <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
+              
+              {sidebarOpen && (
+                <div 
+                  className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                />
+              )}
+
+              <aside className={`fixed lg:static inset-y-0 left-0 w-72 bg-slate-900 text-slate-300 z-50 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} flex flex-col shadow-2xl`}>
+                <div className="p-6 bg-slate-950 flex justify-between items-center">
+                  <h1 className="text-xl font-bold text-white tracking-wider">經營行銷思維</h1>
+                  <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
+                    <IconX className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                  {CHAPTERS.map(chapter => {
+                    const chapterSlides = SLIDES.filter(s => s.chapter === chapter.id);
+                    if (chapterSlides.length === 0) return null;
+                    const isCurrentChapter = currentSlide.chapter === chapter.id;
+
+                    return (
+                      <div key={chapter.id} className="space-y-2">
+                        <div className={`flex items-center gap-2 font-semibold ${isCurrentChapter ? 'text-amber-400' : 'text-slate-400'}`}>
+                          {chapter.icon}
+                          <span>{chapter.title}</span>
+                        </div>
+                        <div className="pl-6 space-y-1">
+                          {chapterSlides.map(slide => {
+                            const idx = SLIDES.findIndex(s => s.id === slide.id);
+                            const isActive = currentIndex === idx;
+                            return (
+                              <button
+                                key={slide.id}
+                                onClick={() => goToSlide(idx)}
+                                className={`w-full text-left text-sm py-1.5 px-3 rounded-lg transition-colors ${
+                                  isActive 
+                                    ? 'bg-amber-500/10 text-amber-300 font-medium' 
+                                    : 'hover:bg-slate-800 hover:text-white'
+                                }`}
+                              >
+                                {slide.id}. {slide.title.length > 15 ? slide.title.substring(0, 15) + '...' : slide.title}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <div className="p-4 bg-slate-950 text-xs text-slate-500 text-center">
+                  互動式教育講義系統
+                </div>
+              </aside>
+
+              <main className="flex-1 flex flex-col relative w-full h-full overflow-hidden">
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setSidebarOpen(true)}
+                      className="p-2 lg:hidden text-slate-600 hover:bg-slate-100 rounded-lg"
+                    >
+                      <IconMenu className="w-6 h-6" />
+                    </button>
+                    <div className="hidden sm:block text-sm font-medium text-slate-500">
+                      第 {currentIndex + 1} 頁 / 共 {SLIDES.length} 頁
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={prevSlide}
+                      disabled={currentIndex === 0}
+                      className="p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-colors"
+                    >
+                      <IconChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button 
+                      onClick={nextSlide}
+                      disabled={currentIndex === SLIDES.length - 1}
+                      className="p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-colors"
+                    >
+                      <IconChevronRight className="w-6 h-6" />
+                    </button>
+                  </div>
+                </header>
+
+                <div className="h-1 w-full bg-slate-100 shrink-0">
+                  <div 
+                    className="h-full bg-amber-500 transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center justify-start pb-24">
+                  <div className="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[60vh] flex flex-col transition-all duration-500">
+                    
+                    <div className="bg-slate-900 text-white p-8 md:p-12 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 opacity-10">
+                        <IconTarget className="w-32 h-32" />
+                      </div>
+                      <div className="relative z-10">
+                        <div className="inline-block px-3 py-1 bg-amber-500/20 text-amber-300 text-sm font-semibold rounded-full mb-4 border border-amber-500/30">
+                          {CHAPTERS.find(c => c.id === currentSlide.chapter)?.title}
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-bold leading-tight mb-2">
+                          {currentSlide.title}
+                        </h2>
+                        {currentSlide.subtitle && (
+                          <p className="text-xl text-slate-300 mt-2">
+                            {currentSlide.subtitle}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-8 md:p-12 flex-1 flex flex-col justify-center bg-white">
+                      <ul className="space-y-6 text-lg md:text-xl text-slate-700 font-medium">
+                        {currentSlide.content.map((point, i) => (
+                          <li key={i} className="flex items-start gap-4">
+                            <IconCheckCircle2 className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
+                            <span className="leading-relaxed">{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="border-t border-slate-100 bg-slate-50 p-6 md:p-8">
+                      {!showExplanation ? (
+                        <button
+                          onClick={() => setShowExplanation(true)}
+                          className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50 transition-all font-medium"
+                        >
+                          <IconLightbulb className="w-5 h-5" />
+                          <span>點擊查看延伸說明</span>
+                        </button>
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-slate-800 transition-all duration-300">
+                          <div className="flex items-center gap-2 mb-3 text-amber-700 font-bold">
+                            <IconLightbulb className="w-5 h-5" />
+                            <span>延伸說明</span>
+                          </div>
+                          <p className="leading-relaxed text-lg text-slate-700">
+                            {currentSlide.ext}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+
+                  <div className="mt-8 text-slate-400 text-sm flex items-center gap-2">
+                    <span>💡 提示：可使用鍵盤</span>
+                    <kbd className="px-2 py-1 bg-white border border-slate-200 rounded shadow-sm text-xs">←</kbd>
+                    <kbd className="px-2 py-1 bg-white border border-slate-200 rounded shadow-sm text-xs">→</kbd>
+                    <span>切換頁面</span>
+                  </div>
+
+                </div>
+              </main>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
