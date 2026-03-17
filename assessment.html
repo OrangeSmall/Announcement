@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>平凡五金行｜門市處三級職員考核表</title>
+  <style>
+    :root{
+      --bg:#f5f1eb;
+      --paper:#fffdf9;
+      --line:#b9aca0;
+      --line-deep:#8e7e71;
+      --text:#2f2a26;
+      --muted:#6d6259;
+      --tea:#d8c1a6;
+      --wine:#8a5a5a;
+      --dark:#4a4340;
+      --head:#efe5da;
+      --sub:#f7f2ec;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#f3eee7 0%, #ebe3d9 100%);
+      color:var(--text);
+      font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      line-height:1.55;
+    }
+    .wrap{
+      max-width:1500px;
+      margin:0 auto;
+      padding:24px 18px 40px;
+    }
+    .sheet{
+      background:var(--paper);
+      border:1.5px solid var(--line-deep);
+      box-shadow:0 10px 28px rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+    .header{
+      padding:18px 20px 12px;
+      border-bottom:1.5px solid var(--line-deep);
+      background:linear-gradient(180deg,#fbf8f4 0%, #f3ebe2 100%);
+    }
+    .title{
+      text-align:center;
+      font-weight:800;
+      letter-spacing:.08em;
+      font-size:28px;
+      color:var(--dark);
+      margin:0 0 6px;
+    }
+    .subtitle{
+      text-align:center;
+      font-size:14px;
+      color:var(--muted);
+      margin:0;
+    }
+    .note{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .table-wrap{
+      overflow:auto;
+      background:var(--paper);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1380px;
+      table-layout:fixed;
+    }
+    th,td{
+      border:1px solid var(--line);
+      padding:10px 10px;
+      vertical-align:top;
+      word-break:break-word;
+    }
+    thead th{
+      background:var(--head);
+      text-align:center;
+      font-weight:800;
+      color:var(--dark);
+      font-size:15px;
+    }
+    tbody td{
+      font-size:14px;
+    }
+    .num{width:52px;text-align:center;font-weight:700;background:var(--sub)}
+    .item{width:180px;font-weight:800;text-align:center;font-size:16px}
+    .done{width:330px}
+    .result{width:290px}
+    .time{width:130px;text-align:center;font-weight:700}
+    .eval{width:300px}
+    .status{width:140px;text-align:center}
+    .status-box{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:14px;
+      min-height:100%;
+      padding-top:8px;
+    }
+    .check{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      white-space:nowrap;
+      font-size:13px;
+      color:var(--dark);
+    }
+    .box{
+      width:16px;height:16px;border:1.5px solid var(--dark);display:inline-block;
+    }
+    .section{
+      padding:14px 18px 20px;
+      border-top:1px solid var(--line);
+      background:#fcfaf7;
+    }
+    .section h2{
+      margin:0 0 8px;
+      font-size:17px;
+      color:var(--dark);
+    }
+    .section ul{
+      margin:0;
+      padding-left:20px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    @media print{
+      body{background:#fff}
+      .wrap{padding:0}
+      .sheet{box-shadow:none;border:none}
+      .section{page-break-inside:avoid}
+    }
+    @media (max-width:900px){
+      .title{font-size:22px}
+      .subtitle{font-size:13px}
+      th,td{padding:8px}
+      tbody td{font-size:13px}
+      .item{font-size:15px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="sheet">
+      <div class="header">
+        <h1 class="title">平凡五金行 門市處｜三級職員考核表</h1>
+        <p class="subtitle">依二級職員與一級副店長考核邏輯延伸版本｜目前討論使用</p>
+        <div class="note">
+          <span>考核定位：可獨立執行、能帶動現場、能初步承接店務與教育任務</span>
+          <span>版本：初稿 v1</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">編號</th>
+              <th class="item">項目</th>
+              <th class="done">完成品</th>
+              <th class="result">成品結果與數量</th>
+              <th class="time">操作時限</th>
+              <th class="eval">評核重點（主管依標準進行評核）</th>
+              <th class="status">考核結果</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num">1</td>
+              <td class="item">現場引導與工作分配能力</td>
+              <td class="done">能依當日人力、時段與現場狀況，安排夥伴執行基礎工作分配，明確交辦優先順序，並能於尖峰與假日時段維持現場動線與節奏。</td>
+              <td class="result">經主管確認，可獨立完成一個時段之基礎工作分配、口頭交辦與現場引導。</td>
+              <td class="time">五個工作天<br>（含兩天假日）</td>
+              <td class="eval">分配是否清楚、順序是否合理、是否能依現場即時調整，不混亂、不遺漏，並能主動引導夥伴執行。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">2</td>
+              <td class="item">新人基礎帶教能力</td>
+              <td class="done">能整理並擬訂一份指定基礎工作之教學內容，說明標準流程、注意事項與常見錯誤，供新人或內部教學使用。</td>
+              <td class="result">擬訂一份教學內容，經主管確認內容正確、邏輯完整且符合公司版本。</td>
+              <td class="time">三天</td>
+              <td class="eval">內容是否清楚、是否符合公司版本、步驟是否完整、是否具備實際教學與交接使用價值。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">3</td>
+              <td class="item">商品陳列與賣場整體維護</td>
+              <td class="done">能主動巡視賣場排面、補貨、價卡、整潔與陳列完整性，維持門市基本賣場品質。</td>
+              <td class="result">經主管確認，可獨立完成指定區域巡場、陳列調整、補貨與修正作業。</td>
+              <td class="time">月初五個工作天</td>
+              <td class="eval">是否主動發現問題、陳列是否整齊、價卡是否正確、區域是否有基本美感與可售性。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">4</td>
+              <td class="item">檔期活動執行熟悉度</td>
+              <td class="done">能理解並正確執行當期活動內容，包含活動話術、適用品項、折扣方式與提醒事項。</td>
+              <td class="result">抽測三項活動內容皆可正確說明，並可對應現場執行方式。</td>
+              <td class="time">五分鐘</td>
+              <td class="eval">是否理解活動內容、是否會誤導客人、是否能正確搭配商品與結帳提醒。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">5</td>
+              <td class="item">組合銷售與加購引導能力</td>
+              <td class="done">能依顧客需求進行商品搭配、加購推薦與延伸銷售，提高客單與購買完整度。</td>
+              <td class="result">經主管確認，完成三組不同情境之銷售推薦話術。</td>
+              <td class="time">一天</td>
+              <td class="eval">推薦是否自然、是否符合需求、不強迫推銷、是否能提升整體購買合理性。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">6</td>
+              <td class="item">顧客問題處理與初步應對</td>
+              <td class="done">能面對現場一般客訴、疑問、臨時狀況，先做正確安撫與初步處理，必要時上報主管。</td>
+              <td class="result">完成三類情境模擬應對，主管確認判斷方向正確。</td>
+              <td class="time">一天</td>
+              <td class="eval">是否先穩定顧客情緒、是否不亂承諾、是否懂得區分可處理與需上報事項。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">7</td>
+              <td class="item">冷凍冷藏與效期管理能力</td>
+              <td class="done">能管理指定區域商品效期、先進先出、異常品回報與短效品處理建議，並配合盤點前整理。</td>
+              <td class="result">完成指定區域效期巡檢、短效整理回報與盤點前商品狀態確認一次。</td>
+              <td class="time">含盤點日前五天</td>
+              <td class="eval">是否有短效意識、資訊是否正確、是否有主動回報與明確處置建議、盤點前整理是否落實。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">8</td>
+              <td class="item">訂單備貨與出貨複核能力</td>
+              <td class="done">能依訂單內容完成撿貨、複核、包裝、附單與交接，並處理缺貨進調貨相關回報與後續安排。</td>
+              <td class="result">完成五筆訂單複核與包裝，無錯包、漏包、品項錯誤，並能說明缺貨進調貨處理流程。</td>
+              <td class="time">兩天</td>
+              <td class="eval">是否依單作業、是否懂得複核、標示是否完整、交接是否清楚，缺貨進調貨處理是否正確。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">9</td>
+              <td class="item">結帳異常與金流風險意識</td>
+              <td class="done">能處理一般結帳異常情境，了解折扣、退款、補差額、作廢等基本判斷與上報原則，並可獨立結總帳。</td>
+              <td class="result">完成三類收銀異常情境測試，流程與判斷正確，並經主管確認可獨立完成一次總帳結算。</td>
+              <td class="time">五天</td>
+              <td class="eval">是否依流程、不私自處理、不跳步驟、對金流風險是否有基本敏感度，總帳結算是否正確完整。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">10</td>
+              <td class="item">現場優先順序判斷能力</td>
+              <td class="done">能依人流、訂單、補貨、出餐、顧客需求等狀況，判斷當下工作先後順序。</td>
+              <td class="result">完成三類現場情境排序測驗，主管確認判斷合理。</td>
+              <td class="time">五分鐘內</td>
+              <td class="eval">是否能分辨輕重緩急、是否具備現場觀念、不只做自己手邊工作。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">11</td>
+              <td class="item">日常回報與交接完整性</td>
+              <td class="done">能將當班異常、缺貨、短效、客訴、未完成事項進行完整交接與回報。</td>
+              <td class="result">完成三次完整交接紀錄，內容明確可追蹤。</td>
+              <td class="time">五個工作天</td>
+              <td class="eval">是否回報具體、不模糊、可追蹤、不遺漏重點，交接是否具備後續執行性。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+            <tr>
+              <td class="num">12</td>
+              <td class="item">代班主責與基本店務承接能力</td>
+              <td class="done">能在主管短暫不在場時，承接現場主責，維持店務運作與問題回報。</td>
+              <td class="result">經主管確認，可獨立支撐一個指定時段之現場運作。</td>
+              <td class="time">五個工作天</td>
+              <td class="eval">是否穩定、是否敢於承接、是否有基本判斷與回報能力，不慌亂、不失序。</td>
+              <td class="status"><div class="status-box"><span class="check"><span class="box"></span>通過</span><span class="check"><span class="box"></span>未通過</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>備註建議</h2>
+        <ul>
+          <li>此版本以「三級職員＝可獨立執行＋可初步帶人＋可承接部分店務」為核心設定。</li>
+          <li>工作日主要依照該月活動日程與主管時間安排。</li>
+          <li>考核項目較廣泛，安排日程約為一個月。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
