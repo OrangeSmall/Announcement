@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>平凡五金行｜母親節・兒童節活動企劃整合版</title>
+  <style>
+    :root{
+      --bg:#f6f2ed;
+      --paper:#fffdfb;
+      --card:#ffffff;
+      --ink:#242424;
+      --muted:#6b6b6b;
+      --line:#e8ddd3;
+      --tea:#c9b19d;
+      --rose:#9a5b5b;
+      --rose-2:#b87474;
+      --soft:#fdf5f2;
+      --soft-2:#faf6f1;
+      --ok:#2f6e50;
+      --warn:#9b6a15;
+      --shadow:0 14px 32px rgba(45,35,25,.08);
+      --radius:20px;
+      --max:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(184,116,116,.10) 0%, transparent 28%),
+        radial-gradient(circle at left 20%, rgba(201,177,157,.08) 0%, transparent 22%),
+        linear-gradient(180deg, #f8f5f1 0%, #f3efe9 100%);
+      line-height:1.72;
+    }
+    .wrap{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:22px 16px 48px;
+    }
+    .hero{
+      background:linear-gradient(135deg, #fffaf7 0%, #fff2ef 100%);
+      border:1px solid #efd7cf;
+      border-radius:28px;
+      padding:28px 24px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:220px;height:220px;
+      right:-70px;top:-70px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(184,116,116,.20) 0%, rgba(184,116,116,0) 68%);
+    }
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid #efd9d4;
+      padding:7px 12px;
+      border-radius:999px;
+      background:#fff;
+      color:var(--rose);
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.04em;
+    }
+    h1{
+      margin:14px 0 10px;
+      font-size:clamp(30px, 5vw, 46px);
+      line-height:1.18;
+    }
+    .lead{
+      margin:0;
+      max-width:920px;
+      color:#5f6670;
+      font-size:16px;
+    }
+    .nav{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:18px;
+    }
+    .nav a{
+      text-decoration:none;
+      color:#7b4a4a;
+      background:#fff;
+      border:1px solid #edd8d4;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:14px;
+      font-weight:700;
+    }
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    @media (max-width:960px){
+      .grid-2,.grid-4{grid-template-columns:1fr}
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:20px 18px;
+    }
+    .campaign{
+      margin-top:18px;
+      scroll-margin-top:20px;
+    }
+    .campaign-head{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-end;
+      margin-bottom:14px;
+    }
+    .campaign-title{
+      margin:0;
+      font-size:28px;
+      line-height:1.2;
+    }
+    .campaign-sub{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:15px;
+    }
+    .badge-row{
+      display:flex;flex-wrap:wrap;gap:8px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid #ecd6cf;
+      background:#fff6f4;
+      color:#8a5050;
+    }
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0 0 12px;
+      font-size:20px;
+    }
+    .dot{
+      width:12px;height:12px;border-radius:999px;background:var(--rose);
+      flex:0 0 auto;
+    }
+    .kpi{
+      border:1px solid #ecdcd2;
+      border-radius:16px;
+      background:linear-gradient(180deg,#fff,#fff9f8);
+      padding:16px 14px;
+    }
+    .kpi .label{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .kpi .value{
+      font-size:22px;
+      font-weight:900;
+      color:#8d4f4f;
+      line-height:1.2;
+    }
+    ul.clean{
+      margin:8px 0 0;
+      padding-left:1.15em;
+    }
+    ul.clean li{margin:6px 0}
+    .note{
+      background:var(--soft);
+      border:1px dashed #e4bdb5;
+      border-radius:14px;
+      padding:14px;
+      color:#7a4c4c;
+      font-size:14px;
+    }
+    .steps{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+    }
+    @media (max-width:960px){
+      .steps{grid-template-columns:1fr}
+    }
+    .step{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:linear-gradient(180deg,#fff,#fffaf8);
+      padding:16px 14px;
+    }
+    .step-num{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:32px;height:32px;
+      border-radius:999px;
+      background:var(--rose);
+      color:#fff;
+      font-weight:900;
+      font-size:14px;
+      margin-bottom:10px;
+    }
+    .step h4{
+      margin:0 0 8px;
+      font-size:16px;
+    }
+    .step p{
+      margin:0;
+      color:#5f6670;
+      font-size:14px;
+    }
+    .timeline{
+      position:relative;
+      padding-left:18px;
+    }
+    .timeline::before{
+      content:"";
+      position:absolute;
+      left:4px;top:8px;bottom:8px;
+      width:2px;background:#ead8cf;
+    }
+    .time-item{
+      position:relative;
+      margin:0 0 14px;
+      padding-left:14px;
+    }
+    .time-item::before{
+      content:"";
+      position:absolute;
+      left:-2px;top:7px;
+      width:12px;height:12px;border-radius:999px;
+      background:var(--rose);
+    }
+    .time-item strong{display:block}
+    .table-wrap{
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+    }
+    table{
+      width:100%;
+      min-width:760px;
+      border-collapse:collapse;
+    }
+    th,td{
+      border-bottom:1px solid var(--line);
+      padding:12px;
+      text-align:left;
+      vertical-align:top;
+      font-size:14px;
+    }
+    th{
+      background:#faf5f2;
+      color:#7c4b4b;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    tr:last-child td{border-bottom:none}
+    .status{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .pending{background:#fff3db;border:1px solid #ecd7a7;color:#8b6212}
+    .doing{background:#eaf4ff;border:1px solid #bfd7f0;color:#215a8f}
+    .summary{
+      margin-top:18px;
+      background:linear-gradient(135deg,#fffaf8 0%,#fff3f0 100%);
+      border:1px solid #efd9d2;
+      border-radius:22px;
+      padding:22px 18px;
+      box-shadow:var(--shadow);
+    }
+    .footer{
+      margin-top:20px;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+    @media print{
+      body{background:#fff}
+      .wrap{max-width:none;padding:0}
+      .hero,.card,.summary{box-shadow:none}
+      a{text-decoration:none;color:inherit}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">活動企劃整合版・便於後續微調</div>
+      <h1>母親節 × 兒童節<br>雙檔活動企劃整合 HTML</h1>
+      <p class="lead">
+        本版將兩檔活動統一整理成可快速檢視的企劃頁面，方便後續補規則、調整文案、交給主管檢視，
+        也可作為後續延伸成海報文案、券面內容、現場 SOP 與社群貼文的基底。
+      </p>
+      <div class="nav">
+        <a href="#mothers-day">母親節活動</a>
+        <a href="#childrens-day">兒童節活動</a>
+        <a href="#shared-todo">共通待辦整理</a>
+      </div>
+    </section>
+
+    <section id="mothers-day" class="campaign">
+      <div class="campaign-head">
+        <div>
+          <h2 class="campaign-title">母親節活動企劃</h2>
+          <p class="campaign-sub">主軸：帶媽媽來店用餐，創造節慶感、來店誘因與二次回流</p>
+        </div>
+        <div class="badge-row">
+          <span class="badge">聚餐主題</span>
+          <span class="badge">回流設計</span>
+          <span class="badge">康乃馨贈禮</span>
+          <span class="badge">活體免代料費</span>
+        </div>
+      </div>
+
+      <div class="grid grid-4">
+        <div class="kpi">
+          <div class="label">活動定位</div>
+          <div class="value">母親節聚餐禮遇</div>
+        </div>
+        <div class="kpi">
+          <div class="label">當日亮點</div>
+          <div class="value">打卡＋送花</div>
+        </div>
+        <div class="kpi">
+          <div class="label">回流設計</div>
+          <div class="value">下次免費招待</div>
+        </div>
+        <div class="kpi">
+          <div class="label">補充條件</div>
+          <div class="value">滿 999 贈康乃馨</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:16px;">
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>一、活動目的</h3>
+          <ul class="clean">
+            <li>以母親節聚餐情境創造「帶媽媽來吃一餐」的節日理由。</li>
+            <li>透過指定排餐贈券，把一次來店延伸成第二次回流消費。</li>
+            <li>結合打卡拍照、康乃馨造花與現場儀式感，提升活動記憶點。</li>
+            <li>用「媽媽同行享活體免代料費」作為高感知優惠，增加吸引力。</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>二、容易看懂的活動內容</h3>
+          <ul class="clean">
+            <li><strong>當日禮：</strong>媽媽同行來店用餐，可享節慶互動與指定優惠。</li>
+            <li><strong>打卡互動：</strong>現場設置打卡牆 / 拍照區，增加分享感。</li>
+            <li><strong>贈花條件：</strong>門市消費滿 <strong>999 元</strong>，即贈康乃馨造花一朵。</li>
+            <li><strong>活體優惠：</strong>媽媽同行可享活體免代料費。</li>
+            <li><strong>回流禮：</strong>活動當天購買指定排餐品項，即贈下次免費招待券。</li>
+            <li><strong>招待內容：</strong>改日持券回店並完成消費，可免費招待一片牛排或指定牛肉品項。</li>
+          </ul>
+          <div class="note" style="margin-top:14px;">
+            建議對外訊息分成「今天來有什麼」與「下次回來有什麼」兩段說法，
+            顧客會比較不容易誤解成當天馬上再送一份。
+          </div>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top:16px;">
+        <h3 class="section-title"><span class="dot"></span>三、建議活動流程</h3>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">01</div>
+            <h4>媽媽同行來店</h4>
+            <p>門市引導顧客感受母親節聚餐氛圍，提醒現場活動內容。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <h4>當日消費享禮遇</h4>
+            <p>滿 999 元贈康乃馨造花一朵；媽媽同行可享活體免代料費。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">03</div>
+            <h4>購買指定排餐送券</h4>
+            <p>和牛 / 美牛 / 豬排等指定品項可獲得免費招待券。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">04</div>
+            <h4>下次持券回店</h4>
+            <p>改日持券來店並完成消費，即可兌換指定牛肉招待品項。</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid-2" style="margin-top:16px;">
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>四、建議執行方向</h3>
+          <ul class="clean">
+            <li>主視覺與文案先講三件事：帶媽媽來用餐、滿 999 送康乃馨、指定排餐送回流券。</li>
+            <li>免費券規則建議明確寫清楚：<strong>下次使用、每次限用一張、不得與其他優惠併用</strong>。</li>
+            <li>免費招待品項名稱建議誠實表述，可用「指定牛肉品項」避免期待落差。</li>
+            <li>活體免代料費必須先定義適用品項、是否限內用、單桌限用份數與是否限媽媽同行。</li>
+            <li>打卡區建議以好拍、易執行為主，不一定要大型背板。</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>五、可能遇到的問題</h3>
+          <ul class="clean">
+            <li>顧客誤以為當天購買指定排餐可立即再免費吃一份。</li>
+            <li>康乃馨贈送條件若未明寫，容易出現「媽媽同行就有嗎？」的認知落差。</li>
+            <li>活體免代料費若無邊界，現場容易被問是否所有活體都適用。</li>
+            <li>同桌集中使用多張兌換券，可能影響毛利。</li>
+            <li>現場夥伴說法不一致，最容易造成客訴。</li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top:16px;">
+        <h3 class="section-title"><span class="dot"></span>六、母親節待辦準備事項</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:18%;">項目類別</th>
+                <th style="width:28%;">待辦事項</th>
+                <th>說明</th>
+                <th style="width:12%;">狀態</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>活動機制</td>
+                <td>確認活動檔期</td>
+                <td>確認正式檔期、平假日與午晚餐是否同規則。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>活動機制</td>
+                <td>確認指定排餐品項</td>
+                <td>和牛 / 美牛 / 豬排哪些品項適用贈券。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>贈花規則</td>
+                <td>確認康乃馨贈送方式</td>
+                <td>以「門市消費滿 999 元贈康乃馨造花一朵」為基準，需確認是否每筆限贈一朵、送完為止。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>活體優惠</td>
+                <td>定義活體免代料費範圍</td>
+                <td>需確認適用品項、內用限制、單桌上限與媽媽同行判定。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>券面設計</td>
+                <td>免費招待券設計</td>
+                <td>券面要含使用方式、期限、限制條件，建議加入編號或蓋章欄位。</td>
+                <td><span class="status doing">規劃中</span></td>
+              </tr>
+              <tr>
+                <td>現場互動</td>
+                <td>打卡牆 / 打卡區規劃</td>
+                <td>確認主題、位置、拍照元素與導引方式。</td>
+                <td><span class="status doing">規劃中</span></td>
+              </tr>
+              <tr>
+                <td>教育訓練</td>
+                <td>門市話術與結帳判定</td>
+                <td>統一活動說法與發券、贈花、優惠判定流程。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="childrens-day" class="campaign">
+      <div class="campaign-head">
+        <div>
+          <h2 class="campaign-title">兒童節活動企劃</h2>
+          <p class="campaign-sub">主軸：龍蝦著色互動，結合親子參與、門市收件、社群投票與五月回流兌換</p>
+        </div>
+        <div class="badge-row">
+          <span class="badge">親子互動</span>
+          <span class="badge">著色投稿</span>
+          <span class="badge">FB 投票</span>
+          <span class="badge">五月回流獎勵</span>
+        </div>
+      </div>
+
+      <div class="grid grid-4">
+        <div class="kpi">
+          <div class="label">活動形式</div>
+          <div class="value">龍蝦著色比賽</div>
+        </div>
+        <div class="kpi">
+          <div class="label">參與方式</div>
+          <div class="value">消費拿線稿</div>
+        </div>
+        <div class="kpi">
+          <div class="label">互動機制</div>
+          <div class="value">FB 按讚投票</div>
+        </div>
+        <div class="kpi">
+          <div class="label">第一名獎勵</div>
+          <div class="value">五月免費龍蝦</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:16px;">
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>一、活動目的</h3>
+          <ul class="clean">
+            <li>以兒童節著色活動吸引親子家庭來店互動。</li>
+            <li>讓孩子把活動帶回家完成，增加參與感與家庭討論度。</li>
+            <li>透過門市收件與 Facebook 投票延續活動聲量。</li>
+            <li>用五月獎項兌換設計回流，讓活動不只停留在當下。</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>二、容易看懂的活動內容</h3>
+          <ul class="clean">
+            <li>來店消費即可領取一張<strong>黑白龍蝦線稿</strong>。</li>
+            <li>帶回家自由上色，於指定期限內完成後交回門市。</li>
+            <li>門市統一將作品上傳至 Facebook，開放按讚投票。</li>
+            <li>票選前幾名可獲得獎勵，第一名可於五月回店兌換免費龍蝦招待。</li>
+          </ul>
+          <div class="note" style="margin-top:14px;">
+            活動重點建議拆成四句：<strong>消費拿線稿 → 帶回家上色 → 四月中前交件 → 四月底投票，五月得獎兌換</strong>。
+          </div>
+        </section>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:16px;">
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>三、初步時程規劃</h3>
+          <div class="timeline">
+            <div class="time-item">
+              <strong>活動開始後</strong>
+              來店消費可領取龍蝦著色線稿。
+            </div>
+            <div class="time-item">
+              <strong>四月中前</strong>
+              收件截止，作品需完成並交回門市。
+            </div>
+            <div class="time-item">
+              <strong>四月中～四月底</strong>
+              Facebook 開放按讚投票。
+            </div>
+            <div class="time-item">
+              <strong>五月</strong>
+              公布名次並開放得獎者回店兌換獎項。
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>四、建議執行方向</h3>
+          <ul class="clean">
+            <li>活動定位建議以<strong>兒童節親子來店互動</strong>為主，避免完全變成大人參賽活動。</li>
+            <li>線稿設計不要太難，需可愛、清楚、容易上色，讓參與率提高。</li>
+            <li>作品建議加上編號、姓名 / 暱稱、聯絡方式欄位，便於收件管理。</li>
+            <li>若只用按讚數投票，需接受其較偏向人氣競賽的特性。</li>
+            <li>若想降低爭議，可考慮「按讚數＋門市評選」綜合制。</li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:16px;">
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>五、可能遇到的問題</h3>
+          <ul class="clean">
+            <li>顧客會問多少消費可以拿一張、每筆可拿幾張、是否限兒童。</li>
+            <li>收件若未編號，後續容易找不到作品對應資料。</li>
+            <li>Facebook 按讚投票最容易遇到公平性爭議與灌票疑慮。</li>
+            <li>第一名免費龍蝦若不寫清楚，得獎者對規格與使用方式可能期待過高。</li>
+            <li>作品上傳時需避免公開完整個資，建議用名字簡稱或暱稱。</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3 class="section-title"><span class="dot"></span>六、獎項與規則建議</h3>
+          <ul class="clean">
+            <li>第一名：五月可回店兌換<strong>指定龍蝦招待</strong>。</li>
+            <li>前幾名：可另外規劃較小型獎勵，如折價、招待品、加碼小禮。</li>
+            <li>第一名龍蝦招待建議先定義：限內用、是否需預約、是否需搭配消費、使用期限。</li>
+            <li>投票規則需清楚寫明：截止時間、計算方式、如遇異常互動主辦保留調整權利。</li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top:16px;">
+        <h3 class="section-title"><span class="dot"></span>七、兒童節待辦準備事項</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:18%;">項目類別</th>
+                <th style="width:28%;">待辦事項</th>
+                <th>說明</th>
+                <th style="width:12%;">狀態</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>活動機制</td>
+                <td>確認發放條件</td>
+                <td>需確認是否「來店消費即可領取」或需設定消費門檻，以及每筆可領幾張。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>活動定位</td>
+                <td>確認參賽資格</td>
+                <td>是否限兒童參加、是否以親子家庭為主、每人是否限投稿一件。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>素材物料</td>
+                <td>製作黑白龍蝦線稿</td>
+                <td>需設計成清楚、可愛、適合上色的黑白線稿版型。</td>
+                <td><span class="status doing">規劃中</span></td>
+              </tr>
+              <tr>
+                <td>印刷物料</td>
+                <td>印製線稿與填寫欄位</td>
+                <td>建議加入作品編號、姓名 / 暱稱、年齡、聯絡方式欄位。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>收件管理</td>
+                <td>建立交件流程</td>
+                <td>需確認收件截止日、保管方式、拍照 / 掃描上傳流程。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>社群執行</td>
+                <td>確認 Facebook 投票形式</td>
+                <td>是一篇總投票貼文還是每張作品單獨貼文，並確認按讚計算方式。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>獎項規則</td>
+                <td>定義五月龍蝦招待內容</td>
+                <td>需確認是否為指定規格、限內用、是否需預約、是否需搭配消費。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+              <tr>
+                <td>對外公告</td>
+                <td>活動規則與投票說明</td>
+                <td>需寫明交件期限、投票截止時間、公布方式與主辦保留調整權利。</td>
+                <td><span class="status pending">待確認</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="shared-todo" class="summary">
+      <h3 class="section-title"><span class="dot"></span>兩檔活動共通建議整理</h3>
+      <div class="grid grid-2">
+        <div class="card" style="box-shadow:none;">
+          <ul class="clean">
+            <li><strong>先確認規則，再做文宣：</strong>先把檔期、門檻、獎項、限制條件定義清楚，文案才不會反覆修改。</li>
+            <li><strong>門市話術要一致：</strong>海報、貼文、券面、現場夥伴說法需同步。</li>
+            <li><strong>高吸引力優惠一定要有邊界：</strong>免費牛排、免費龍蝦、免代料費都需寫清楚使用方式。</li>
+            <li><strong>社群活動要先想到公平性：</strong>尤其投票型活動，需有截止時間與異常互動處理原則。</li>
+          </ul>
+        </div>
+        <div class="card" style="box-shadow:none;">
+          <ul class="clean">
+            <li><strong>物料應提早處理：</strong>康乃馨、線稿、收件表、說明牌、兌換券都需要預留製作時間。</li>
+            <li><strong>成效記錄可一起規劃：</strong>母親節記錄發券與回收，兒童節記錄發稿、收件與投票數。</li>
+            <li><strong>對外訊息保持簡單：</strong>用最少句子讓顧客一眼看懂，不把所有規則一次塞滿。</li>
+            <li><strong>可後續延伸：</strong>本頁內容可再拆成主管版簡報、對外貼文版、現場 SOP 版。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">母親節 × 兒童節 活動企劃整合 HTML 初稿</div>
+  </div>
+</body>
+</html>
