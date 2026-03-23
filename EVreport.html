@@ -149,7 +149,7 @@
             <div class="w-full mb-4 lg:hidden">
                 <button onclick="exportToPNG()" class="w-full bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center shadow-md">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    儲存圖片至手機
+                    儲存圖片至手機相簿
                 </button>
             </div>
 
@@ -379,10 +379,39 @@
             }
         }
 
-        // 匯出為 PNG 功能
+        // ====== 核心功能 3：無痛匯出與儲存相簿機制 ======
+        
+        // 建立防呆長按儲存視窗 (Fallback for mobile without share API)
+        function showMobileSaveModal(dataUrl) {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'absolute top-6 right-6 text-white text-xl font-bold bg-white/20 rounded-full w-10 h-10 flex items-center justify-center hover:bg-white/30';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = () => document.body.removeChild(overlay);
+            
+            const hint = document.createElement('div');
+            hint.className = 'text-white text-lg mb-6 font-bold text-center animate-bounce';
+            hint.innerHTML = '👇 請「長按」下方圖片<br>並選擇「儲存到相簿」或「分享」';
+            
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'overflow-y-auto max-h-[75vh] w-full rounded-lg shadow-2xl';
+            
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.className = 'w-full h-auto object-contain';
+            
+            imgContainer.appendChild(img);
+            overlay.appendChild(closeBtn);
+            overlay.appendChild(hint);
+            overlay.appendChild(imgContainer);
+            document.body.appendChild(overlay);
+        }
+
+        // 執行匯出處理
         function exportToPNG() {
             const element = document.getElementById('report-preview');
-            // 抓取畫面上所有的匯出按鈕並改變文字
             const btns = document.querySelectorAll('button[onclick="exportToPNG()"]');
             const originalTexts = [];
             
@@ -405,21 +434,71 @@
                 element.style.transform = originalTransform;
                 element.style.transformOrigin = originalOrigin;
 
-                const link = document.createElement('a');
                 const vendorName = document.getElementById('input-vendorName').value || '未命名';
-                link.download = `宣傳活動紀錄-${vendorName}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                // 還原按鈕文字
-                btns.forEach((btn, index) => {
-                    btn.innerHTML = originalTexts[index];
-                });
+                const fileName = `宣傳活動紀錄-${vendorName}.png`;
+                const dataUrl = canvas.toDataURL('image/png');
+
+                const restoreBtns = () => {
+                    btns.forEach((btn, index) => {
+                        btn.innerHTML = originalTexts[index];
+                    });
+                };
+
+                // 判斷該採取何種存檔策略
+                const performFallback = () => {
+                    if (window.innerWidth < 1024) {
+                        // 手機版：彈出提示長按儲存的視窗
+                        showMobileSaveModal(dataUrl);
+                    } else {
+                        // 電腦版：走傳統下載模式
+                        const link = document.createElement('a');
+                        link.download = fileName;
+                        link.href = dataUrl;
+                        link.click();
+                    }
+                    restoreBtns();
+                };
+
+                // 嘗試使用手機原生 Web Share API 呼叫「分享與儲存選單」
+                try {
+                    canvas.toBlob(blob => {
+                        if (!blob) {
+                            performFallback();
+                            return;
+                        }
+                        const file = new File([blob], fileName, { type: 'image/png' });
+                        
+                        // 檢查設備是否支援檔案分享
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                files: [file],
+                                title: '試吃活動結案報告'
+                            }).then(() => {
+                                console.log('已開啟原生分享/儲存選單');
+                                restoreBtns();
+                            }).catch(err => {
+                                console.log('分享取消或失敗:', err);
+                                // 如果不是因為使用者主動按取消而導致的錯誤，則啟動備案
+                                if (err.name !== 'AbortError') {
+                                    performFallback();
+                                } else {
+                                    restoreBtns();
+                                }
+                            });
+                        } else {
+                            // 不支援 Web Share API 時走備案
+                            performFallback();
+                        }
+                    }, 'image/png');
+                } catch (e) {
+                    performFallback();
+                }
+
             }).catch(err => {
                 element.style.transform = originalTransform;
                 element.style.transformOrigin = originalOrigin;
                 console.error('導出失敗:', err);
-                alert('圖片導出失敗，請再試一次。');
+                alert('圖片導出處理失敗，請再試一次。');
                 btns.forEach((btn, index) => {
                     btn.innerHTML = originalTexts[index];
                 });
