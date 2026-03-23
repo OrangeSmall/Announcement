@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營運日誌</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for image export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'milk-tea': '#F5EBE0',     // 淺奶茶色
+                        'wine-red': '#A75D67',     // 淺酒紅色
+                        'light-gray': '#F3F4F6',   // 淺灰色
+                        'dark-gray': '#4B5563',    // 深灰色(文字用)
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #E5E7EB;
+        }
+
+        /* Auto-resizing textarea styling */
+        textarea {
+            resize: none;
+            overflow: hidden;
+            min-height: 48px;
+        }
+
+        /* Custom scrollbar for better look if needed */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        /* Hide specific elements during export */
+        .exporting .no-export {
+            display: none !important;
+        }
+        
+        .exporting .custom-shadow {
+            box-shadow: none !important;
+        }
+
+        /* Compact styling specifically for the exported image to reduce length */
+        .compact-export {
+            padding: 2rem !important;
+        }
+        .compact-export .mb-8 {
+            margin-bottom: 1.5rem !important;
+        }
+        .compact-export .gap-6 {
+            gap: 1rem !important;
+        }
+        
+        /* Make inputs, textareas, and specific wrappers transparent on export */
+        .compact-export textarea, 
+        .compact-export .converted-input,
+        .compact-export .converted-textarea,
+        .compact-export .bg-transparent-on-export {
+            background-color: transparent !important;
+            border-color: transparent !important;
+        }
+        
+        /* Container-based responsive styling (Fix for squished inputs) */
+        .layout-pc {
+            padding: 2.5rem;
+        }
+        .layout-mobile {
+            padding: 1.5rem;
+        }
+        .layout-pc .responsive-grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .layout-mobile .responsive-grid-3 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+        
+        /* Layout specific logos */
+        .layout-pc .logo-pc { display: block; }
+        .layout-pc .logo-mobile { display: none; }
+        .layout-mobile .logo-pc { display: none; }
+        .layout-mobile .logo-mobile { display: block; }
+
+        /* Grid layout for photos */
+        .photo-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+        
+        /* PC layout: 3 columns */
+        .layout-pc .photo-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        /* Mobile layout: 2 columns */
+        .layout-mobile .photo-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
+
+    <!-- Toolbar -->
+    <div class="w-full max-w-4xl mb-6 flex flex-wrap justify-between items-center bg-white p-4 rounded-xl shadow-sm gap-4 no-export">
+        <div class="flex gap-2">
+            <button onclick="switchView('mobile')" id="btn-mobile" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-light-gray text-gray-700 hover:bg-gray-200">
+                📱 手機版型
+            </button>
+            <button onclick="switchView('pc')" id="btn-pc" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-wine-red text-white shadow-md">
+                💻 電腦版型
+            </button>
+        </div>
+        <button onclick="exportToImage()" class="px-6 py-2 rounded-lg text-sm font-bold transition-colors bg-dark-gray text-white hover:bg-gray-800 shadow-md flex items-center gap-2">
+            📸 一鍵匯出圖片
+        </button>
+    </div>
+
+    <!-- Main Capture Area -->
+    <div id="capture-area" class="bg-white w-full max-w-4xl rounded-xl shadow-lg transition-all duration-300 layout-pc custom-shadow relative">
+        
+        <!-- Header -->
+        <div class="flex flex-col items-center mb-8 relative border-b-2 border-wine-red pb-6">
+            <img src="https://raw.githubusercontent.com/OrangeSmall/seafood-menu-app/main/logo.png" alt="Logo" class="logo-pc h-16 object-contain mb-4 absolute left-0 top-0" crossorigin="anonymous">
+            <!-- Mobile Logo -->
+            <img src="https://raw.githubusercontent.com/OrangeSmall/seafood-menu-app/main/logo.png" alt="Logo" class="logo-mobile h-12 object-contain mb-4" crossorigin="anonymous">
+            
+            <h1 class="text-3xl font-bold text-wine-red tracking-wider">營運日誌</h1>
+            <div class="mt-2 text-dark-gray font-medium flex items-center gap-2">
+                <label>日期：</label>
+                <input type="date" id="log-date" class="bg-light-gray px-3 py-1 rounded focus:outline-none focus:ring-1 focus:ring-wine-red text-center font-medium text-gray-700">
+            </div>
+        </div>
+
+        <!-- Section 1: Basic Info -->
+        <div class="grid gap-6 mb-8 responsive-grid-3">
+            <div class="bg-milk-tea p-4 rounded-lg">
+                <label class="block text-sm font-bold text-wine-red mb-2">店別</label>
+                <select class="w-full bg-white border border-gray-200 p-2 rounded focus:outline-none focus:border-wine-red text-gray-700 appearance-none font-medium">
+                    <option>四維店</option>
+                    <option>北高店</option>
+                </select>
+            </div>
+            
+            <div class="bg-milk-tea p-4 rounded-lg">
+                <label class="block text-sm font-bold text-wine-red mb-2">本日櫃台營收</label>
+                <!-- 加上 bg-transparent-on-export，讓外框在匯出圖片時變成透明 -->
+                <div class="bg-transparent-on-export flex items-center gap-2 bg-white border border-gray-200 p-2 rounded focus-within:border-wine-red">
+                    <span class="text-gray-500">$</span>
+                    <input type="number" placeholder="請輸入金額" class="w-full bg-transparent focus:outline-none text-gray-700 font-medium">
+                </div>
+            </div>
+
+            <div class="bg-milk-tea p-4 rounded-lg">
+                <label class="block text-sm font-bold text-wine-red mb-2">記錄人</label>
+                <input type="text" placeholder="請輸入姓名" class="w-full bg-white border border-gray-200 p-2 rounded focus:outline-none focus:border-wine-red text-gray-700 font-medium">
+            </div>
+        </div>
+
+        <!-- Section 2: Customer Complaint -->
+        <div class="mb-8 border border-gray-200 rounded-lg p-5">
+            <div class="flex items-center gap-6 mb-3">
+                <label class="text-lg font-bold text-wine-red">客訴紀錄</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer text-gray-700 font-medium">
+                        <input type="radio" name="complaint" value="no" checked class="accent-wine-red w-4 h-4" onchange="toggleComplaint()"> 
+                        無
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-gray-700 font-medium">
+                        <input type="radio" name="complaint" value="yes" class="accent-wine-red w-4 h-4" onchange="toggleComplaint()"> 
+                        有
+                    </label>
+                </div>
+            </div>
+            <div id="complaint-details" class="hidden mt-3">
+                <textarea oninput="autoResize(this)" placeholder="請說明客訴詳細狀況、發生時間及後續處理方式..." class="w-full bg-light-gray border-none p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-wine-red text-gray-700 leading-relaxed"></textarea>
+            </div>
+        </div>
+
+        <!-- Section 3: Operations Log -->
+        <div class="mb-8">
+            <label class="block text-lg font-bold text-wine-red mb-3 border-l-4 border-wine-red pl-3">營運日常紀錄</label>
+            <p class="text-xs text-gray-500 mb-2 no-export">紀錄店內發生的大小好壞事</p>
+            <textarea oninput="autoResize(this)" placeholder="例如：今日高湯熬煮狀態良好 / 某設備需要報修..." class="w-full bg-light-gray p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-wine-red text-gray-700 leading-relaxed border border-gray-100"></textarea>
+        </div>
+
+        <!-- Section 4: To-Do -->
+        <div class="mb-8">
+            <label class="block text-lg font-bold text-wine-red mb-3 border-l-4 border-wine-red pl-3">待辦事項</label>
+            <p class="text-xs text-gray-500 mb-2 no-export">預計想做或需要交接的事項</p>
+            <textarea oninput="autoResize(this)" placeholder="1. &#10;2. &#10;3. " class="w-full bg-milk-tea bg-opacity-50 p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-wine-red text-gray-700 leading-relaxed border border-transparent"></textarea>
+        </div>
+
+        <!-- Section 5: Completed -->
+        <div class="mb-8">
+            <label class="block text-lg font-bold text-wine-red mb-3 border-l-4 border-wine-red pl-3">完成事項</label>
+            <p class="text-xs text-gray-500 mb-2 no-export">今日已完成的重要工作</p>
+            <textarea oninput="autoResize(this)" placeholder="1. &#10;2. &#10;3. " class="w-full bg-light-gray p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-wine-red text-gray-700 leading-relaxed border border-gray-100"></textarea>
+        </div>
+
+        <!-- Section 6: Notes -->
+        <div class="mb-8">
+            <label class="block text-lg font-bold text-wine-red mb-3 border-l-4 border-wine-red pl-3">備註補充事項</label>
+            <textarea oninput="autoResize(this)" placeholder="其他需要補充說明的內容..." class="w-full bg-white border border-gray-200 p-4 rounded-lg focus:outline-none focus:border-wine-red text-gray-700 leading-relaxed"></textarea>
+        </div>
+
+        <!-- Section 7: Photos -->
+        <div id="photo-section" class="mb-4">
+            <div class="flex justify-between items-end mb-3 border-l-4 border-wine-red pl-3">
+                <label class="text-lg font-bold text-wine-red">日常紀錄照片</label>
+                <span class="text-xs text-gray-500 font-medium no-export" id="photo-count">0 / 9 張</span>
+            </div>
+            
+            <div class="photo-grid mt-4" id="photo-container">
+                <!-- Add Photo Button -->
+                <div id="add-photo-btn" class="no-export border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center aspect-square cursor-pointer hover:bg-gray-50 hover:border-wine-red transition-colors text-gray-400" onclick="document.getElementById('file-upload').click()">
+                    <span class="text-4xl mb-2">+</span>
+                    <span class="text-sm">新增照片</span>
+                </div>
+            </div>
+            
+            <input type="file" id="file-upload" class="hidden" multiple accept="image/*" onchange="handleFiles(event)">
+        </div>
+
+        <!-- Footer for Export -->
+        <div class="mt-8 text-center text-gray-400 text-xs hidden export-footer">
+            營運日誌公版v1 by 小橘
+        </div>
+    </div>
+
+    <script>
+        // Set today's date
+        document.getElementById('log-date').valueAsDate = new Date();
+
+        // Auto resize textareas
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Initialize textareas height
+        document.querySelectorAll('textarea').forEach(autoResize);
+
+        // Toggle Complaint Details
+        function toggleComplaint() {
+            const isYes = document.querySelector('input[name="complaint"][value="yes"]').checked;
+            const detailsDiv = document.getElementById('complaint-details');
+            if (isYes) {
+                detailsDiv.classList.remove('hidden');
+                autoResize(detailsDiv.querySelector('textarea'));
+            } else {
+                detailsDiv.classList.add('hidden');
+            }
+        }
+
+        // Switch View (PC / Mobile)
+        function switchView(view) {
+            const captureArea = document.getElementById('capture-area');
+            const btnPc = document.getElementById('btn-pc');
+            const btnMobile = document.getElementById('btn-mobile');
+
+            if (view === 'mobile') {
+                captureArea.classList.remove('max-w-4xl', 'layout-pc');
+                captureArea.classList.add('max-w-md', 'layout-mobile');
+                
+                btnMobile.classList.replace('bg-light-gray', 'bg-wine-red');
+                btnMobile.classList.replace('text-gray-700', 'text-white');
+                btnMobile.classList.add('shadow-md');
+                
+                btnPc.classList.replace('bg-wine-red', 'bg-light-gray');
+                btnPc.classList.replace('text-white', 'text-gray-700');
+                btnPc.classList.remove('shadow-md');
+            } else {
+                captureArea.classList.remove('max-w-md', 'layout-mobile');
+                captureArea.classList.add('max-w-4xl', 'layout-pc');
+                
+                btnPc.classList.replace('bg-light-gray', 'bg-wine-red');
+                btnPc.classList.replace('text-gray-700', 'text-white');
+                btnPc.classList.add('shadow-md');
+                
+                btnMobile.classList.replace('bg-wine-red', 'bg-light-gray');
+                btnMobile.classList.replace('text-white', 'text-gray-700');
+                btnMobile.classList.remove('shadow-md');
+            }
+            // re-adjust textareas after layout change
+            setTimeout(() => {
+                document.querySelectorAll('textarea').forEach(autoResize);
+            }, 350);
+        }
+
+        // Handle Photo Upload
+        let photos = [];
+        const MAX_PHOTOS = 9;
+
+        function handleFiles(event) {
+            const files = Array.from(event.target.files);
+            
+            if (photos.length + files.length > MAX_PHOTOS) {
+                alert(`最多只能上傳 ${MAX_PHOTOS} 張照片，您選取了過多照片。`);
+                return;
+            }
+
+            files.forEach(file => {
+                if (photos.length >= MAX_PHOTOS) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    photos.push(e.target.result);
+                    renderPhotos();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Reset input
+            event.target.value = '';
+        }
+
+        function removePhoto(index) {
+            photos.splice(index, 1);
+            renderPhotos();
+        }
+
+        function renderPhotos() {
+            const container = document.getElementById('photo-container');
+            const addBtn = document.getElementById('add-photo-btn');
+            
+            // Remove all existing photo divs
+            const existingPhotos = container.querySelectorAll('.photo-item');
+            existingPhotos.forEach(p => p.remove());
+
+            // Add photos
+            photos.forEach((src, index) => {
+                const div = document.createElement('div');
+                div.className = 'photo-item relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'w-full h-full object-cover';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '×';
+                removeBtn.className = 'no-export absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-md hover:bg-red-600 transition-colors';
+                removeBtn.onclick = () => removePhoto(index);
+
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                container.insertBefore(div, addBtn);
+            });
+
+            // Update count
+            document.getElementById('photo-count').innerText = `${photos.length} / ${MAX_PHOTOS} 張`;
+
+            // Hide add button if max reached
+            if (photos.length >= MAX_PHOTOS) {
+                addBtn.style.display = 'none';
+            } else {
+                addBtn.style.display = 'flex';
+            }
+        }
+
+        // Export to Image using html2canvas
+        function exportToImage() {
+            const captureArea = document.getElementById('capture-area');
+            const dateStr = document.getElementById('log-date').value || new Date().toISOString().slice(0, 10);
+            
+            // Add exporting class to hide UI elements and apply compact styles
+            captureArea.classList.add('exporting');
+            document.querySelector('.export-footer').classList.remove('hidden');
+            document.querySelector('.export-footer').classList.add('block');
+
+            html2canvas(captureArea, {
+                scale: 2, // Keep high resolution but layout will be smaller due to compact-export
+                useCORS: true, 
+                backgroundColor: '#ffffff',
+                logging: false,
+                onclone: (clonedDoc) => {
+                    const clonedCaptureArea = clonedDoc.getElementById('capture-area');
+                    clonedCaptureArea.classList.add('compact-export'); // Compress margins/paddings
+
+                    // 1. Hide photo section completely if empty
+                    if (photos.length === 0) {
+                        const photoSec = clonedDoc.getElementById('photo-section');
+                        if (photoSec) photoSec.style.display = 'none';
+                    }
+
+                    // 2. Fix Input text cropping: replace inputs with pure Divs
+                    const inputs = clonedDoc.querySelectorAll('input:not([type="radio"]):not([type="file"])');
+                    inputs.forEach(input => {
+                        const div = clonedDoc.createElement('div');
+                        div.className = input.className + ' converted-input';
+                        div.style.display = 'flex';
+                        div.style.alignItems = 'center';
+                        div.style.minHeight = input.offsetHeight + 'px';
+                        // Keep text, strip placeholder when exported
+                        div.innerText = input.value || ''; 
+                        input.parentNode.replaceChild(div, input);
+                    });
+
+                    // 3. Fix Select dropdown text cropping
+                    const selects = clonedDoc.querySelectorAll('select');
+                    selects.forEach(select => {
+                        const div = clonedDoc.createElement('div');
+                        div.className = select.className + ' converted-input';
+                        div.style.display = 'flex';
+                        div.style.alignItems = 'center';
+                        div.style.minHeight = select.offsetHeight + 'px';
+                        div.innerText = select.options[select.selectedIndex].text;
+                        select.parentNode.replaceChild(div, select);
+                    });
+
+                    // 4. Fix Textarea layout formatting
+                    const textareas = clonedDoc.querySelectorAll('textarea');
+                    textareas.forEach(ta => {
+                        const div = clonedDoc.createElement('div');
+                        // Add converted-textarea class to ensure background is stripped correctly on export
+                        div.className = ta.className + ' converted-textarea';
+                        div.style.minHeight = ta.style.height || ta.scrollHeight + 'px';
+                        div.style.whiteSpace = 'pre-wrap';
+                        div.innerHTML = ta.value.replace(/\n/g, '<br>') || ''; 
+                        ta.parentNode.replaceChild(div, ta);
+                    });
+                }
+            }).then(canvas => {
+                // Remove exporting class after generation
+                captureArea.classList.remove('exporting');
+                document.querySelector('.export-footer').classList.add('hidden');
+                document.querySelector('.export-footer').classList.remove('block');
+
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `營運日誌_${dateStr}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            }).catch(err => {
+                console.error('匯出圖片失敗:', err);
+                alert('匯出失敗，請重試或檢查是否包含不支援的圖片格式。');
+                captureArea.classList.remove('exporting');
+                document.querySelector('.export-footer').classList.add('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
