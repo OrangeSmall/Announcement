@@ -2,65 +2,60 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>廠商試吃活動結案報告產生器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; }
-        /* 模擬 A4 尺寸的預覽區，並將 padding 調小使版面緊密 */
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            /* 避免手機瀏覽器底部拉動時出現多餘空白 */
+            overscroll-behavior-y: none;
+        }
+        
+        /* 固定的像素尺寸 (794px * 1123px 約為 A4 96dpi 尺寸)，確保手機縮放計算精準 */
         .a4-container {
-            width: 100%;
-            max-width: 210mm;
-            min-height: 297mm;
+            width: 794px;
+            min-height: 1123px;
             background: white;
-            padding: 10mm; 
+            padding: 40px; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin: 0 auto;
             box-sizing: border-box;
+            transform-origin: top center; 
         }
+        
         /* 保留使用者輸入的換行符號 */
         .keep-breaks {
             white-space: pre-wrap;
             word-break: break-word;
             line-height: 1.6;
         }
-        /* 簽名字體：使用思源宋體斜體，確保繁體中文 100% 支援 */
+        
+        /* 簽名字體 */
         .signature-font {
             font-family: 'Noto Serif TC', serif;
             font-style: italic;
         }
-        
-        /* 針對 PDF 列印的優化，強制 A4 且無邊界，避免跨版 */
-        @page {
-            size: A4 portrait;
-            margin: 0;
+
+        /* 隱藏捲軸但保留滾動功能 (美化介面) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        @media print {
-            body { 
-                background: white; 
-                margin: 0; 
-                padding: 0;
-                -webkit-print-color-adjust: exact; 
-            }
-            .no-print { display: none; }
-            .a4-container { 
-                box-shadow: none; 
-                margin: 0; 
-                padding: 10mm;
-                width: 210mm; 
-                height: 297mm; /* 強制一頁高度 */
-                overflow: hidden; /* 防止內容溢出到第二頁 */
-            }
+        .no-scrollbar {
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<!-- 加入 pb-20 確保手機端底部 Tab bar 不會擋住內容 -->
+<body class="bg-slate-100 min-h-screen pb-20 lg:pb-8">
 
-    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8">
         
-        <div class="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-sm border border-gray-200 no-print h-fit sticky top-8 overflow-y-auto" style="max-height: calc(100vh - 4rem);">
+        <!-- ================= 左側/編輯模式：輸入表單區 ================= -->
+        <div id="form-section" class="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit lg:sticky lg:top-8 overflow-y-auto no-scrollbar" style="max-height: calc(100vh - 4rem);">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 宣傳試吃報告輸入
@@ -133,106 +128,179 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">上傳現場照片 (最多6張，僅本機處理)</label>
                     <input type="file" id="input-photos" accept="image/*" multiple class="w-full border border-gray-300 rounded-md p-2 text-sm" onchange="handleImageUpload(event)">
-                    <p class="text-xs text-gray-500 mt-1">照片不會上傳雲端，保護隱私且無容量限制。</p>
                 </div>
             </div>
 
-            <div class="mt-8 space-y-3">
-                <button onclick="exportToPNG()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center justify-center">
+            <div class="mt-8">
+                <!-- 取消了 PDF 按鈕，僅保留 PNG 匯出 -->
+                <button onclick="exportToPNG()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center shadow-md text-lg">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    匯出為 PNG 圖片
-                </button>
-                <button onclick="window.print()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    列印 / 存為 PDF
+                    匯出結案報告 (PNG)
                 </button>
             </div>
         </div>
 
-        <div class="w-full lg:w-2/3 overflow-x-auto">
-            <div id="report-preview" class="a4-container relative flex flex-col bg-white">
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.08]">
-                    <img src="https://raw.githubusercontent.com/OrangeSmall/seafood-menu-app/main/logo.png" crossorigin="anonymous" class="w-3/4 max-w-md object-contain" alt="Watermark">
-                </div>
+        <!-- ================= 右側/預覽模式：報告預覽區 ================= -->
+        <!-- 手機版預設隱藏 (max-lg:hidden)，透過底部 Tab 切換顯示 -->
+        <div id="preview-section" class="w-full lg:w-2/3 flex flex-col items-center max-lg:hidden">
+            
+            <!-- 手機版專屬：在預覽區上方也放一個匯出按鈕，方便預覽後直接存檔 -->
+            <div class="w-full mb-4 lg:hidden">
+                <button onclick="exportToPNG()" class="w-full bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    儲存圖片至手機
+                </button>
+            </div>
 
-                <div class="absolute top-0 left-0 w-full h-3 bg-teal-600 z-10"></div>
-                
-                <div class="mt-4 border-b-2 border-gray-800 pb-2 mb-3 relative z-10">
-                    <h1 class="text-2xl font-bold text-center text-gray-800 tracking-wider leading-relaxed min-h-[2rem]" id="preview-eventName"></h1>
-                    <h2 class="text-lg font-bold text-center text-gray-600 mt-1 leading-normal">合作廠商試吃活動紀錄</h2>
-                </div>
+            <div id="preview-wrapper" class="w-full overflow-hidden flex flex-col items-center">
+                <div id="report-preview" class="a4-container relative flex flex-col bg-white shrink-0">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.08]">
+                        <img src="https://raw.githubusercontent.com/OrangeSmall/seafood-menu-app/main/logo.png" crossorigin="anonymous" class="w-3/4 max-w-md object-contain" alt="Watermark">
+                    </div>
 
-                <div class="grid grid-cols-2 gap-y-4 gap-x-6 mb-4 bg-gray-50/90 p-4 rounded-lg border border-gray-200 relative z-10 backdrop-blur-sm">
-                    <div>
-                        <span class="text-gray-500 font-bold text-xs block mb-1">廠商名稱</span>
-                        <p class="text-base font-bold text-gray-800 leading-normal min-h-[1.5rem]" id="preview-vendorName"></p>
+                    <div class="absolute top-0 left-0 w-full h-3 bg-teal-600 z-10"></div>
+                    
+                    <div class="mt-4 border-b-2 border-gray-800 pb-2 mb-3 relative z-10">
+                        <h1 class="text-2xl font-bold text-center text-gray-800 tracking-wider leading-relaxed min-h-[2rem]" id="preview-eventName"></h1>
+                        <h2 class="text-lg font-bold text-center text-gray-600 mt-1 leading-normal">合作廠商試吃活動紀錄</h2>
                     </div>
-                    <div>
-                        <span class="text-gray-500 font-bold text-xs block mb-1">活動日期</span>
-                        <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-date"></p>
-                    </div>
-                    <div class="col-span-2">
-                        <span class="text-gray-500 font-bold text-xs block mb-1">主打品項</span>
-                        <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-items"></p>
-                    </div>
-                    <div class="col-span-2 mt-1">
-                        <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">活動優惠內容</span>
-                        <p class="text-base text-teal-900 keep-breaks min-h-[1.5rem]" id="preview-promo"></p>
-                    </div>
-                </div>
 
-                <div class="space-y-4 flex-grow relative z-10">
-                    <div class="flex flex-row gap-4 bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm">
-                        <div class="flex-1">
-                            <span class="text-gray-600 font-bold text-xs block mb-1">廠商積極度</span>
-                            <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-proactive"></p>
+                    <div class="grid grid-cols-2 gap-y-4 gap-x-6 mb-4 bg-gray-50/90 p-4 rounded-lg border border-gray-200 relative z-10 backdrop-blur-sm">
+                        <div>
+                            <span class="text-gray-500 font-bold text-xs block mb-1">廠商名稱</span>
+                            <p class="text-base font-bold text-gray-800 leading-normal min-h-[1.5rem]" id="preview-vendorName"></p>
                         </div>
-                        <div class="flex-1 border-l border-yellow-300 pl-4">
-                            <span class="text-gray-600 font-bold text-xs block mb-1">後續優先安排意願</span>
-                            <p class="text-lg text-gray-900 font-medium leading-normal min-h-[1.75rem]" id="preview-priority"></p>
+                        <div>
+                            <span class="text-gray-500 font-bold text-xs block mb-1">活動日期</span>
+                            <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-date"></p>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="text-gray-500 font-bold text-xs block mb-1">主打品項</span>
+                            <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-items"></p>
+                        </div>
+                        <div class="col-span-2 mt-1">
+                            <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">活動優惠內容</span>
+                            <p class="text-base text-teal-900 keep-breaks min-h-[1.5rem]" id="preview-promo"></p>
                         </div>
                     </div>
 
-                    <div>
-                        <h3 class="text-base font-bold text-teal-700 border-l-4 border-teal-600 pl-2 mb-2">現場反應與成效</h3>
-                        <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[3rem]" id="preview-pros"></div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-base font-bold text-orange-600 border-l-4 border-orange-500 pl-2 mb-2">需協助或改善事項</h3>
-                        <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-cons"></div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-base font-bold text-gray-800 border-l-4 border-gray-700 pl-2 mb-2">活動現場照片</h3>
-                        <div id="preview-photos" class="grid grid-cols-3 gap-3 mt-2 min-h-[6rem]">
+                    <div class="space-y-4 flex-grow relative z-10">
+                        <div class="flex flex-row gap-4 bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm">
+                            <div class="flex-1">
+                                <span class="text-gray-600 font-bold text-xs block mb-1">廠商積極度</span>
+                                <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-proactive"></p>
                             </div>
-                    </div>
-                </div>
+                            <div class="flex-1 border-l border-yellow-300 pl-4">
+                                <span class="text-gray-600 font-bold text-xs block mb-1">後續優先安排意願</span>
+                                <p class="text-lg text-gray-900 font-medium leading-normal min-h-[1.75rem]" id="preview-priority"></p>
+                            </div>
+                        </div>
 
-                <div class="mt-6 pt-4 border-t border-gray-300 flex justify-end relative z-10">
-                    <div class="w-56">
-                        <p class="text-gray-500 font-bold mb-2 text-xs">活動紀錄人：</p>
-                        <div class="border-b border-gray-400 h-16 flex items-end justify-center pb-2">
-                            <span id="preview-recorder" class="signature-font text-3xl font-bold text-black tracking-widest inline-block transform -rotate-2 min-h-[2.25rem] w-full text-center"></span>
+                        <div>
+                            <h3 class="text-base font-bold text-teal-700 border-l-4 border-teal-600 pl-2 mb-2">現場反應與成效</h3>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[3rem]" id="preview-pros"></div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-bold text-orange-600 border-l-4 border-orange-500 pl-2 mb-2">需協助或改善事項</h3>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-cons"></div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-bold text-gray-800 border-l-4 border-gray-700 pl-2 mb-2">活動現場照片</h3>
+                            <div id="preview-photos" class="grid grid-cols-3 gap-3 mt-2 min-h-[6rem]">
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="absolute bottom-2 right-6 text-[10px] text-gray-400 z-10">
-                    Generated by 小橘
+
+                    <div class="mt-6 pt-4 border-t border-gray-300 flex justify-end relative z-10">
+                        <div class="w-56">
+                            <p class="text-gray-500 font-bold mb-2 text-xs">活動紀錄人：</p>
+                            <div class="border-b border-gray-400 h-16 flex items-end justify-center pb-2">
+                                <span id="preview-recorder" class="signature-font text-3xl font-bold text-black tracking-widest inline-block transform -rotate-2 min-h-[2.25rem] w-full text-center"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute bottom-2 right-6 text-[10px] text-gray-400 z-10">
+                        Generated by 小橘
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ================= 手機版專屬：底部導航切換列 ================= -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex lg:hidden z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-safe">
+        <button id="tab-edit" onclick="switchMode('edit')" class="flex-1 py-4 text-center font-bold text-blue-600 border-b-4 border-blue-600 bg-blue-50 transition-colors">
+            📝 編輯資料
+        </button>
+        <button id="tab-preview" onclick="switchMode('preview')" class="flex-1 py-4 text-center font-bold text-gray-500 border-b-4 border-transparent bg-white transition-colors">
+            👁️ 預覽與匯出
+        </button>
     </div>
 
     <script>
         // 等待字體載入
         document.fonts.ready.then(() => {
             console.log("字體已加載完成");
+            updatePreviewScale(); 
         });
 
-        // 實時更新預覽區：使用 || '\u200B' (零寬度空白) 確保沒有輸入時版面不塌陷
+        // ====== 核心功能 1：手機版 / 電腦版 畫面切換 ======
+        function switchMode(mode) {
+            const formSection = document.getElementById('form-section');
+            const previewSection = document.getElementById('preview-section');
+            const tabEdit = document.getElementById('tab-edit');
+            const tabPreview = document.getElementById('tab-preview');
+
+            if (mode === 'edit') {
+                // 顯示表單，隱藏預覽 (僅限手機版生效，電腦版兩者皆顯示)
+                formSection.classList.remove('max-lg:hidden');
+                previewSection.classList.add('max-lg:hidden');
+                
+                // 更新按鈕樣式
+                tabEdit.className = "flex-1 py-4 text-center font-bold text-blue-600 border-b-4 border-blue-600 bg-blue-50 transition-colors";
+                tabPreview.className = "flex-1 py-4 text-center font-bold text-gray-500 border-b-4 border-transparent bg-white transition-colors";
+            } else {
+                // 顯示預覽，隱藏表單
+                formSection.classList.add('max-lg:hidden');
+                previewSection.classList.remove('max-lg:hidden');
+                
+                // 更新按鈕樣式
+                tabPreview.className = "flex-1 py-4 text-center font-bold text-blue-600 border-b-4 border-blue-600 bg-blue-50 transition-colors";
+                tabEdit.className = "flex-1 py-4 text-center font-bold text-gray-500 border-b-4 border-transparent bg-white transition-colors";
+                
+                // 重要：切換到預覽畫面時，必須重新計算縮放比例
+                setTimeout(updatePreviewScale, 50);
+            }
+            // 切換時自動回到最上方
+            window.scrollTo(0, 0);
+        }
+
+        // ====== 核心功能 2：手機版自動縮放預覽區 ======
+        function updatePreviewScale() {
+            const wrapper = document.getElementById('preview-wrapper');
+            const preview = document.getElementById('report-preview');
+            // 如果預覽區被隱藏 (clientWidth = 0)，就不進行計算
+            if (!wrapper || wrapper.clientWidth === 0) return;
+
+            const availableWidth = wrapper.clientWidth;
+            const targetWidth = 794; 
+
+            if (availableWidth < targetWidth) {
+                const scale = availableWidth / targetWidth;
+                preview.style.transform = `scale(${scale})`;
+                wrapper.style.height = `${preview.offsetHeight * scale}px`;
+            } else {
+                preview.style.transform = 'none';
+                wrapper.style.height = 'auto';
+            }
+        }
+
+        window.addEventListener('resize', updatePreviewScale);
+
+        // 實時更新預覽區資料
         function updatePreview() {
             document.getElementById('preview-eventName').innerText = document.getElementById('input-eventName').value || '\u200B';
             document.getElementById('preview-vendorName').innerText = document.getElementById('input-vendorName').value || '\u200B';
@@ -240,7 +308,6 @@
             document.getElementById('preview-items').innerText = document.getElementById('input-items').value || '\u200B';
             document.getElementById('preview-promo').innerText = document.getElementById('input-promo').value || '\u200B';
             
-            // 下拉選單若未選擇則保持空白
             const proactive = document.getElementById('input-proactive').value;
             document.getElementById('preview-proactive').innerText = proactive || '\u200B';
             
@@ -250,32 +317,35 @@
             document.getElementById('preview-pros').innerText = document.getElementById('input-pros').value || '\u200B';
             document.getElementById('preview-cons').innerText = document.getElementById('input-cons').value || '\u200B';
             
-            // 簽名區更新
             document.getElementById('preview-recorder').innerText = document.getElementById('input-recorder').value || '\u200B';
+            
+            setTimeout(updatePreviewScale, 50);
         }
 
-        // 處理照片上傳預覽 (本機處理，最多6張)
+        // 處理照片上傳
         function handleImageUpload(event) {
             const files = event.target.files;
             const previewContainer = document.getElementById('preview-photos');
             previewContainer.innerHTML = ''; 
             
             if (files.length === 0) {
-                // 完全清空，不顯示任何文字
+                setTimeout(updatePreviewScale, 50);
                 return;
             }
 
-            // 限制最多顯示6張
             const maxFiles = Math.min(files.length, 6);
+            let loadedCount = 0;
             
             for (let i = 0; i < maxFiles; i++) {
                 const file = files[i];
-                if (!file.type.startsWith('image/')){ continue }
+                if (!file.type.startsWith('image/')){ 
+                    loadedCount++;
+                    continue; 
+                }
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const imgContainer = document.createElement('div');
-                    // 為了塞入6張(2行)，將單張照片高度調為 h-24 (96px)，確保不跨頁
                     imgContainer.className = 'w-full h-24 border border-gray-200 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center';
                     
                     const img = document.createElement('img');
@@ -284,6 +354,11 @@
                     
                     imgContainer.appendChild(img);
                     previewContainer.appendChild(imgContainer);
+
+                    loadedCount++;
+                    if(loadedCount === maxFiles) {
+                        setTimeout(updatePreviewScale, 50);
+                    }
                 }
                 reader.readAsDataURL(file); 
             }
@@ -292,33 +367,50 @@
         // 匯出為 PNG 功能
         function exportToPNG() {
             const element = document.getElementById('report-preview');
-            const btn = document.querySelector('button[onclick="exportToPNG()"]');
-            const originalText = btn.innerHTML;
+            // 抓取畫面上所有的匯出按鈕並改變文字
+            const btns = document.querySelectorAll('button[onclick="exportToPNG()"]');
+            const originalTexts = [];
             
-            btn.innerHTML = '處理中...';
+            btns.forEach((btn, index) => {
+                originalTexts[index] = btn.innerHTML;
+                btn.innerHTML = '處理中...';
+            });
             
+            // 截圖前暫時解除縮放，確保匯出的是原始 A4 高畫質尺寸
+            const originalTransform = element.style.transform;
+            element.style.transform = 'none';
+
             html2canvas(element, {
                 scale: 2, 
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                windowWidth: 794
             }).then(canvas => {
+                element.style.transform = originalTransform;
+
                 const link = document.createElement('a');
-                // 若沒有廠商名稱，則給予預設檔名
                 const vendorName = document.getElementById('input-vendorName').value || '未命名';
                 link.download = `宣傳活動紀錄-${vendorName}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 
-                btn.innerHTML = originalText;
+                // 還原按鈕文字
+                btns.forEach((btn, index) => {
+                    btn.innerHTML = originalTexts[index];
+                });
             }).catch(err => {
+                element.style.transform = originalTransform;
                 console.error('導出失敗:', err);
                 alert('圖片導出失敗，請再試一次。');
-                btn.innerHTML = originalText;
+                btns.forEach((btn, index) => {
+                    btn.innerHTML = originalTexts[index];
+                });
             });
         }
 
-        // 初始載入時同步一次
+        // 初始載入
         updatePreview();
+        setTimeout(updatePreviewScale, 100);
     </script>
 </body>
 </html>
