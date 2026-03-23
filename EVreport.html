@@ -412,6 +412,7 @@
         // 執行匯出處理
         function exportToPNG() {
             const element = document.getElementById('report-preview');
+            // 抓取畫面上所有的匯出按鈕並改變文字
             const btns = document.querySelectorAll('button[onclick="exportToPNG()"]');
             const originalTexts = [];
             
@@ -436,7 +437,6 @@
 
                 const vendorName = document.getElementById('input-vendorName').value || '未命名';
                 const fileName = `宣傳活動紀錄-${vendorName}.png`;
-                const dataUrl = canvas.toDataURL('image/png');
 
                 const restoreBtns = () => {
                     btns.forEach((btn, index) => {
@@ -444,55 +444,50 @@
                     });
                 };
 
-                // 判斷該採取何種存檔策略
-                const performFallback = () => {
-                    if (window.innerWidth < 1024) {
-                        // 手機版：彈出提示長按儲存的視窗
-                        showMobileSaveModal(dataUrl);
-                    } else {
-                        // 電腦版：走傳統下載模式
-                        const link = document.createElement('a');
-                        link.download = fileName;
-                        link.href = dataUrl;
-                        link.click();
+                // 將畫布轉為 Blob 物件 (解決電腦版 Data URL 過長導致 0KB 下載失敗的問題)
+                canvas.toBlob(blob => {
+                    if (!blob) {
+                        alert('圖片產生失敗');
+                        restoreBtns();
+                        return;
                     }
-                    restoreBtns();
-                };
 
-                // 嘗試使用手機原生 Web Share API 呼叫「分享與儲存選單」
-                try {
-                    canvas.toBlob(blob => {
-                        if (!blob) {
-                            performFallback();
-                            return;
-                        }
+                    const isMobile = window.innerWidth < 1024;
+
+                    if (isMobile) {
+                        // 【手機版流程】
                         const file = new File([blob], fileName, { type: 'image/png' });
-                        
-                        // 檢查設備是否支援檔案分享
                         if (navigator.canShare && navigator.canShare({ files: [file] })) {
                             navigator.share({
                                 files: [file],
                                 title: '試吃活動結案報告'
                             }).then(() => {
-                                console.log('已開啟原生分享/儲存選單');
                                 restoreBtns();
                             }).catch(err => {
-                                console.log('分享取消或失敗:', err);
-                                // 如果不是因為使用者主動按取消而導致的錯誤，則啟動備案
                                 if (err.name !== 'AbortError') {
-                                    performFallback();
-                                } else {
-                                    restoreBtns();
+                                    // 確保長按儲存圖片能正常運作，iOS 偏好 dataURL
+                                    showMobileSaveModal(canvas.toDataURL('image/png'));
                                 }
+                                restoreBtns();
                             });
                         } else {
-                            // 不支援 Web Share API 時走備案
-                            performFallback();
+                            showMobileSaveModal(canvas.toDataURL('image/png'));
+                            restoreBtns();
                         }
-                    }, 'image/png');
-                } catch (e) {
-                    performFallback();
-                }
+                    } else {
+                        // 【電腦版流程】改用 Blob URL 觸發下載，穩定且不會有 0KB 問題
+                        const blobUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = fileName;
+                        link.href = blobUrl;
+                        document.body.appendChild(link); // 確保相容性 (Firefox 需要)
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 100); // 釋放記憶體
+                        restoreBtns();
+                    }
+                }, 'image/png');
 
             }).catch(err => {
                 element.style.transform = originalTransform;
