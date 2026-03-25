@@ -14,11 +14,11 @@
             overscroll-behavior-y: none;
         }
         
-        /* 固定的像素尺寸 (794px * 1123px 約為 A4 96dpi 尺寸)，確保手機縮放計算精準 */
+        /* 固定的像素尺寸 (794px * 1123px 約為 A4 96dpi 尺寸) */
         .a4-container {
             width: 794px;
             min-height: 1123px;
-            background: white;
+            background-color: #F8F5F0; /* 更改為淺茶色底色 */
             padding: 40px; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin: 0 auto;
@@ -50,7 +50,6 @@
         }
     </style>
 </head>
-<!-- 加入 pb-20 確保手機端底部 Tab bar 不會擋住內容 -->
 <body class="bg-slate-100 min-h-screen pb-20 lg:pb-8">
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8">
@@ -68,31 +67,36 @@
                     <input type="text" id="input-eventName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入活動名稱" oninput="updatePreview()">
                 </div>
                 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">已合作廠商名稱</label>
+                    <input type="text" id="input-vendorName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入廠商名稱" oninput="updatePreview()">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">已合作廠商名稱</label>
-                        <input type="text" id="input-vendorName" class="w-full border border-gray-300 rounded-md p-2" value="" placeholder="請輸入廠商名稱" oninput="updatePreview()">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">活動日期</label>
+                        <input type="date" id="input-date" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" oninput="updatePreview()">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">活動日期</label>
-                        <input type="date" id="input-date" class="w-full border border-gray-300 rounded-md p-2" value="" oninput="updatePreview()">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">活動時間</label>
+                        <input type="text" id="input-time" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="例如：14:00 - 18:00" oninput="updatePreview()">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">主打品項</label>
-                    <input type="text" id="input-items" class="w-full border border-gray-300 rounded-md p-2" value="" placeholder="請輸入試吃品項" oninput="updatePreview()">
+                    <input type="text" id="input-items" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入試吃品項" oninput="updatePreview()">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">試吃活動優惠內容 (支援換行)</label>
-                    <textarea id="input-promo" rows="2" class="w-full border border-gray-300 rounded-md p-2" placeholder="請輸入優惠方案..." oninput="updatePreview()"></textarea>
+                    <textarea id="input-promo" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入優惠方案..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">廠商積極度</label>
-                        <select id="input-proactive" class="w-full border border-gray-300 rounded-md p-2" onchange="updatePreview()">
+                        <select id="input-proactive" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
                             <option value="" disabled selected>請選擇</option>
                             <option value="★★★★★ (極佳)">★★★★★ (極佳)</option>
                             <option value="★★★★☆ (良好)">★★★★☆ (良好)</option>
@@ -102,7 +106,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">優先安排意願</label>
-                        <select id="input-priority" class="w-full border border-gray-300 rounded-md p-2" onchange="updatePreview()">
+                        <select id="input-priority" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
                             <option value="" disabled selected>請選擇</option>
                             <option value="⭐⭐⭐ 極高 (優先排程)">⭐⭐⭐ 極高 (優先排程)</option>
                             <option value="⭐⭐ 普通 (正常排程)">⭐⭐ 普通 (正常排程)</option>
@@ -113,12 +117,17 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">現場反應與成效 (支援換行)</label>
-                    <textarea id="input-pros" rows="3" class="w-full border border-gray-300 rounded-md p-2" placeholder="請輸入現場反應..." oninput="updatePreview()"></textarea>
+                    <textarea id="input-pros" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入現場反應..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據 (支援換行)</label>
+                    <textarea id="input-sales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入銷售數據 (如：冰花10盒完售)..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">需協助或改善事項 (支援換行)</label>
-                    <textarea id="input-cons" rows="2" class="w-full border border-gray-300 rounded-md p-2" placeholder="請輸入改善建議..." oninput="updatePreview()"></textarea>
+                    <textarea id="input-cons" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入改善建議..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
@@ -128,7 +137,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">上傳現場照片 (最多6張，僅本機處理)</label>
-                    <input type="file" id="input-photos" accept="image/*" multiple class="w-full border border-gray-300 rounded-md p-2 text-sm" onchange="handleImageUpload(event)">
+                    <input type="file" id="input-photos" accept="image/*" multiple class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none" onchange="handleImageUpload(event)">
                 </div>
             </div>
 
@@ -152,13 +161,14 @@
             </div>
 
             <div id="preview-wrapper" class="w-full overflow-hidden flex flex-col">
-                <div id="report-preview" class="a4-container relative flex flex-col bg-white shrink-0">
+                <div id="report-preview" class="a4-container relative flex flex-col shrink-0">
                     
-                    <!-- 背景浮水印 (更換為 jsdelivr CDN 確保 CORS 正常) -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.08]">
+                    <!-- 背景浮水印 -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.05]">
                         <img src="https://cdn.jsdelivr.net/gh/OrangeSmall/seafood-menu-app@main/logo.png" crossorigin="anonymous" class="w-3/4 max-w-md object-contain" alt="Watermark">
                     </div>
 
+                    <!-- 頂部裝飾線條 -->
                     <div class="absolute top-0 left-0 w-full h-3 bg-teal-600 z-10"></div>
                     
                     <div class="mt-4 border-b-2 border-gray-800 pb-2 mb-3 relative z-10">
@@ -166,27 +176,33 @@
                         <h2 class="text-lg font-bold text-center text-gray-600 mt-1 leading-normal">合作廠商試吃活動紀錄</h2>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-y-4 gap-x-6 mb-4 bg-gray-50/90 p-4 rounded-lg border border-gray-200 relative z-10 backdrop-blur-sm">
-                        <div>
+                    <!-- 基本資訊區塊：新增「活動時間」 -->
+                    <div class="grid grid-cols-3 gap-y-4 gap-x-6 mb-4 bg-white/80 p-4 rounded-lg border border-gray-200 relative z-10 backdrop-blur-sm shadow-sm">
+                        <div class="col-span-1">
                             <span class="text-gray-500 font-bold text-xs block mb-1">廠商名稱</span>
                             <p class="text-base font-bold text-gray-800 leading-normal min-h-[1.5rem]" id="preview-vendorName"></p>
                         </div>
-                        <div>
+                        <div class="col-span-1">
                             <span class="text-gray-500 font-bold text-xs block mb-1">活動日期</span>
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-date"></p>
                         </div>
-                        <div class="col-span-2">
+                        <div class="col-span-1">
+                            <span class="text-gray-500 font-bold text-xs block mb-1">活動時間</span>
+                            <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-time"></p>
+                        </div>
+                        <div class="col-span-3">
                             <span class="text-gray-500 font-bold text-xs block mb-1">主打品項</span>
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-items"></p>
                         </div>
-                        <div class="col-span-2 mt-1">
+                        <div class="col-span-3 mt-1">
                             <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">活動優惠內容</span>
                             <p class="text-base text-teal-900 keep-breaks min-h-[1.5rem]" id="preview-promo"></p>
                         </div>
                     </div>
 
                     <div class="space-y-4 flex-grow relative z-10">
-                        <div class="flex flex-row gap-4 bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm">
+                        <!-- 評估區塊 -->
+                        <div class="flex flex-row gap-4 bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm shadow-sm">
                             <div class="flex-1">
                                 <span class="text-gray-600 font-bold text-xs block mb-1">廠商積極度</span>
                                 <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-proactive"></p>
@@ -197,16 +213,25 @@
                             </div>
                         </div>
 
+                        <!-- 現場反應與成效 -->
                         <div>
                             <h3 class="text-base font-bold text-teal-700 border-l-4 border-teal-600 pl-2 mb-2">現場反應與成效</h3>
-                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[3rem]" id="preview-pros"></div>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-pros"></div>
                         </div>
 
+                        <!-- 新增：當日銷售數據 -->
+                        <div>
+                            <h3 class="text-base font-bold text-blue-600 border-l-4 border-blue-500 pl-2 mb-2">當日銷售數據</h3>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-sales"></div>
+                        </div>
+
+                        <!-- 需協助或改善事項 -->
                         <div>
                             <h3 class="text-base font-bold text-orange-600 border-l-4 border-orange-500 pl-2 mb-2">需協助或改善事項</h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-cons"></div>
                         </div>
 
+                        <!-- 照片區塊 -->
                         <div>
                             <h3 class="text-base font-bold text-gray-800 border-l-4 border-gray-700 pl-2 mb-2">活動現場照片</h3>
                             <div id="preview-photos" class="grid grid-cols-3 gap-3 mt-2 min-h-[6rem]">
@@ -214,10 +239,10 @@
                         </div>
                     </div>
 
-                    <!-- 記錄人簽名區與左側 Logo (更換為 jsdelivr CDN) -->
+                    <!-- 記錄人簽名區與左側 Logo -->
                     <div class="mt-6 pt-4 border-t border-gray-300 flex justify-between items-end relative z-10">
                         <div class="pb-2 pl-2">
-                            <img src="https://cdn.jsdelivr.net/gh/OrangeSmall/seafood-menu-app@main/logo.png" crossorigin="anonymous" class="h-16 object-contain opacity-90" alt="Logo">
+                            <img src="https://cdn.jsdelivr.net/gh/OrangeSmall/seafood-menu-app@main/logo.png" crossorigin="anonymous" class="h-16 object-contain opacity-80" alt="Logo">
                         </div>
 
                         <div class="w-56">
@@ -229,7 +254,7 @@
                     </div>
                     
                     <div class="absolute bottom-4 left-0 w-full flex justify-center z-10">
-                        <span class="text-[10px] text-gray-300 tracking-widest uppercase">Generated by 小橘</span>
+                        <span class="text-[10px] text-gray-400 tracking-widest uppercase opacity-80">Generated by 小橘 v2</span>
                     </div>
                 </div>
             </div>
@@ -299,6 +324,7 @@
             document.getElementById('preview-eventName').innerText = document.getElementById('input-eventName').value || '\u200B';
             document.getElementById('preview-vendorName').innerText = document.getElementById('input-vendorName').value || '\u200B';
             document.getElementById('preview-date').innerText = document.getElementById('input-date').value || '\u200B';
+            document.getElementById('preview-time').innerText = document.getElementById('input-time').value || '\u200B'; // 新增：活動時間
             document.getElementById('preview-items').innerText = document.getElementById('input-items').value || '\u200B';
             document.getElementById('preview-promo').innerText = document.getElementById('input-promo').value || '\u200B';
             
@@ -309,6 +335,7 @@
             document.getElementById('preview-priority').innerText = priority || '\u200B';
             
             document.getElementById('preview-pros').innerText = document.getElementById('input-pros').value || '\u200B';
+            document.getElementById('preview-sales').innerText = document.getElementById('input-sales').value || '\u200B'; // 新增：銷售數據
             document.getElementById('preview-cons').innerText = document.getElementById('input-cons').value || '\u200B';
             
             document.getElementById('preview-recorder').innerText = document.getElementById('input-recorder').value || '\u200B';
@@ -357,7 +384,7 @@
             }
         }
 
-        // 建立防呆長按儲存視窗 (Fallback)
+        // 建立防呆長按儲存視窗
         function showMobileSaveModal(dataUrl) {
             const overlay = document.createElement('div');
             overlay.className = 'fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm';
@@ -376,7 +403,7 @@
             
             const img = document.createElement('img');
             img.src = dataUrl;
-            img.className = 'w-full h-auto object-contain';
+            img.className = 'w-full h-auto object-contain bg-white';
             
             imgContainer.appendChild(img);
             overlay.appendChild(closeBtn);
@@ -385,14 +412,12 @@
             document.body.appendChild(overlay);
         }
 
-        // ================= 重大修正：匯出為 PNG 邏輯 =================
         function exportToPNG() {
             const element = document.getElementById('report-preview');
             const wrapper = document.getElementById('preview-wrapper');
             const btns = document.querySelectorAll('button[onclick="exportToPNG()"]');
             const originalTexts = [];
             
-            // 防止重複點擊
             btns.forEach((btn, index) => {
                 originalTexts[index] = btn.innerHTML;
                 btn.innerHTML = '處理中...';
@@ -400,23 +425,21 @@
                 btn.classList.add('opacity-70', 'cursor-not-allowed');
             });
             
-            // 截圖前暫時解除縮放與外框高度限制，確保匯出的是完整 A4 高畫質尺寸
             const originalTransform = element.style.transform;
             const originalOrigin = element.style.transformOrigin;
             const originalWrapperHeight = wrapper.style.height;
             
             element.style.transform = 'none';
-            wrapper.style.height = 'auto'; // 解決高度截斷問題
+            wrapper.style.height = 'auto'; 
 
             html2canvas(element, {
-                scale: 2, // 高解析度
+                scale: 2, 
                 useCORS: true,
                 allowTaint: false,
-                backgroundColor: '#ffffff',
+                backgroundColor: '#F8F5F0', // 搭配淺茶底色
                 width: 794,
-                height: element.offsetHeight // 明確指定高度
+                height: element.offsetHeight 
             }).then(canvas => {
-                // 截圖完成，立刻還原手機版排版樣式
                 element.style.transform = originalTransform;
                 element.style.transformOrigin = originalOrigin;
                 wrapper.style.height = originalWrapperHeight;
@@ -436,7 +459,6 @@
                 const dataUrl = canvas.toDataURL('image/png');
 
                 if (isMobile) {
-                    // 【手機版流程】
                     canvas.toBlob(blob => {
                         if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })) {
                             navigator.share({
@@ -452,8 +474,6 @@
                         }
                     }, 'image/png');
                 } else {
-                    // 【電腦版流程重大修正】
-                    // 透過 fetch 取回 blob，徹底解決 toBlob 可能回傳 null 及 a.href 字串過長導致 0KB 的問題
                     fetch(dataUrl)
                         .then(res => res.blob())
                         .then(blob => {
@@ -461,11 +481,11 @@
                             const link = document.createElement('a');
                             link.download = fileName;
                             link.href = blobUrl;
-                            document.body.appendChild(link); // 確保相容性
+                            document.body.appendChild(link); 
                             link.click();
                             document.body.removeChild(link);
                             
-                            setTimeout(() => URL.revokeObjectURL(blobUrl), 100); // 釋放記憶體
+                            setTimeout(() => URL.revokeObjectURL(blobUrl), 100); 
                             restoreBtns();
                         })
                         .catch(err => {
@@ -476,7 +496,6 @@
                 }
 
             }).catch(err => {
-                // 發生錯誤時也要還原樣式
                 element.style.transform = originalTransform;
                 element.style.transformOrigin = originalOrigin;
                 wrapper.style.height = originalWrapperHeight;
