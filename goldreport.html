@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>金包優惠活動回報｜3/18–3/23</title>
+  <style>
+    :root{
+      --bg:#f6f2ee;
+      --paper:#fffdfb;
+      --ink:#2f2a26;
+      --muted:#756b63;
+      --line:#e6ddd5;
+      --accent:#8f5b52;
+      --accent-2:#c9a27c;
+      --accent-3:#d9c5b2;
+      --good:#7a9b76;
+      --shadow:0 12px 28px rgba(60,40,20,.08);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+      background:linear-gradient(180deg,#f5efe9 0%, #f8f5f2 100%);
+      color:var(--ink);
+      line-height:1.6;
+    }
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:28px 18px 40px;
+    }
+    .hero{
+      background:linear-gradient(135deg, rgba(143,91,82,.95), rgba(201,162,124,.92));
+      color:#fff;
+      border-radius:28px;
+      padding:28px 30px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -60px -60px auto;
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      background:rgba(255,255,255,.08);
+    }
+    .eyebrow{
+      font-size:13px;
+      letter-spacing:.12em;
+      opacity:.85;
+      margin-bottom:8px;
+    }
+    h1{
+      margin:0 0 10px;
+      font-size:clamp(28px,4vw,40px);
+      line-height:1.2;
+    }
+    .sub{
+      max-width:800px;
+      font-size:15px;
+      opacity:.95;
+    }
+    .grid{
+      display:grid;
+      gap:18px;
+      margin-top:20px;
+    }
+    .cards{
+      grid-template-columns:repeat(4,minmax(0,1fr));
+    }
+    .card{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px 18px 16px;
+      box-shadow:var(--shadow);
+    }
+    .label{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px;
+    }
+    .value{
+      font-size:32px;
+      font-weight:800;
+      line-height:1.1;
+      letter-spacing:.01em;
+    }
+    .delta{
+      margin-top:8px;
+      font-size:14px;
+      color:#6b564d;
+    }
+    .section-title{
+      font-size:22px;
+      margin:0 0 12px;
+    }
+    .chart-grid{
+      display:grid;
+      grid-template-columns:1.2fr 1fr;
+      gap:18px;
+      margin-top:18px;
+    }
+    .chart-card{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+    .chart-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:end;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .chart-note{
+      color:var(--muted);
+      font-size:13px;
+    }
+    .bars{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .bar-row{
+      display:grid;
+      grid-template-columns:100px 1fr;
+      gap:14px;
+      align-items:center;
+    }
+    .bar-label{
+      font-size:14px;
+      font-weight:700;
+    }
+    .bar-stack{display:flex; flex-direction:column; gap:8px;}
+    .track{
+      position:relative;
+      height:24px;
+      background:#f1ece7;
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .fill{
+      position:absolute;
+      inset:0 auto 0 0;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      padding-right:10px;
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .prev{ background:linear-gradient(90deg,#c9a27c,#d9c5b2); color:#4b372b; }
+    .curr{ background:linear-gradient(90deg,#8f5b52,#b57469); }
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+      margin-top:14px;
+    }
+    .mini-card{
+      padding:16px;
+      border-radius:18px;
+      background:#faf6f2;
+      border:1px solid var(--line);
+    }
+    .mini-title{font-size:14px;font-weight:700;margin-bottom:8px;}
+    .mini-lines{font-size:14px;color:#5f5650;}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+    th,td{
+      padding:12px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:right;
+      vertical-align:middle;
+    }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2){text-align:left;}
+    th{
+      color:#665d56;
+      font-weight:700;
+      background:#faf6f2;
+    }
+    .up{color:#8a3f34;font-weight:700;}
+    .down{color:#5f7a5a;font-weight:700;}
+    .note-box{
+      margin-top:18px;
+      background:linear-gradient(180deg,#fffdfa,#f9f4ef);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+    .footer{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:right;
+    }
+    @media (max-width: 980px){
+      .cards, .chart-grid, .mini-grid{grid-template-columns:1fr 1fr;}
+    }
+    @media (max-width: 720px){
+      .cards, .chart-grid, .mini-grid{grid-template-columns:1fr;}
+      .bar-row{grid-template-columns:1fr; gap:8px;}
+      .value{font-size:28px;}
+      th,td{font-size:13px; padding:10px 8px;}
+      .wrap{padding:16px 12px 30px;}
+      .hero{padding:22px 18px;}
+    }
+    @media print{
+      body{background:#fff;}
+      .wrap{max-width:none;padding:10mm;}
+      .card,.chart-card,.note-box,.hero{box-shadow:none;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">活動回報｜金包優惠</div>
+      <h1>3/18–3/23 金包優惠活動回報</h1>
+      <div class="sub">活動品項為日本和牛、美國牛、豬肉；活動機制為 <b>2包89折、3包79折、5包69折</b>。以下整理本週銷售表現，並與前一週做簡要對比，協助快速掌握活動成效。</div>
+    </section>
+
+    <section class="grid cards">
+      <article class="card">
+        <div class="label">本週總銷售件數</div>
+        <div class="value">340</div>
+        <div class="delta">前週 339，<span class="up">+1 件</span></div>
+      </article>
+      <article class="card">
+        <div class="label">本週原金額</div>
+        <div class="value">106,130</div>
+        <div class="delta">前週 78,662，<span class="up">+27,468 元</span></div>
+      </article>
+      <article class="card">
+        <div class="label">本週總折扣金額</div>
+        <div class="value">30,445</div>
+        <div class="delta">前週 4,809，<span class="up">+25,636 元</span></div>
+      </article>
+      <article class="card">
+        <div class="label">活動整體觀察</div>
+        <div class="value" style="font-size:24px">金額明顯成長</div>
+        <div class="delta">主要來自美國牛與高折扣組合帶動</div>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <h2 class="section-title">整體指標對比</h2>
+            <div class="chart-note">前週 vs 本週</div>
+          </div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <div class="bar-label">銷售件數</div>
+            <div class="bar-stack">
+              <div class="track"><div class="fill prev" style="width:99.7%">前週 339</div></div>
+              <div class="track"><div class="fill curr" style="width:100%">本週 340</div></div>
+            </div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">原金額</div>
+            <div class="bar-stack">
+              <div class="track"><div class="fill prev" style="width:74.1%">前週 78,662</div></div>
+              <div class="track"><div class="fill curr" style="width:100%">本週 106,130</div></div>
+            </div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">折扣金額</div>
+            <div class="bar-stack">
+              <div class="track"><div class="fill prev" style="width:15.8%">前週 4,809</div></div>
+              <div class="track"><div class="fill curr" style="width:100%">本週 30,445</div></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <h2 class="section-title">品類重點</h2>
+            <div class="chart-note">以件數與金額變化觀察</div>
+          </div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-card">
+            <div class="mini-title">日本和牛</div>
+            <div class="mini-lines">件數：64 → 64（持平）<br>原金額：27,922 → 29,602<br>折扣：3,527 → 8,848</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-title">美國牛</div>
+            <div class="mini-lines">件數：195 → 188（-7）<br>原金額：36,620 → 62,694<br>折扣：837 → 15,413</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-title">豬肉</div>
+            <div class="mini-lines">件數：80 → 88（+8）<br>原金額：14,120 → 13,834<br>折扣：445 → 6,184</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid" style="grid-template-columns:1fr; margin-top:18px;">
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <h2 class="section-title">各品類週別比較</h2>
+            <div class="chart-note">數據單位：件／元</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>品類</th>
+              <th>項目</th>
+              <th>前週</th>
+              <th>本週</th>
+              <th>差異</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td rowspan="3"><b>日本和牛</b></td>
+              <td>銷售件數</td>
+              <td>64</td>
+              <td>64</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>原金額</td>
+              <td>27,922</td>
+              <td>29,602</td>
+              <td class="up">+1,680</td>
+            </tr>
+            <tr>
+              <td>折扣金額</td>
+              <td>3,527</td>
+              <td>8,848</td>
+              <td class="up">+5,321</td>
+            </tr>
+
+            <tr>
+              <td rowspan="3"><b>美國牛</b></td>
+              <td>銷售件數</td>
+              <td>195</td>
+              <td>188</td>
+              <td class="down">-7</td>
+            </tr>
+            <tr>
+              <td>原金額</td>
+              <td>36,620</td>
+              <td>62,694</td>
+              <td class="up">+26,074</td>
+            </tr>
+            <tr>
+              <td>折扣金額</td>
+              <td>837</td>
+              <td>15,413</td>
+              <td class="up">+14,576</td>
+            </tr>
+
+            <tr>
+              <td rowspan="3"><b>豬肉</b></td>
+              <td>銷售件數</td>
+              <td>80</td>
+              <td>88</td>
+              <td class="up">+8</td>
+            </tr>
+            <tr>
+              <td>原金額</td>
+              <td>14,120</td>
+              <td>13,834</td>
+              <td class="down">-286</td>
+            </tr>
+            <tr>
+              <td>折扣金額</td>
+              <td>445</td>
+              <td>6,184</td>
+              <td class="up">+5,739</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+
+    <section class="note-box">
+      <h2 class="section-title" style="margin-top:0">簡要結論</h2>
+      <div>
+        本週金包優惠活動在整體件數與前週相近的情況下，<b>原金額明顯提升</b>，顯示活動有效推升客單與組合購買力。<b>美國牛</b>仍是本次活動主力，雖件數略減，但金額成長最明顯；<b>日本和牛</b>維持穩定表現；<b>豬肉</b>則在件數上成長，持續扮演帶動組數的角色。整體來看，本次折扣機制對高單價肉品與多件購買的帶動效果明確。
+      </div>
+    </section>
+
+    <div class="footer">資料期間：前週對比 vs 3/18–3/23 本週金包優惠活動</div>
+  </div>
+</body>
+</html>
