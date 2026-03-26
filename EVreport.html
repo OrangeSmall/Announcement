@@ -10,37 +10,31 @@
     <style>
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            /* 避免手機瀏覽器底部拉動時出現多餘空白 */
             overscroll-behavior-y: none;
         }
         
-        /* 固定的像素尺寸 (794px * 1123px 約為 A4 96dpi 尺寸) */
         .a4-container {
             width: 794px;
             min-height: 1123px;
-            background-color: #F8F5F0; /* 更改為淺茶色底色 */
+            background-color: #F8F5F0; 
             padding: 40px; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin: 0 auto;
             box-sizing: border-box;
-            /* 預設基準點改為左上方，配合 JavaScript 動態計算防止跑版 */
             transform-origin: top left; 
         }
         
-        /* 保留使用者輸入的換行符號 */
         .keep-breaks {
             white-space: pre-wrap;
             word-break: break-word;
             line-height: 1.6;
         }
         
-        /* 簽名字體 */
         .signature-font {
             font-family: 'Noto Serif TC', serif;
             font-style: italic;
         }
 
-        /* 隱藏捲軸但保留滾動功能 (美化介面) */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -68,7 +62,7 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">廠商名稱</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">已合作廠商名稱</label>
                     <input type="text" id="input-vendorName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入廠商名稱" oninput="updatePreview()">
                 </div>
 
@@ -84,12 +78,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">本次試吃品項</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">主打品項</label>
                     <input type="text" id="input-items" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入試吃品項" oninput="updatePreview()">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">試吃活動優惠內容</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">試吃活動優惠內容 (支援換行)</label>
                     <textarea id="input-promo" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入優惠方案..." oninput="updatePreview()"></textarea>
                 </div>
 
@@ -106,32 +100,32 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據 (支援換行)</label>
                     <textarea id="input-sales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入銷售數據 (如：冰花10盒完售)..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">上次活動數據參考（若有)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">上次活動數據參考（若有，支援換行)</label>
                     <textarea id="input-prevSales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入上次數據..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">兩次活動對比分析（若有)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">兩次活動對比分析（若有，支援換行)</label>
                     <textarea id="input-comparison" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入對比分析..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">現場反應與成效</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">現場反應與成效 (支援換行)</label>
                     <textarea id="input-pros" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入現場反應..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">需協助或改善事項</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">需協助或改善事項 (支援換行)</label>
                     <textarea id="input-cons" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入改善建議..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">建議補充事項</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">建議補充事項 (支援換行)</label>
                     <textarea id="input-suggestions" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入建議補充..." oninput="updatePreview()"></textarea>
                 </div>
 
@@ -181,7 +175,7 @@
                         <h2 class="text-lg font-bold text-center text-gray-600 mt-1 leading-normal">合作廠商試吃活動紀錄</h2>
                     </div>
 
-                    <!-- 基本資訊區塊：新增「活動時間」 -->
+                    <!-- 基本資訊區塊 -->
                     <div class="grid grid-cols-3 gap-y-4 gap-x-6 mb-4 bg-white/80 p-4 rounded-lg border border-gray-200 relative z-10 backdrop-blur-sm shadow-sm">
                         <div class="col-span-1">
                             <span class="text-gray-500 font-bold text-xs block mb-1">廠商名稱</span>
@@ -196,11 +190,11 @@
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-time"></p>
                         </div>
                         <div class="col-span-3">
-                            <span class="text-gray-500 font-bold text-xs block mb-1">本次試吃品項</span>
+                            <span class="text-gray-500 font-bold text-xs block mb-1">主打品項</span>
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-items"></p>
                         </div>
                         <div class="col-span-3 mt-1">
-                            <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">試吃活動優惠內容</span>
+                            <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">活動優惠內容</span>
                             <p class="text-base text-teal-900 keep-breaks min-h-[1.5rem]" id="preview-promo"></p>
                         </div>
                     </div>
@@ -212,45 +206,61 @@
                             <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-overallStatus"></p>
                         </div>
 
+                        <!-- 修正：所有小標題採用 Flexbox 與實體色塊，確保出圖時絕對不會上下偏移 -->
+                        
                         <!-- 當日銷售數據 -->
                         <div>
-                            <h3 class="text-base font-bold text-blue-600 border-l-4 border-blue-500 pl-2 mb-2">當日銷售數據</h3>
+                            <h3 class="text-base font-bold text-blue-600 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-blue-500 rounded-[1px] shrink-0 mr-2"></div>當日銷售數據
+                            </h3>
                             <div class="keep-breaks text-sm font-bold text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-sales"></div>
                         </div>
 
                         <!-- 上次活動數據參考 -->
                         <div>
-                            <h3 class="text-base font-bold text-indigo-600 border-l-4 border-indigo-500 pl-2 mb-2">上次活動數據參考</h3>
+                            <h3 class="text-base font-bold text-indigo-600 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-indigo-500 rounded-[1px] shrink-0 mr-2"></div>上次活動數據參考
+                            </h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-prevSales"></div>
                         </div>
 
                         <!-- 兩次活動對比分析 -->
                         <div>
-                            <h3 class="text-base font-bold text-purple-600 border-l-4 border-purple-500 pl-2 mb-2">兩次活動對比分析</h3>
+                            <h3 class="text-base font-bold text-purple-600 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-purple-500 rounded-[1px] shrink-0 mr-2"></div>兩次活動對比分析
+                            </h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-comparison"></div>
                         </div>
 
                         <!-- 現場反應與成效 -->
                         <div>
-                            <h3 class="text-base font-bold text-teal-700 border-l-4 border-teal-600 pl-2 mb-2">現場反應與成效</h3>
+                            <h3 class="text-base font-bold text-teal-700 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-teal-600 rounded-[1px] shrink-0 mr-2"></div>現場反應與成效
+                            </h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-pros"></div>
                         </div>
 
                         <!-- 需協助或改善事項 -->
                         <div>
-                            <h3 class="text-base font-bold text-orange-600 border-l-4 border-orange-500 pl-2 mb-2">需協助或改善事項</h3>
+                            <h3 class="text-base font-bold text-orange-600 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-orange-500 rounded-[1px] shrink-0 mr-2"></div>需協助或改善事項
+                            </h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-cons"></div>
                         </div>
 
                         <!-- 建議補充事項 -->
                         <div>
-                            <h3 class="text-base font-bold text-slate-700 border-l-4 border-slate-600 pl-2 mb-2">建議補充事項</h3>
+                            <h3 class="text-base font-bold text-slate-700 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-slate-600 rounded-[1px] shrink-0 mr-2"></div>建議補充事項
+                            </h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-suggestions"></div>
                         </div>
 
                         <!-- 照片區塊 -->
                         <div>
-                            <h3 class="text-base font-bold text-gray-800 border-l-4 border-gray-700 pl-2 mb-2">活動現場照片</h3>
+                            <h3 class="text-base font-bold text-gray-800 flex items-center mb-2">
+                                <div class="w-1 h-4 bg-gray-700 rounded-[1px] shrink-0 mr-2"></div>活動現場照片
+                            </h3>
                             <div id="preview-photos" class="grid grid-cols-3 gap-3 mt-2 min-h-[6rem]">
                             </div>
                         </div>
@@ -315,6 +325,7 @@
             window.scrollTo(0, 0);
         }
 
+        // 修正：手機預覽跑版問題 (確保 margin 歸零與左上對齊)
         function updatePreviewScale() {
             const wrapper = document.getElementById('preview-wrapper');
             const preview = document.getElementById('report-preview');
@@ -327,10 +338,12 @@
                 const scale = availableWidth / targetWidth;
                 preview.style.transformOrigin = 'top left'; 
                 preview.style.transform = `scale(${scale})`;
+                preview.style.margin = '0'; // 取消居中，避免負座標偏移
                 wrapper.style.height = `${preview.offsetHeight * scale}px`;
             } else {
                 preview.style.transformOrigin = 'top center';
                 preview.style.transform = 'none';
+                preview.style.margin = '0 auto'; // 恢復置中
                 wrapper.style.height = 'auto';
             }
         }
@@ -341,7 +354,7 @@
             document.getElementById('preview-eventName').innerText = document.getElementById('input-eventName').value || '\u200B';
             document.getElementById('preview-vendorName').innerText = document.getElementById('input-vendorName').value || '\u200B';
             document.getElementById('preview-date').innerText = document.getElementById('input-date').value || '\u200B';
-            document.getElementById('preview-time').innerText = document.getElementById('input-time').value || '\u200B'; // 新增：活動時間
+            document.getElementById('preview-time').innerText = document.getElementById('input-time').value || '\u200B';
             document.getElementById('preview-items').innerText = document.getElementById('input-items').value || '\u200B';
             document.getElementById('preview-promo').innerText = document.getElementById('input-promo').value || '\u200B';
             
@@ -444,9 +457,12 @@
             
             const originalTransform = element.style.transform;
             const originalOrigin = element.style.transformOrigin;
+            const originalMargin = element.style.margin; // 儲存原本的 margin 狀態
             const originalWrapperHeight = wrapper.style.height;
             
+            // 截圖前：完全清除縮放與外距干擾，給 html2canvas 最乾淨的原始尺寸
             element.style.transform = 'none';
+            element.style.margin = '0'; 
             wrapper.style.height = 'auto'; 
 
             html2canvas(element, {
@@ -457,8 +473,10 @@
                 width: 794,
                 height: element.offsetHeight 
             }).then(canvas => {
+                // 截圖後：立刻還原所有版面狀態
                 element.style.transform = originalTransform;
                 element.style.transformOrigin = originalOrigin;
+                element.style.margin = originalMargin;
                 wrapper.style.height = originalWrapperHeight;
 
                 const vendorName = document.getElementById('input-vendorName').value || '未命名';
@@ -515,6 +533,7 @@
             }).catch(err => {
                 element.style.transform = originalTransform;
                 element.style.transformOrigin = originalOrigin;
+                element.style.margin = originalMargin;
                 wrapper.style.height = originalWrapperHeight;
                 console.error('導出失敗:', err);
                 alert('圖片導出處理失敗，請再試一次。');
