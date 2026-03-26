@@ -77,9 +77,22 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">主打品項</label>
-                    <input type="text" id="input-items" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入試吃品項" oninput="updatePreview()">
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">主打品項</label>
+                        <input type="text" id="input-items" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入試吃品項" oninput="updatePreview()">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">整體活動狀況</label>
+                        <select id="input-overallStatus" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
+                            <option value="" disabled selected>請選擇</option>
+                            <option value="★★★★★">★★★★★</option>
+                            <option value="★★★★☆">★★★★☆</option>
+                            <option value="★★★☆☆">★★★☆☆</option>
+                            <option value="★★☆☆☆">★★☆☆☆</option>
+                            <option value="★☆☆☆☆">★☆☆☆☆</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div>
@@ -87,30 +100,19 @@
                     <textarea id="input-promo" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入優惠方案..." oninput="updatePreview()"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">整體活動狀況</label>
-                    <select id="input-overallStatus" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
-                        <option value="" disabled selected>請選擇</option>
-                        <option value="★★★★★ (極佳)">★★★★★ (極佳)</option>
-                        <option value="★★★★☆ (良好)">★★★★☆ (良好)</option>
-                        <option value="★★★☆☆ (普通)">★★★☆☆ (普通)</option>
-                        <option value="★★☆☆☆ (待加強)">★★☆☆☆ (待加強)</option>
-                        <option value="★☆☆☆☆ (不佳)">★☆☆☆☆ (不佳)</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據</label>
+                        <textarea id="input-sales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入銷售數據..." oninput="updatePreview()"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">上次活動數據參考</label>
+                        <textarea id="input-prevSales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入上次數據..." oninput="updatePreview()"></textarea>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據 (支援換行)</label>
-                    <textarea id="input-sales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入銷售數據 (如：冰花10盒完售)..." oninput="updatePreview()"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">上次活動數據參考（若有，支援換行)</label>
-                    <textarea id="input-prevSales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入上次數據..." oninput="updatePreview()"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">兩次活動對比分析（若有，支援換行)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">兩次活動對比分析 (支援換行)</label>
                     <textarea id="input-comparison" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入對比分析..." oninput="updatePreview()"></textarea>
                 </div>
 
@@ -175,7 +177,7 @@
                         <h2 class="text-lg font-bold text-center text-gray-600 mt-1 leading-normal">合作廠商試吃活動紀錄</h2>
                     </div>
 
-                    <!-- 基本資訊區塊 -->
+                    <!-- 基本資訊區塊：整合「整體活動狀況」至右方 -->
                     <div class="grid grid-cols-3 gap-y-4 gap-x-6 mb-4 bg-white/80 p-4 rounded-lg border border-gray-200 relative z-10 backdrop-blur-sm shadow-sm">
                         <div class="col-span-1">
                             <span class="text-gray-500 font-bold text-xs block mb-1">廠商名稱</span>
@@ -189,10 +191,18 @@
                             <span class="text-gray-500 font-bold text-xs block mb-1">活動時間</span>
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-time"></p>
                         </div>
-                        <div class="col-span-3">
+                        
+                        <!-- 主打品項佔 2 格 -->
+                        <div class="col-span-2 flex flex-col justify-center">
                             <span class="text-gray-500 font-bold text-xs block mb-1">主打品項</span>
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-items"></p>
                         </div>
+                        <!-- 整體活動狀況佔 1 格，採用醒目的獨立樣式 -->
+                        <div class="col-span-1 bg-yellow-50/80 p-2 rounded border border-yellow-200 flex flex-col items-center justify-center">
+                            <span class="text-gray-500 font-bold text-[10px] block mb-1">整體活動狀況</span>
+                            <p class="text-lg text-yellow-600 tracking-widest font-bold leading-normal min-h-[1.5rem]" id="preview-overallStatus"></p>
+                        </div>
+
                         <div class="col-span-3 mt-1">
                             <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">活動優惠內容</span>
                             <p class="text-base text-teal-900 keep-breaks min-h-[1.5rem]" id="preview-promo"></p>
@@ -200,28 +210,24 @@
                     </div>
 
                     <div class="space-y-4 flex-grow relative z-10">
-                        <!-- 評估區塊 -->
-                        <div class="bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm shadow-sm">
-                            <span class="text-gray-600 font-bold text-xs block mb-1">整體活動狀況</span>
-                            <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-overallStatus"></p>
-                        </div>
-
-                        <!-- 修正：所有小標題採用 Flexbox 與實體色塊，確保出圖時絕對不會上下偏移 -->
                         
-                        <!-- 當日銷售數據 -->
-                        <div>
-                            <h3 class="text-base font-bold text-blue-600 flex items-center mb-2">
-                                <div class="w-1 h-4 bg-blue-500 rounded-[1px] shrink-0 mr-2"></div>當日銷售數據
-                            </h3>
-                            <div class="keep-breaks text-sm font-bold text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-sales"></div>
-                        </div>
+                        <!-- 數據比對區：並排顯示，利用 Grid 避免跑版 -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- 當日銷售數據 -->
+                            <div>
+                                <h3 class="text-base font-bold text-blue-600 flex items-center mb-2">
+                                    <div class="w-1 h-4 bg-blue-500 rounded-[1px] shrink-0 mr-2"></div>當日銷售數據
+                                </h3>
+                                <div class="keep-breaks text-sm font-bold text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-sales"></div>
+                            </div>
 
-                        <!-- 上次活動數據參考 -->
-                        <div>
-                            <h3 class="text-base font-bold text-indigo-600 flex items-center mb-2">
-                                <div class="w-1 h-4 bg-indigo-500 rounded-[1px] shrink-0 mr-2"></div>上次活動數據參考
-                            </h3>
-                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-prevSales"></div>
+                            <!-- 上次活動數據參考 -->
+                            <div>
+                                <h3 class="text-base font-bold text-indigo-600 flex items-center mb-2">
+                                    <div class="w-1 h-4 bg-indigo-500 rounded-[1px] shrink-0 mr-2"></div>上次活動數據參考
+                                </h3>
+                                <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-prevSales"></div>
+                            </div>
                         </div>
 
                         <!-- 兩次活動對比分析 -->
