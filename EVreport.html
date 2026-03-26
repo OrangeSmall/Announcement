@@ -68,7 +68,7 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">已合作廠商名稱</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">廠商名稱</label>
                     <input type="text" id="input-vendorName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入廠商名稱" oninput="updatePreview()">
                 </div>
 
@@ -84,50 +84,55 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">主打品項</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">本次試吃品項</label>
                     <input type="text" id="input-items" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" value="" placeholder="請輸入試吃品項" oninput="updatePreview()">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">試吃活動優惠內容 (支援換行)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">試吃活動優惠內容</label>
                     <textarea id="input-promo" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入優惠方案..." oninput="updatePreview()"></textarea>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">廠商積極度</label>
-                        <select id="input-proactive" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
-                            <option value="" disabled selected>請選擇</option>
-                            <option value="★★★★★ (極佳)">★★★★★ (極佳)</option>
-                            <option value="★★★★☆ (良好)">★★★★☆ (良好)</option>
-                            <option value="★★★☆☆ (普通)">★★★☆☆ (普通)</option>
-                            <option value="★★☆☆☆ (消極)">★★☆☆☆ (消極)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">優先安排意願</label>
-                        <select id="input-priority" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
-                            <option value="" disabled selected>請選擇</option>
-                            <option value="⭐⭐⭐ 極高 (優先排程)">⭐⭐⭐ 極高 (優先排程)</option>
-                            <option value="⭐⭐ 普通 (正常排程)">⭐⭐ 普通 (正常排程)</option>
-                            <option value="⭐ 較低 (暫緩排程)">⭐ 較低 (暫緩排程)</option>
-                        </select>
-                    </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">整體活動狀況</label>
+                    <select id="input-overallStatus" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updatePreview()">
+                        <option value="" disabled selected>請選擇</option>
+                        <option value="★★★★★ (極佳)">★★★★★ (極佳)</option>
+                        <option value="★★★★☆ (良好)">★★★★☆ (良好)</option>
+                        <option value="★★★☆☆ (普通)">★★★☆☆ (普通)</option>
+                        <option value="★★☆☆☆ (待加強)">★★☆☆☆ (待加強)</option>
+                        <option value="★☆☆☆☆ (不佳)">★☆☆☆☆ (不佳)</option>
+                    </select>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">現場反應與成效 (支援換行)</label>
-                    <textarea id="input-pros" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入現場反應..." oninput="updatePreview()"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據 (支援換行)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">當日銷售數據</label>
                     <textarea id="input-sales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入銷售數據 (如：冰花10盒完售)..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">需協助或改善事項 (支援換行)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">上次活動數據參考（若有)</label>
+                    <textarea id="input-prevSales" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入上次數據..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">兩次活動對比分析（若有)</label>
+                    <textarea id="input-comparison" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入對比分析..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">現場反應與成效</label>
+                    <textarea id="input-pros" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入現場反應..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">需協助或改善事項</label>
                     <textarea id="input-cons" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入改善建議..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">建議補充事項</label>
+                    <textarea id="input-suggestions" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="請輸入建議補充..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <div>
@@ -191,26 +196,38 @@
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-time"></p>
                         </div>
                         <div class="col-span-3">
-                            <span class="text-gray-500 font-bold text-xs block mb-1">主打品項</span>
+                            <span class="text-gray-500 font-bold text-xs block mb-1">本次試吃品項</span>
                             <p class="text-base text-gray-800 leading-normal min-h-[1.5rem]" id="preview-items"></p>
                         </div>
                         <div class="col-span-3 mt-1">
-                            <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">活動優惠內容</span>
+                            <span class="text-teal-700 font-bold text-xs border-b border-teal-200 inline-block mb-2 pb-1">試吃活動優惠內容</span>
                             <p class="text-base text-teal-900 keep-breaks min-h-[1.5rem]" id="preview-promo"></p>
                         </div>
                     </div>
 
                     <div class="space-y-4 flex-grow relative z-10">
                         <!-- 評估區塊 -->
-                        <div class="flex flex-row gap-4 bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm shadow-sm">
-                            <div class="flex-1">
-                                <span class="text-gray-600 font-bold text-xs block mb-1">廠商積極度</span>
-                                <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-proactive"></p>
-                            </div>
-                            <div class="flex-1 border-l border-yellow-300 pl-4">
-                                <span class="text-gray-600 font-bold text-xs block mb-1">後續優先安排意願</span>
-                                <p class="text-lg text-gray-900 font-medium leading-normal min-h-[1.75rem]" id="preview-priority"></p>
-                            </div>
+                        <div class="bg-yellow-50/90 p-4 rounded border border-yellow-200 backdrop-blur-sm shadow-sm">
+                            <span class="text-gray-600 font-bold text-xs block mb-1">整體活動狀況</span>
+                            <p class="text-lg text-yellow-600 tracking-wider font-medium leading-normal min-h-[1.75rem]" id="preview-overallStatus"></p>
+                        </div>
+
+                        <!-- 當日銷售數據 -->
+                        <div>
+                            <h3 class="text-base font-bold text-blue-600 border-l-4 border-blue-500 pl-2 mb-2">當日銷售數據</h3>
+                            <div class="keep-breaks text-sm font-bold text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-sales"></div>
+                        </div>
+
+                        <!-- 上次活動數據參考 -->
+                        <div>
+                            <h3 class="text-base font-bold text-indigo-600 border-l-4 border-indigo-500 pl-2 mb-2">上次活動數據參考</h3>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-prevSales"></div>
+                        </div>
+
+                        <!-- 兩次活動對比分析 -->
+                        <div>
+                            <h3 class="text-base font-bold text-purple-600 border-l-4 border-purple-500 pl-2 mb-2">兩次活動對比分析</h3>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-comparison"></div>
                         </div>
 
                         <!-- 現場反應與成效 -->
@@ -219,16 +236,16 @@
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-pros"></div>
                         </div>
 
-                        <!-- 新增：當日銷售數據 -->
-                        <div>
-                            <h3 class="text-base font-bold text-blue-600 border-l-4 border-blue-500 pl-2 mb-2">當日銷售數據</h3>
-                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-sales"></div>
-                        </div>
-
                         <!-- 需協助或改善事項 -->
                         <div>
                             <h3 class="text-base font-bold text-orange-600 border-l-4 border-orange-500 pl-2 mb-2">需協助或改善事項</h3>
                             <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2.5rem]" id="preview-cons"></div>
+                        </div>
+
+                        <!-- 建議補充事項 -->
+                        <div>
+                            <h3 class="text-base font-bold text-slate-700 border-l-4 border-slate-600 pl-2 mb-2">建議補充事項</h3>
+                            <div class="keep-breaks text-sm text-gray-700 leading-relaxed bg-white/90 p-2 border border-gray-100 rounded shadow-sm backdrop-blur-sm min-h-[2rem]" id="preview-suggestions"></div>
                         </div>
 
                         <!-- 照片區塊 -->
@@ -254,7 +271,7 @@
                     </div>
                     
                     <div class="absolute bottom-4 left-0 w-full flex justify-center z-10">
-                        <span class="text-[10px] text-gray-400 tracking-widest uppercase opacity-80">Generated by 小橘 v2</span>
+                        <span class="text-[10px] text-gray-400 tracking-widest uppercase opacity-80">Generated by Event Planner Assistant</span>
                     </div>
                 </div>
             </div>
@@ -328,15 +345,15 @@
             document.getElementById('preview-items').innerText = document.getElementById('input-items').value || '\u200B';
             document.getElementById('preview-promo').innerText = document.getElementById('input-promo').value || '\u200B';
             
-            const proactive = document.getElementById('input-proactive').value;
-            document.getElementById('preview-proactive').innerText = proactive || '\u200B';
+            const overallStatus = document.getElementById('input-overallStatus').value;
+            document.getElementById('preview-overallStatus').innerText = overallStatus || '\u200B';
             
-            const priority = document.getElementById('input-priority').value;
-            document.getElementById('preview-priority').innerText = priority || '\u200B';
-            
+            document.getElementById('preview-sales').innerText = document.getElementById('input-sales').value || '\u200B';
+            document.getElementById('preview-prevSales').innerText = document.getElementById('input-prevSales').value || '\u200B';
+            document.getElementById('preview-comparison').innerText = document.getElementById('input-comparison').value || '\u200B';
             document.getElementById('preview-pros').innerText = document.getElementById('input-pros').value || '\u200B';
-            document.getElementById('preview-sales').innerText = document.getElementById('input-sales').value || '\u200B'; // 新增：銷售數據
             document.getElementById('preview-cons').innerText = document.getElementById('input-cons').value || '\u200B';
+            document.getElementById('preview-suggestions').innerText = document.getElementById('input-suggestions').value || '\u200B';
             
             document.getElementById('preview-recorder').innerText = document.getElementById('input-recorder').value || '\u200B';
             
