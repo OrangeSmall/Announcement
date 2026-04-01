@@ -3,381 +3,350 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>平凡五金行｜母親節・端午節活動企劃整合版</title>
+  <title>平凡五金行｜母親節活動正式提報版企畫書</title>
   <style>
     :root{
-      --bg:#f6f2ed;
-      --card:#ffffff;
-      --ink:#242424;
-      --muted:#6b6b6b;
-      --line:#e8ddd3;
-      --rose:#9a5b5b;
-      --soft:#fdf5f2;
-      --shadow:0 14px 32px rgba(45,35,25,.08);
-      --radius:20px;
-      --max:1200px;
+      --bg:#f7f3ee;
+      --paper:#fffdfb;
+      --ink:#2b2b2b;
+      --muted:#6f655f;
+      --line:#d9cec3;
+      --primary:#8a3f47;
+      --primary-deep:#6e2f36;
+      --soft:#efe3d7;
+      --gold:#b39368;
+      --tag:#f3ece5;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
-      color:var(--ink);
-      background:
-        radial-gradient(circle at top right, rgba(184,116,116,.10) 0%, transparent 28%),
-        radial-gradient(circle at left 20%, rgba(201,177,157,.08) 0%, transparent 22%),
-        linear-gradient(180deg, #f8f5f1 0%, #f3efe9 100%);
-      line-height:1.72;
-    }
-    .wrap{max-width:var(--max);margin:0 auto;padding:22px 16px 48px}
-    .hero{
-      background:linear-gradient(135deg, #fffaf7 0%, #fff2ef 100%);
-      border:1px solid #efd7cf;
-      border-radius:28px;
-      padding:28px 24px;
-      box-shadow:var(--shadow);
-      position:relative;
-      overflow:hidden;
-    }
-    .hero::after{
-      content:"";
-      position:absolute;
-      width:220px;height:220px;
-      right:-70px;top:-70px;
-      border-radius:50%;
-      background:radial-gradient(circle, rgba(184,116,116,.20) 0%, rgba(184,116,116,0) 68%);
-    }
-    .eyebrow{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid #efd9d4;
-      padding:7px 12px;border-radius:999px;background:#fff;
-      color:var(--rose);font-size:13px;font-weight:800;letter-spacing:.04em;
-    }
-    h1{margin:14px 0 10px;font-size:clamp(30px,5vw,46px);line-height:1.18}
-    .lead{margin:0;max-width:920px;color:#5f6670;font-size:16px}
-    .nav{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
-    .nav a{
-      text-decoration:none;color:#7b4a4a;background:#fff;border:1px solid #edd8d4;
-      border-radius:999px;padding:8px 12px;font-size:14px;font-weight:700;
-    }
-    .campaign{margin-top:18px;scroll-margin-top:20px}
-    .campaign-head{
-      display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:14px;
-    }
-    .campaign-title{margin:0;font-size:28px;line-height:1.2}
-    .campaign-sub{margin:4px 0 0;color:var(--muted);font-size:15px}
-    .badge-row{display:flex;flex-wrap:wrap;gap:8px}
-    .badge{
-      display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;
-      font-weight:800;border:1px solid #ecd6cf;background:#fff6f4;color:#8a5050;
-    }
-    .grid{display:grid;gap:16px}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    @media (max-width:960px){.grid-2,.grid-4{grid-template-columns:1fr}}
-    .card{
-      background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-      box-shadow:var(--shadow);padding:20px 18px;
-    }
-    .section-title{
-      display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:20px;
-    }
-    .dot{width:12px;height:12px;border-radius:999px;background:var(--rose);flex:0 0 auto}
-    .kpi{
-      border:1px solid #ecdcd2;border-radius:16px;background:linear-gradient(180deg,#fff,#fff9f8);
-      padding:16px 14px;
-    }
-    .kpi .label{font-size:13px;color:var(--muted);margin-bottom:8px}
-    .kpi .value{font-size:22px;font-weight:900;color:#8d4f4f;line-height:1.2}
-    ul.clean{margin:8px 0 0;padding-left:1.15em}
-    ul.clean li{margin:6px 0}
-    .note{
-      background:var(--soft);border:1px dashed #e4bdb5;border-radius:14px;padding:14px;color:#7a4c4c;font-size:14px;
-    }
-    .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    @media (max-width:960px){.steps{grid-template-columns:1fr}}
-    .step{
-      border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#fffaf8);
-      padding:16px 14px;
-    }
-    .step-num{
-      display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;
-      border-radius:999px;background:var(--rose);color:#fff;font-weight:900;font-size:14px;margin-bottom:10px;
-    }
-    .step h4{margin:0 0 8px;font-size:16px}
-    .step p{margin:0;color:#5f6670;font-size:14px}
-    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
-    table{width:100%;min-width:760px;border-collapse:collapse}
-    th,td{
-      border-bottom:1px solid var(--line);padding:12px;text-align:left;vertical-align:top;font-size:14px;
-    }
-    th{background:#faf5f2;color:#7c4b4b;font-weight:900;white-space:nowrap}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.7}
+    .wrap{max-width:1080px;margin:0 auto;padding:28px 18px 64px}
+    .sheet{background:var(--paper);border:1px solid var(--line);box-shadow:0 18px 40px rgba(60,40,20,.08);border-radius:18px;overflow:hidden}
+    .hero{padding:36px 42px 28px;background:linear-gradient(135deg,#f8f2eb 0%,#fffdfb 55%,#f4e8de 100%);border-bottom:1px solid var(--line)}
+    .eyebrow{display:inline-block;padding:6px 12px;border-radius:999px;background:var(--tag);color:var(--primary-deep);font-size:13px;letter-spacing:.08em;font-weight:700}
+    h1{margin:16px 0 8px;font-size:32px;line-height:1.25;color:var(--primary-deep)}
+    .subtitle{font-size:15px;color:var(--muted);max-width:860px}
+    .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px}
+    .meta-card{border:1px solid var(--line);background:#fff;padding:14px 16px;border-radius:14px}
+    .meta-card .label{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .meta-card .value{font-size:16px;font-weight:700;color:var(--primary-deep)}
+
+    .content{padding:34px 42px 42px}
+    section{margin-bottom:30px}
+    h2{margin:0 0 14px;font-size:22px;color:var(--primary-deep);padding-left:12px;border-left:4px solid var(--gold)}
+    h3{margin:18px 0 8px;font-size:17px;color:var(--primary)}
+    p{margin:0 0 10px}
+    .lead{font-size:16px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:18px 18px}
+    .card.soft{background:#fffaf6}
+    ul{margin:8px 0 0 0;padding-left:20px}
+    li{margin:6px 0}
+    .highlight{display:inline-block;padding:2px 8px;border-radius:8px;background:var(--soft);color:var(--primary-deep);font-weight:700}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    th,td{padding:12px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+    th{background:#f8f2eb;color:var(--primary-deep);font-size:14px}
     tr:last-child td{border-bottom:none}
-    .status{
-      display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;
+    .note{font-size:13px;color:var(--muted)}
+    .tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .tag{padding:7px 12px;border-radius:999px;background:var(--tag);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--primary-deep)}
+    .kpi-good{font-weight:700;color:var(--primary-deep)}
+    .footer{padding:18px 42px 28px;border-top:1px solid var(--line);background:#fcfaf7;color:var(--muted);font-size:13px}
+    .small{font-size:13px;color:var(--muted)}
+    .checklist li{margin:8px 0}
+
+    @media (max-width: 860px){
+      .meta,.grid-2{grid-template-columns:1fr 1fr}
+      .hero,.content,.footer{padding-left:22px;padding-right:22px}
+      h1{font-size:26px}
     }
-    .pending{background:#fff3db;border:1px solid #ecd7a7;color:#8b6212}
-    .doing{background:#eaf4ff;border:1px solid #bfd7f0;color:#215a8f}
-    .summary{
-      margin-top:18px;background:linear-gradient(135deg,#fffaf8 0%,#fff3f0 100%);
-      border:1px solid #efd9d2;border-radius:22px;padding:22px 18px;box-shadow:var(--shadow);
+    @media (max-width: 640px){
+      .meta,.grid-2{grid-template-columns:1fr}
+      th,td{padding:10px 10px;font-size:14px}
+      h2{font-size:19px}
     }
-    .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px}
     @media print{
       body{background:#fff}
       .wrap{max-width:none;padding:0}
-      .hero,.card,.summary{box-shadow:none}
-      a{text-decoration:none;color:inherit}
+      .sheet{box-shadow:none;border:none;border-radius:0}
+      .hero{background:#fff}
+      a{color:inherit;text-decoration:none}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <section class="hero">
-      <div class="eyebrow">活動企劃整合版・便於後續微調</div>
-      <h1>母親節 × 端午節<br>活動企劃整合 HTML</h1>
-      <p class="lead">
-        本版先保留母親節完整企劃內容，並預留端午節區塊，方便後續直接補充。
-        母親節內容已依目前最新規劃同步修正活動流程、優惠條件與待處理事項。
-      </p>
-      <div class="nav">
-        <a href="#mothers-day">母親節活動</a>
-        <a href="#dragon-boat">端午節活動</a>
-      </div>
-    </section>
+    <article class="sheet">
+      <header class="hero">
+        <div class="eyebrow">正式提報版企畫書</div>
+        <h1>平凡五金行｜母親節活動企畫案</h1>
+        <div class="subtitle">
+          以母親節聚餐需求為核心，透過內用優惠、滿額贈禮與 Ocard 回流券設計，形成「當次消費提升＋後續再訪導流」的節慶活動方案。<br>
+          本版已依最新補充內容更新，並刪除打卡牆規劃，聚焦於營運執行、數據追蹤與 KPI 管理。
+        </div>
+        <div class="meta">
+          <div class="meta-card">
+            <div class="label">活動檔期</div>
+            <div class="value">5/4－5/10</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">活動定位</div>
+            <div class="value">母親節聚餐禮遇</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">適用方式</div>
+            <div class="value">內用活動為主</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">追蹤單位</div>
+            <div class="value">以週為單位</div>
+          </div>
+        </div>
+      </header>
 
-    <section id="mothers-day" class="campaign">
-      <div class="campaign-head">
-        <div>
-          <h2 class="campaign-title">母親節活動企劃</h2>
-          <p class="campaign-sub">主軸：帶媽媽來店用餐，創造節慶感、話題感與後續回流機會</p>
-        </div>
-        <div class="badge-row">
-          <span class="badge">打卡牆規劃</span>
-          <span class="badge">金包半價</span>
-          <span class="badge">1500 康乃馨</span>
-          <span class="badge">2000 Ocard 兌換券</span>
-        </div>
-      </div>
-
-      <div class="grid grid-4">
-        <div class="kpi">
-          <div class="label">活動定位</div>
-          <div class="value">母親節聚餐禮遇</div>
-        </div>
-        <div class="kpi">
-          <div class="label">當日亮點</div>
-          <div class="value">打卡牆＋金包半價</div>
-        </div>
-        <div class="kpi">
-          <div class="label">滿額 1500</div>
-          <div class="value">應景康乃馨</div>
-        </div>
-        <div class="kpi">
-          <div class="label">滿額 2000</div>
-          <div class="value">Ocard 兌換券</div>
-        </div>
-      </div>
-
-      <div class="grid grid-2" style="margin-top:16px;">
-        <section class="card">
-          <h3 class="section-title"><span class="dot"></span>一、活動目的</h3>
-          <ul class="clean">
-            <li>以母親節聚餐情境創造「帶媽媽來店用餐」的明確理由。</li>
-            <li>透過打卡牆與當日優惠，增加活動記憶點與分享感。</li>
-            <li>以滿額招待券與兌換券設計，延伸第二次來店消費機會。</li>
-            <li>讓活動同時具備現場氛圍、促銷誘因與會員系統延伸空間。</li>
-          </ul>
-        </section>
-
-        <section class="card">
-          <h3 class="section-title"><span class="dot"></span>二、容易看懂的活動內容</h3>
-          <ul class="clean">
-            <li><strong>活動流程 1：</strong>現場規劃母親節打卡牆，讓顧客可拍照打卡。</li>
-            <li><strong>當天來店內用優惠：</strong>金包半價優惠，肉類不限品項。</li>
-            <li><strong>消費滿 1500 元：</strong>贈送康乃馨一朵（使用品項成本待確認）。</li>
-            <li><strong>消費滿 2000 元：</strong>贈送兌換券，下次來店使用，預計以 Ocard 系統發放，內容待確認。</li>
-          </ul>
-          <div class="note" style="margin-top:14px;">
-            建議對外文案可分成「當天內用有什麼」與「下次回店有什麼」兩段表述，
-            顧客會更容易理解活動層次。
+      <main class="content">
+        <section>
+          <h2>一、企畫背景與目的</h2>
+          <p class="lead">
+            母親節檔期具備明確聚餐需求，顧客多以家庭聚會、慶祝聚餐與節日儀式感作為消費動機。本次活動以「帶媽媽來平凡吃一頓好的」為核心概念，透過即時優惠與滿額禮遇，拉升內用來客與客單價；再以 Ocard 發券機制延伸後續回流，讓節慶活動不只停留於一次性折扣，而能形成後續再訪與會員經營效益。
+          </p>
+          <div class="grid-2">
+            <div class="card soft">
+              <h3>活動目的</h3>
+              <ul>
+                <li>提供顧客於母親節檔期到店聚餐的明確理由。</li>
+                <li>提升內用消費動機，強化湊單與加購行為。</li>
+                <li>藉由滿額贈花與 Ocard 券，增加節慶記憶點與回店誘因。</li>
+                <li>建立可追蹤的活動數據欄位，利於後續檢討與優化。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>本次調整方向</h3>
+              <ul>
+                <li>刪除打卡牆內容，避免企畫重心分散。</li>
+                <li>聚焦於內用聚餐、滿額贈禮與 Ocard 回流券三大主軸。</li>
+                <li>明確化優惠規則與單筆判定方式，降低現場爭議。</li>
+                <li>同步增設快捷數據抓取項目，利於活動後結案回報。</li>
+              </ul>
+            </div>
           </div>
         </section>
-      </div>
 
-      <section class="card" style="margin-top:16px;">
-        <h3 class="section-title"><span class="dot"></span>三、建議活動流程</h3>
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">01</div>
-            <h4>現場打卡牆規劃</h4>
-            <p>門市設置母親節打卡牆 / 打卡區，營造節慶氛圍並引導拍照分享。</p>
-          </div>
-          <div class="step">
-            <div class="step-num">02</div>
-            <h4>當天來店內用享禮遇</h4>
-            <p>金包半價優惠，肉類不限品項，提升當次消費吸引力。</p>
-          </div>
-          <div class="step">
-            <div class="step-num">03</div>
-            <h4>消費滿 1500 元</h4>
-            <p>贈送康乃馨一朵（成本待討論）</p>
-          </div>
-          <div class="step">
-            <div class="step-num">04</div>
-            <h4>消費滿 2000 元</h4>
-            <p>贈送兌換券，下次回店使用，預計由 Ocard 系統發放，內容待確認。</p>
-          </div>
-        </div>
-      </section>
-
-      <div class="grid grid-2" style="margin-top:16px;">
-        <section class="card">
-          <h3 class="section-title"><span class="dot"></span>四、建議執行方向</h3>
-          <ul class="clean">
-            <li>打卡牆建議用「母親節溫馨感＋簡單好拍」為主，不一定要大型背板，但要明確可辨識。</li>
-            <li>金包半價需先定義適用品項、是否限內用、是否可與其他活動併用。</li>
-            <li>滿 1500 要先寫清楚是否累贈。</li>
-            <li>滿 2000 的 Ocard 兌換券需提早確認發放方式、券種內容與後台操作流程。</li>
-            <li>現場、社群、門市話術與結帳判定標準需同步，避免不同人說法不一致。</li>
-          </ul>
-        </section>
-
-        <section class="card">
-          <h3 class="section-title"><span class="dot"></span>五、可能遇到的問題</h3>
-          <ul class="clean">
-            <li>顧客會問金包半價的適用品項範圍，以及是否真的肉類都適用。</li>
-            <li>1500 與 2000 是否能同時累贈，需先有統一規則。</li>
-            <li>指定兌換券若未說明清楚，容易產生對招待等級的認知落差。</li>
-            <li>Ocard 兌換券若內容與發放方式未先測試，現場執行可能卡住。</li>
-            <li>打卡牆若無引導動線，容易變成有設置但使用率不高。</li>
-          </ul>
-        </section>
-      </div>
-
-      <section class="card" style="margin-top:16px;">
-        <h3 class="section-title"><span class="dot"></span>六、母親節待處理與準備事項</h3>
-        <div class="table-wrap">
+        <section>
+          <h2>二、活動內容規劃</h2>
           <table>
-            <thead>
-              <tr>
-                <th style="width:18%;">項目類別</th>
-                <th style="width:28%;">待辦事項</th>
-                <th>說明</th>
-                <th style="width:12%;">狀態</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>活動機制</td>
-                <td>確認活動檔期</td>
-                <td>確認正式檔期、平假日與午晚餐是否都適用同規則。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>現場佈置</td>
-                <td>打卡牆主題與位置規劃</td>
-                <td>需確認視覺方向、擺放位置、是否有拍照手牌或標語，並避免影響動線。</td>
-                <td><span class="status doing">規劃中</span></td>
-              </tr>
-              <tr>
-                <td>現場佈置</td>
-                <td>打卡牆使用引導方式</td>
-                <td>確認由誰引導顧客拍照、是否需桌卡或立牌提醒，以及是否搭配社群標籤。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>優惠規則</td>
-                <td>金包半價適用範圍</td>
-                <td>確認肉類不限品項的定義、是否限內用、是否可與其他優惠併用。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>滿額機制</td>
-                <td>1500 元內容確認</td>
-                <td>確認兌換方式、是否累贈。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>系統設定</td>
-                <td>2000 元 Ocard 兌換券規劃</td>
-                <td>確認以 Ocard 發放的券種內容、發放條件、核銷方式與後台操作流程。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>活動機制</td>
-                <td>確認滿額是否可累贈</td>
-                <td>需明確規範滿 2000 是否同時享有 1500 贈禮與 2000 兌換券。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>活動機制</td>
-                <td>確認指定使用期間</td>
-                <td>需定義 2000 兌換券的開始使用日、截止日與是否有例外期間。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>文宣設計</td>
-                <td>活動主視覺與公告文案</td>
-                <td>建議分成「當天內用優惠」與「下次回店贈券」兩段說明。</td>
-                <td><span class="status doing">規劃中</span></td>
-              </tr>
-              <tr>
-                <td>門市執行</td>
-                <td>結帳判定與員工話術</td>
-                <td>統一現場說法，確認發券、Ocard 發放與引導打卡流程。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-              <tr>
-                <td>數據追蹤</td>
-                <td>活動成效記錄方式</td>
-                <td>可記錄打卡人次、半價使用件數、1500 康乃馨發放數、2000 Ocard 券發放數。</td>
-                <td><span class="status pending">待確認</span></td>
-              </tr>
-            </tbody>
+            <tr>
+              <th style="width:18%">項目</th>
+              <th>內容</th>
+            </tr>
+            <tr>
+              <td>活動名稱</td>
+              <td>母親節聚餐禮遇活動</td>
+            </tr>
+            <tr>
+              <td>活動時間</td>
+              <td>暫定 5/4－5/10</td>
+            </tr>
+            <tr>
+              <td>活動對象</td>
+              <td>活動期間內到店內用之顧客</td>
+            </tr>
+            <tr>
+              <td>主機制 A</td>
+              <td><span class="highlight">母親節金包優惠</span>：單筆消費可享 <strong>1 份金包半價</strong>，以價低者計。</td>
+            </tr>
+            <tr>
+              <td>主機制 B</td>
+              <td><span class="highlight">滿 1500 贈康乃馨</span>：單筆消費滿 1500 元，贈送康乃馨 1 朵。</td>
+            </tr>
+            <tr>
+              <td>主機制 C</td>
+              <td><span class="highlight">滿 2000 贈 Ocard 券</span>：單筆消費滿 2000 元，透過 Ocard 發送回流優惠券 1 張。</td>
+            </tr>
+            <tr>
+              <td>贈送原則</td>
+              <td>各贈禮與優惠皆以 <strong>單筆贈一次</strong> 為原則。</td>
+            </tr>
           </table>
-        </div>
-      </section>
-    </section>
+        </section>
 
-    <section id="dragon-boat" class="campaign">
-      <div class="campaign-head">
-        <div>
-          <h2 class="campaign-title">端午節活動企劃</h2>
-          <p class="campaign-sub">主軸：端午節檔期活動規劃預留區，後續補充活動內容與執行細節</p>
-        </div>
-        <div class="badge-row">
-          <span class="badge">待補內容</span>
-          <span class="badge">預留區塊</span>
-        </div>
-      </div>
+        <section>
+          <h2>三、活動規則說明</h2>
+          <div class="grid-2">
+            <div class="card">
+              <h3>金包半價規則</h3>
+              <ul>
+                <li>活動期間，內用單筆可享 1 份金包半價。</li>
+                <li>若同筆符合多項品項，依 <strong>價低者計</strong>。</li>
+                <li>單筆限用 1 份，不累計、不重複折抵。</li>
+                <li>現場需明確標示適用品項與不可併用規則。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>滿額贈禮規則</h3>
+              <ul>
+                <li>單筆消費滿 1500 元，贈送康乃馨 1 朵。</li>
+                <li>康乃馨暫定成本：<strong>50 元 / 朵</strong>。</li>
+                <li>單筆消費滿 2000 元，以 Ocard 發送優惠券 1 張。</li>
+                <li>各項贈送皆以單筆贈一次，不重複累贈。</li>
+              </ul>
+            </div>
+          </div>
 
-      <section class="card">
-        <h3 class="section-title"><span class="dot"></span>一、活動內容預留</h3>
-        <div class="note">
-          目前僅先建立端午節活動的正副標題區塊，後續可直接延伸補上活動目的、機制、文宣方向、待辦事項與風險提醒。
-        </div>
-      </section>
-    </section>
+          <div class="card soft" style="margin-top:18px">
+            <h3>Ocard 優惠券內容（暫定）</h3>
+            <ul>
+              <li>券內容：<strong>金包 1 包半價</strong></li>
+              <li>使用條件：需 <strong>內用消費滿 300 元</strong> 方可使用</li>
+              <li>使用限制：<strong>限平日使用</strong></li>
+              <li>優惠併用：<strong>不得與其他優惠並用</strong></li>
+              <li>發送方式：活動期間單筆滿 2000 元，由 Ocard 後台發券並統計發送數量</li>
+            </ul>
+          </div>
+        </section>
 
-    <section class="summary">
-      <h3 class="section-title"><span class="dot"></span>共通提醒</h3>
-      <div class="grid grid-2">
-        <div class="card" style="box-shadow:none;">
-          <ul class="clean">
-            <li><strong>先定規則再做文宣：</strong>檔期、門檻、贈送邏輯與使用期限先定清楚，後續比較不會反覆修改。</li>
-            <li><strong>高吸引力優惠一定要有邊界：</strong>半價、招待券、系統兌換券都需先定義限制條件。</li>
-          </ul>
-        </div>
-        <div class="card" style="box-shadow:none;">
-          <ul class="clean">
-            <li><strong>門市話術要一致：</strong>社群、海報、結帳台、現場夥伴說法需同步。</li>
-            <li><strong>先預留追蹤方式：</strong>活動上線前先想好怎麼記錄發放數、核銷數與使用狀況。</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+        <section>
+          <h2>四、執行重點與數據追蹤</h2>
+          <div class="card">
+            <h3>建議增設快捷數據項目</h3>
+            <p>為利活動期間快速統計與後續結案檢討，建議於系統或結帳端新增以下活動數據捷徑：</p>
+            <div class="tags">
+              <span class="tag">母親節金包優惠</span>
+              <span class="tag">母親節康乃馨</span>
+              <span class="tag">滿 2000 Ocard 發券數</span>
+            </div>
+            <h3>追蹤目的</h3>
+            <ul>
+              <li><strong>母親節金包優惠</strong>：統計金包半價使用次數，判斷活動吸引力與使用率。</li>
+              <li><strong>母親節康乃馨</strong>：統計滿 1500 贈花筆數，對應第一層滿額轉換效果。</li>
+              <li><strong>滿 2000 Ocard 發券數</strong>：作為第二層消費門檻與後續回流追蹤基準。</li>
+            </ul>
+          </div>
 
-    <div class="footer">母親節 × 端午節 活動企劃整合 HTML 初稿</div>
+          <table style="margin-top:18px">
+            <tr>
+              <th style="width:22%">追蹤欄位</th>
+              <th style="width:18%">統計方式</th>
+              <th>用途說明</th>
+            </tr>
+            <tr>
+              <td>檔期內用營收</td>
+              <td>週統計</td>
+              <td>比較近 4 週同星期內用表現，評估檔期是否成功導客。</td>
+            </tr>
+            <tr>
+              <td>平均客單價</td>
+              <td>週統計</td>
+              <td>檢視活動是否有效提升平均消費。</td>
+            </tr>
+            <tr>
+              <td>母親節金包優惠</td>
+              <td>結帳快捷</td>
+              <td>統計金包半價使用筆數與整體使用率。</td>
+            </tr>
+            <tr>
+              <td>母親節康乃馨</td>
+              <td>結帳快捷</td>
+              <td>統計滿 1500 贈花達標筆數。</td>
+            </tr>
+            <tr>
+              <td>Ocard 發券數</td>
+              <td>Ocard 後台</td>
+              <td>統計滿 2000 達標筆數與後續核銷基礎。</td>
+            </tr>
+            <tr>
+              <td>Ocard 核銷率</td>
+              <td>後續追蹤</td>
+              <td>檢視回流券是否成功帶動二次來店。</td>
+            </tr>
+          </table>
+        </section>
+
+        <section>
+          <h2>五、KPI 設定與目標理由</h2>
+          <table>
+            <tr>
+              <th style="width:7%">編號</th>
+              <th style="width:24%">KPI 項目</th>
+              <th style="width:23%">目標值</th>
+              <th>設定原因</th>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>檔期內用營收成長</td>
+              <td class="kpi-good">較近 4 週同星期成長 10%～20%</td>
+              <td>母親節活動首要目的為帶動聚餐來客與內用營收，10%～20% 屬具挑戰但合理的節慶成長目標，可直接判斷檔期是否具備導客效果。</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>平均客單價提升</td>
+              <td class="kpi-good">較平常、假日客單成長 10%～15%</td>
+              <td>本活動設計具備明確湊單門檻，應有助提升單筆消費；若未達標，表示優惠引導或商品組合仍需調整。</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>滿 1500 贈花達標率</td>
+              <td class="kpi-good">活動期間達成 100 筆</td>
+              <td>作為第一層滿額轉換指標，可直接觀察顧客是否願意跨過基本消費門檻，也能同步反推康乃馨備品需求。</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>滿 2000 達標率</td>
+              <td class="kpi-good">占總結帳筆數 25% 以上</td>
+              <td>作為第二層高門檻指標，能反映活動是否具備拉升客單與回流券發放量的能力；25% 以上代表高門檻有被有效跨越。</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>金包半價使用率</td>
+              <td class="kpi-good">活動期間占結帳筆數 40% 以上</td>
+              <td>金包半價為活動最直接的溝通亮點，若使用率高，代表宣傳與現場話術具穿透力，也能支持後續是否延伸類似母親節優惠設計。</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Ocard 券核銷率</td>
+              <td class="kpi-good">後續回流使用率 60% 以上</td>
+              <td>本活動不只看單次成交，更重視二次回流。若核銷率高，代表活動成功將節慶顧客轉化為後續再訪客群，具有會員經營價值。</td>
+            </tr>
+          </table>
+          <p class="note" style="margin-top:10px">※ KPI 皆以週為單位進行追蹤與檢視，Ocard 券核銷率則需於活動後持續觀察回流成效。</p>
+        </section>
+
+        <section>
+          <h2>六、執行建議與補充事項</h2>
+          <div class="grid-2">
+            <div class="card">
+              <h3>現場執行建議</h3>
+              <ul class="checklist">
+                <li>結帳前端需有清楚判定流程，避免優惠與贈禮誤判。</li>
+                <li>海報、社群文案、口頭說法需一致，明確寫出「單筆贈一次」與「不可併用」。</li>
+                <li>康乃馨需預先抓量，至少依 KPI 100 筆以上向上備量。</li>
+                <li>Ocard 發券條件需於活動前完成測試，避免漏發。</li>
+              </ul>
+            </div>
+            <div class="card soft">
+              <h3>後續待補充項目</h3>
+              <ul class="checklist">
+                <li>活動文案對外版與內部版話術。</li>
+                <li>金包半價適用品項最終名單。</li>
+                <li>Ocard 券有效期限與提醒方式。</li>
+                <li>活動結案回報格式與數據匯總表。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>七、結論</h2>
+          <p>
+            本次母親節活動建議以「聚餐禮遇＋回流導客」為核心執行方向，刪除打卡牆後，活動主軸更集中，也更符合門市現場操作與營運目標。透過金包半價、滿額贈花與 Ocard 回流券三層設計，可同時兼顧檔期業績、客單提升與後續會員再訪；若搭配快捷數據欄位與明確 KPI 管理，將有利於活動後進行具體檢討，作為未來節慶企畫優化基準。
+          </p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        本檔為 HTML 正式提報版，可直接於瀏覽器開啟、列印，或後續再轉為 PDF 使用。<br>
+        檔名：motherday_proposal_formal.html
+      </footer>
+    </article>
   </div>
 </body>
 </html>
