@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>餐飲排班系統原型</title>
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2canvas 用於匯出圖片 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f3f4f6; }
+        .grid-table { display: grid; grid-template-columns: 120px repeat(30, minmax(40px, 1fr)); }
+        .sticky-col { position: sticky; left: 0; z-index: 10; background: white; }
+        .sticky-header { position: sticky; top: 0; z-index: 20; background: #f9fafb; }
+        .sticky-corner { position: sticky; top: 0; left: 0; z-index: 30; background: #f9fafb; }
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- 資料定義 ---
+        const EMPLOYEES = [
+            { id: 'store_1', name: '林尚正', dept: '門市', conflict: 'store_2' },
+            { id: 'store_2', name: '陳光庭', dept: '門市', conflict: 'store_1' },
+            { id: 'store_3', name: '吳佳陵', dept: '門市', conflict: null },
+            { id: 'store_4', name: '吳佩潔', dept: '門市', conflict: null },
+            { id: 'store_5', name: '林佩妡', dept: '門市', conflict: null },
+            { id: 'store_6', name: '馮麗平', dept: '門市', conflict: null },
+            { id: 'store_7', name: '陳南鶯', dept: '門市', conflict: null },
+            { id: 'store_8', name: '辛瑄祺', dept: '門市', conflict: null },
+            { id: 'kitchen_1', name: '霍磊', dept: '內場', conflict: 'kitchen_2' },
+            { id: 'kitchen_2', name: '吳東紘', dept: '內場', conflict: 'kitchen_1' },
+            { id: 'kitchen_3', name: '羅紫寧', dept: '內場', conflict: null },
+            { id: 'kitchen_4', name: '歐哲銘', dept: '內場', conflict: null },
+            { id: 'kitchen_5', name: '吳淑娟', dept: '內場', conflict: null },
+        ];
+
+        const SHIFT_TYPES = {
+            'work': { label: '出勤', color: 'bg-green-100 text-green-800 border-green-300', short: '班' },
+            'leave_li': { label: '例假', color: 'bg-red-100 text-red-800 border-red-300', short: '例' },
+            'leave_xiu': { label: '休假', color: 'bg-orange-100 text-orange-800 border-orange-300', short: '休' },
+            'empty_rest': { label: '空班(休)', color: 'bg-blue-100 text-blue-800 border-blue-300', short: '空' },
+            'empty_work': { label: '空班(勤)', color: 'bg-purple-100 text-purple-800 border-purple-300', short: '空勤' },
+            'none': { label: '未排', color: 'bg-gray-50 text-gray-400 border-gray-200', short: '-' }
+        };
+
+        // --- 雲端庫設定 (請貼上您的 Google Apps Script Web App URL) ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzpmhBN1J7voF-yshK1GZ67vi7Op20z74uQ55ujpiQWnTseBTLMmZb-caRhwCkFDRk/exec'; 
+
+        // --- 主應用程式 ---
+        function App() {
+            const [activeTab, setActiveTab] = useState('schedule'); 
+            const [currentUser, setCurrentUser] = useState(EMPLOYEES[0].id); 
+            const [toast, setToast] = useState(null);
+            
+            // --- 雲端同步狀態 ---
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [lastSyncTime, setLastSyncTime] = useState(new Date().toLocaleTimeString());
+
+            // --- 自定義 Confirm Modal ---
+            const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, message: '', onConfirm: null });
+            
+            // --- 異常提示 ---
+            const [anomalies, setAnomalies] = useState([]);
+
+            // --- 月份與時間狀態 ---
+            const [currentDate, setCurrentDate] = useState(new Date()); 
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+
+            // --- 全域資料狀態 (支援跨月) ---
+            const [globalMaxLeave, setGlobalMaxLeave] = useState(3); 
+            const [allSchedules, setAllSchedules] = useState({}); 
+            const [allDaySettings, setAllDaySettings] = useState({}); 
+            
+            // 每日最低出勤人數設定 (依月份儲存)
+            const [minStaffSettings, setMinStaffSettings] = useState({}); 
+
+            // 取得當前月份的資料
+            const currentSchedule = allSchedules[monthKey] || {};
+            const currentDaySettings = allDaySettings[monthKey] || {};
+
+            // --- 雲端資料抓取 (GET) ---
+            const fetchCloudData = async () => {
+                if (!API_URL) return; // 若未設定 API URL 則跳過
+                try {
+                    const res = await fetch(API_URL);
+                    const json = await res.json();
+                    if (json.status === 'success' && json.data) {
+                        if (json.data.allSchedules) setAllSchedules(json.data.allSchedules);
+                        if (json.data.allDaySettings) setAllDaySettings(json.data.allDaySettings);
+                        if (json.data.minStaffSettings) setMinStaffSettings(json.data.minStaffSettings);
+                        setLastSyncTime(new Date().toLocaleTimeString());
+                    }
+                } catch (error) {
+                    console.error("Fetch Error:", error);
+                }
+            };
+
+            // --- 雲端資料儲存 (POST) ---
+            const saveToCloud = async (key, value) => {
+                if (!API_URL) return;
+                setIsSyncing(true);
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ key, value }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 避免 GAS CORS 問題
+                    });
+                    setLastSyncTime(new Date().toLocaleTimeString());
+                } catch (error) {
+                    console.error("Save Error:", error);
+                    showToast('雲端儲存失敗，請檢查網路連線');
+                } finally {
+                    setIsSyncing(false);
+                }
+            };
+
+            // --- 初始載入與每 15 秒輪詢 ---
+            useEffect(() => {
+                fetchCloudData();
+                const interval = setInterval(fetchCloudData, 15000);
+                return () => clearInterval(interval);
+            }, []);
+
+            // 確保當前月份的班表有被初始化 (若雲端無資料時的後備方案)
+            useEffect(() => {
+                if (!allSchedules[monthKey]) {
+                    const initialSchedule = {};
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        initialSchedule[d] = {};
+                        EMPLOYEES.forEach(emp => {
+                            initialSchedule[d][emp.id] = 'none';
+                        });
+                    }
+                    setAllSchedules(prev => ({ ...prev, [monthKey]: initialSchedule }));
+                }
+            }, [monthKey, daysInMonth, allSchedules]);
+
+            const showToast = (msg) => {
+                setToast(msg);
+                setTimeout(() => setToast(null), 3000);
+            };
+
+            // 最低出勤人數 Getter/Setter
+            const getMinStaff = (dept, day) => {
+                // 檢查是否手動設定過
+                const monthSettings = minStaffSettings[monthKey] || { store: {}, kitchen: {} };
+                if (monthSettings[dept]?.[day] !== undefined) return monthSettings[dept][day];
+                
+                // 動態預設：平日 門市4/內場3, 假日 門市5/內場4
+                const dateObj = new Date(year, month - 1, day);
+                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                const isHoliday = currentDaySettings[day]?.isHoliday;
+                const isRedDay = isWeekend || isHoliday;
+                
+                if (dept === 'store') return isRedDay ? 5 : 4;
+                if (dept === 'kitchen') return isRedDay ? 4 : 3;
+                return 0;
+            };
+
+            const updateMinStaff = (dept, day, value) => {
+                setMinStaffSettings(prev => {
+                    const newState = {
+                        ...prev,
+                        [monthKey]: {
+                            ...(prev[monthKey] || { store: {}, kitchen: {} }),
+                            [dept]: {
+                                ...((prev[monthKey] || {})[dept] || {}),
+                                [day]: Number(value)
+                            }
+                        }
+                    };
+                    saveToCloud('minStaffSettings', newState);
+                    return newState;
+                });
+            };
+
+            // 取得某天某部門的休假人數與名單
+            const getLeaveData = (scheduleData, day, dept) => {
+                if (!scheduleData[day]) return { count: 0, emps: [] };
+                let emps = [];
+                EMPLOYEES.filter(e => e.dept === dept).forEach(e => {
+                    const status = scheduleData[day][e.id];
+                    if (['leave_li', 'leave_xiu', 'empty_rest'].includes(status)) {
+                        emps.push(e);
+                    }
+                });
+                return { count: emps.length, emps };
+            };
+
+            // 跨月連休檢查函數
+            const isDayLeaveGlobal = (scheduleData, targetYear, targetMonth, targetDay, empId) => {
+                const date = new Date(targetYear, targetMonth - 1, targetDay);
+                const mKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                const tDay = date.getDate();
+                if (mKey === monthKey) {
+                    return ['leave_li', 'leave_xiu', 'empty_rest'].includes(scheduleData[tDay]?.[empId]);
+                }
+                const s = allSchedules[mKey]?.[tDay]?.[empId];
+                return ['leave_li', 'leave_xiu', 'empty_rest'].includes(s);
+            };
+
+            // 員工選假邏輯 (手動調整)
+            const handleEmployeeRequest = (day, type) => {
+                const daySetting = currentDaySettings[day] || {};
+                if (daySetting.isBanned && type !== 'none') {
+                    alert(`該日禁止排休，原因：${daySetting.banReason}`);
+                    return;
+                }
+
+                const emp = EMPLOYEES.find(e => e.id === currentUser);
+                const currentType = currentSchedule[day]?.[currentUser] || 'none';
+                
+                if (type === 'none') {
+                    updateSchedule(day, currentUser, 'none');
+                    return;
+                }
+
+                const isLeave = ['leave_li', 'leave_xiu', 'empty_rest'].includes(type);
+                const wasLeave = ['leave_li', 'leave_xiu', 'empty_rest'].includes(currentType);
+                
+                // 員工手動排休防呆 (不擋底線讓管理員保留彈性，異常會在下方紅底顯示)
+                if (isLeave && !wasLeave && getLeaveData(currentSchedule, day, emp.dept).count >= globalMaxLeave) {
+                    alert(`${emp.dept} 當天休假人數已達上限 (${globalMaxLeave}人)`);
+                    return;
+                }
+
+                // 檢查連續三天休假 (支援跨月)
+                if (isLeave) {
+                    const tempSchedule = { ...currentSchedule };
+                    tempSchedule[day] = { ...tempSchedule[day], [currentUser]: type };
+                    
+                    const d1 = isDayLeaveGlobal(tempSchedule, year, month, day - 2, currentUser);
+                    const d2 = isDayLeaveGlobal(tempSchedule, year, month, day - 1, currentUser);
+                    const d3 = true; 
+                    const d4 = isDayLeaveGlobal(tempSchedule, year, month, day + 1, currentUser);
+                    const d5 = isDayLeaveGlobal(tempSchedule, year, month, day + 2, currentUser);
+
+                    if ((d1 && d2 && d3) || (d2 && d3 && d4) || (d3 && d4 && d5)) {
+                        alert('排班規定：禁止選擇連續3天休假！');
+                        return;
+                    }
+                }
+
+                updateSchedule(day, currentUser, type);
+            };
+
+            const updateSchedule = (day, empId, type) => {
+                setAllSchedules(prev => {
+                    const monthData = prev[monthKey] || {};
+                    const dayData = monthData[day] || {};
+                    const newState = { ...prev, [monthKey]: { ...monthData, [day]: { ...dayData, [empId]: type } } };
+                    saveToCloud('allSchedules', newState);
+                    return newState;
+                });
+            };
+
+            // 一鍵清除本月班表
+            const requestClearSchedule = () => {
+                setConfirmDialog({
+                    isOpen: true,
+                    message: `確定要清除 ${year}年 ${month}月 的所有排班紀錄嗎？此操作無法復原。`,
+                    onConfirm: () => {
+                        setAllSchedules(prev => {
+                            const monthData = {};
+                            for (let d = 1; d <= daysInMonth; d++) {
+                                monthData[d] = {};
+                                EMPLOYEES.forEach(emp => { monthData[d][emp.id] = 'none'; });
+                            }
+                            const newState = { ...prev, [monthKey]: monthData };
+                            saveToCloud('allSchedules', newState);
+                            return newState;
+                        });
+                        setAnomalies([]);
+                        setConfirmDialog({ isOpen: false, message: '', onConfirm: null });
+                        showToast('已成功清除本月排班紀錄');
+                    }
+                });
+            };
+
+            // 高階自動排班邏輯
+            const autoSchedule = () => {
+                let monthData = JSON.parse(JSON.stringify(currentSchedule));
+                let newAnomalies = [];
+
+                // 取得當天特定部門潛在上班人數 (把 'none' 當作準備要上班的人力)
+                const getPotentialWorkers = (d, dept) => {
+                    return EMPLOYEES.filter(e => e.dept === dept).reduce((acc, e) => {
+                        const s = monthData[d]?.[e.id];
+                        if (['work', 'empty_work', 'none'].includes(s)) return acc + 1;
+                        return acc;
+                    }, 0);
+                };
+
+                const isLeaveType = (s) => ['leave_li', 'leave_xiu', 'empty_rest'].includes(s);
+
+                // 決定演算順序 (林尚正/陳光庭 放最後，自然達成隨時補上機制)
+                const regularStaff = EMPLOYEES.filter(e => !['store_1', 'store_2', 'kitchen_1', 'kitchen_2'].includes(e.id));
+                const processOrder = [
+                    ...regularStaff,
+                    EMPLOYEES.find(e => e.id === 'kitchen_1'),
+                    EMPLOYEES.find(e => e.id === 'kitchen_2'),
+                    EMPLOYEES.find(e => e.id === 'store_1'),
+                    EMPLOYEES.find(e => e.id === 'store_2')
+                ].filter(Boolean);
+
+                processOrder.forEach(emp => {
+                    let counts = { leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0 };
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const s = monthData[d]?.[emp.id];
+                        if (counts[s] !== undefined) counts[s]++;
+                    }
+
+                    // 空班池總數 4
+                    const MAX_EMPTY_POOL = 4;
+                    const targets = { leave_li: 4, leave_xiu: 4 };
+
+                    const placeLeaves = (type, amount) => {
+                        let needed = amount;
+                        let attempts = 0;
+
+                        while (needed > 0 && attempts < 100) {
+                            attempts++;
+                            let bestDay = -1;
+                            let bestScore = -999999;
+
+                            for (let d = 1; d <= daysInMonth; d++) {
+                                if (monthData[d]?.[emp.id] !== 'none') continue; 
+                                if (currentDaySettings[d]?.isBanned) continue; 
+
+                                let canPlace = true;
+
+                                // 【絕對限制 1】: 不能造成連續 3 天休假
+                                const lPrev1 = isLeaveType(monthData[d-1]?.[emp.id]);
+                                const lPrev2 = d > 2 ? isLeaveType(monthData[d-2]?.[emp.id]) : false;
+                                const lNext1 = isLeaveType(monthData[d+1]?.[emp.id]);
+                                const lNext2 = d < daysInMonth - 1 ? isLeaveType(monthData[d+2]?.[emp.id]) : false;
+                                
+                                if ((lPrev1 && lPrev2) || (lPrev1 && lNext1) || (lNext1 && lNext2)) {
+                                    canPlace = false;
+                                }
+
+                                // 【第一優先】: 每天最少上班人數 (絕對限制)
+                                const deptKey = emp.dept === '門市' ? 'store' : 'kitchen';
+                                const minReq = getMinStaff(deptKey, d);
+                                const potential = getPotentialWorkers(d, emp.dept);
+                                if (potential - 1 < minReq) {
+                                    canPlace = false; 
+                                }
+
+                                // 【特殊原則】: 霍磊/吳東紘 互斥原則
+                                if (emp.id === 'kitchen_1' && isLeaveType(monthData[d]?.['kitchen_2'])) canPlace = false;
+                                if (emp.id === 'kitchen_2' && isLeaveType(monthData[d]?.['kitchen_1'])) canPlace = false;
+
+                                if (!canPlace) continue;
+
+                                // --- 簡化計分制 (正向加分，移除扣分機制) ---
+                                let score = Math.random() * 10; // 基礎擾動打亂分佈
+
+                                // 【優先級】：避免超過 6 天連續上班 (權重最高)
+                                let streak = 0;
+                                for (let p = d - 1; p >= Math.max(1, d - 6); p--) {
+                                    const ps = monthData[p]?.[emp.id];
+                                    if (ps === 'none' || ps === 'work' || ps === 'empty_work') {
+                                        streak++;
+                                    } else break;
+                                }
+                                if (streak >= 6) score += 10000;
+
+                                // 【優先級】：錯休人員盡量錯開 (對方沒休才加分)
+                                if (emp.conflict && !isLeaveType(monthData[d]?.[emp.conflict])) {
+                                    score += 5000;
+                                }
+
+                                // 【優先級】：鼓勵連續休假 (最多2天)
+                                if (lPrev1 || lNext1) {
+                                    score += 3000;
+                                }
+
+                                // 【充裕人力優先排假】: 人數大於最低人數 3 人以上可優先安排
+                                if (potential - 1 >= minReq + 3) score += 2000;
+                                else if (potential - 1 >= minReq + 2) score += 1000;
+                                else if (potential - 1 >= minReq + 1) score += 500;
+
+                                if (score > bestScore) {
+                                    bestScore = score;
+                                    bestDay = d;
+                                }
+                            }
+
+                            if (bestDay !== -1) {
+                                monthData[bestDay][emp.id] = type;
+                                needed--;
+                            } else {
+                                break; // 該假別真的塞不下去了
+                            }
+                        }
+                        return needed; // 回傳沒塞成功的數量
+                    };
+
+                    let missingLi = placeLeaves('leave_li', Math.max(0, targets.leave_li - counts.leave_li));
+                    let missingXiu = placeLeaves('leave_xiu', Math.max(0, targets.leave_xiu - counts.leave_xiu));
+                    if (missingLi > 0) newAnomalies.push(`${emp.name} 的 [例假] 無法排滿 (缺 ${missingLi} 天)`);
+                    if (missingXiu > 0) newAnomalies.push(`${emp.name} 的 [休假] 無法排滿 (缺 ${missingXiu} 天)`);
+
+                    // --- 動態分配空班 (空班休 vs 空班勤) ---
+                    let currentEmptyRest = counts.empty_rest;
+                    
+                    // 確保至少有 1 天空班休 (若尚未排)
+                    if (currentEmptyRest < 1) {
+                        let missingER = placeLeaves('empty_rest', 1);
+                        if (missingER === 0) currentEmptyRest++;
+                    }
+
+                    // 檢查並打斷超過 6 天的長班 (轉為空班休)
+                    const checkAnyStreak = () => {
+                        let currentStreak = 0;
+                        for (let d = 1; d <= daysInMonth; d++) {
+                            const s = monthData[d]?.[emp.id];
+                            if (s === 'none' || s === 'work' || s === 'empty_work') {
+                                currentStreak++;
+                                if (currentStreak > 6) return true;
+                            } else {
+                                currentStreak = 0;
+                            }
+                        }
+                        return false;
+                    };
+
+                    while (currentEmptyRest < MAX_EMPTY_POOL && checkAnyStreak()) {
+                        let missingER = placeLeaves('empty_rest', 1);
+                        if (missingER === 0) currentEmptyRest++;
+                        else break; // 塞不下
+                    }
+
+                    // 剩餘的空班額度全部轉為空班勤
+                    let emptyWorkTarget = MAX_EMPTY_POOL - currentEmptyRest - counts.empty_work;
+                    let availableDays = Array.from({length: daysInMonth}, (_,i)=>i+1).filter(d => monthData[d]?.[emp.id] === 'none');
+                    availableDays.sort(() => Math.random() - 0.5); 
+                    for(let d of availableDays) {
+                        if (emptyWorkTarget <= 0) break;
+                        monthData[d][emp.id] = 'empty_work';
+                        emptyWorkTarget--;
+                    }
+                });
+
+                // 將未排的日子全部填入「出勤 (work)」
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (!monthData[d]) monthData[d] = {};
+                    EMPLOYEES.forEach(emp => {
+                        if (monthData[d][emp.id] === 'none' || monthData[d][emp.id] === undefined) {
+                            monthData[d][emp.id] = 'work';
+                        }
+                    });
+                }
+
+                // --- 產生事後異常報告 ---
+                for (let d = 1; d <= daysInMonth; d++) {
+                    let storeCount = 0; let kitchenCount = 0;
+                    EMPLOYEES.forEach(emp => {
+                        const s = monthData[d][emp.id];
+                        if (s === 'work' || s === 'empty_work') {
+                            emp.dept === '門市' ? storeCount++ : kitchenCount++;
+                        }
+                    });
+                    const minS = getMinStaff('store', d);
+                    const minK = getMinStaff('kitchen', d);
+                    if (storeCount < minS) newAnomalies.push(`${month}/${d} 門市出勤人數不足 (實際:${storeCount}, 底線:${minS})`);
+                    if (kitchenCount < minK) newAnomalies.push(`${month}/${d} 內場出勤人數不足 (實際:${kitchenCount}, 底線:${minK})`);
+                }
+
+                EMPLOYEES.forEach(emp => {
+                    let consecutiveWork = 0;
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const s = monthData[d][emp.id];
+                        if (s === 'work' || s === 'empty_work') {
+                            consecutiveWork++;
+                            if (consecutiveWork > 6) {
+                                newAnomalies.push(`${emp.name} 連續上班超過 6 天 (發生於 ${month}/${d} 區間)`);
+                                consecutiveWork = 0; // 重置避免同區段洗版
+                            }
+                        } else {
+                            consecutiveWork = 0;
+                        }
+                    }
+                });
+
+                setAnomalies(newAnomalies);
+                
+                setAllSchedules(prev => {
+                    const newState = { ...prev, [monthKey]: monthData };
+                    saveToCloud('allSchedules', newState);
+                    return newState;
+                });
+                showToast('自動排班運算完成，已同步至雲端');
+            };
+
+            // 匯出 CSV
+            const exportToCSV = () => {
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+                csvContent += `部門,姓名,` + Array.from({length: daysInMonth}, (_, i) => i + 1).join(",") + "\n";
+
+                EMPLOYEES.forEach(emp => {
+                    let row = `${emp.dept},${emp.name}`;
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const shift = currentSchedule[d] ? currentSchedule[d][emp.id] : 'none';
+                        row += `,${SHIFT_TYPES[shift].label}`;
+                    }
+                    csvContent += row + "\n";
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `${year}年${month}月_排班表.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            // 匯出圖片 (html2canvas)
+            const exportToImage = async () => {
+                const element = document.getElementById('export-schedule-container');
+                if (!element) return;
+                
+                showToast('正在產生班表圖片，請稍候...');
+                try {
+                    const canvas = await html2canvas(element, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: '#ffffff' 
+                    });
+                    const link = document.createElement('a');
+                    link.download = `${year}年${month}月_排班表.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showToast('圖片匯出成功！');
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showToast('圖片匯出失敗，請再試一次。');
+                }
+            };
+
+            // 統計計算
+            const stats = useMemo(() => {
+                const res = {};
+                EMPLOYEES.forEach(emp => {
+                    res[emp.id] = { work: 0, leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0, total_leave: 0 };
+                });
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if(!currentSchedule[d]) continue;
+                    EMPLOYEES.forEach(emp => {
+                        const s = currentSchedule[d][emp.id];
+                        if (s === 'work') res[emp.id].work++;
+                        if (s === 'leave_li') { res[emp.id].leave_li++; res[emp.id].total_leave++; }
+                        if (s === 'leave_xiu') { res[emp.id].leave_xiu++; res[emp.id].total_leave++; }
+                        if (s === 'empty_rest') { res[emp.id].empty_rest++; res[emp.id].total_leave++; }
+                        if (s === 'empty_work') { res[emp.id].empty_work++; res[emp.id].work++; } 
+                    });
+                }
+                return res;
+            }, [currentSchedule, daysInMonth]);
+
+            return (
+                <div className="min-h-screen flex flex-col relative">
+                    {/* Header */}
+                    <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-40">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <i data-lucide="calendar-days" className="w-6 h-6"></i>
+                                <h1 className="text-xl font-bold hidden md:block">餐飲排班與排休系統</h1>
+                            </div>
+                            
+                            {/* 月份選擇器 */}
+                            <div className="flex items-center bg-slate-700 rounded-md overflow-hidden border border-slate-600">
+                                <span className="pl-3 pr-2 py-1.5 text-sm text-slate-300 border-r border-slate-600">月份</span>
+                                <input 
+                                    type="month" 
+                                    value={monthKey}
+                                    onChange={(e) => {
+                                        const [y, m] = e.target.value.split('-');
+                                        if (y && m) setCurrentDate(new Date(y, m - 1, 1));
+                                    }}
+                                    className="bg-transparent text-white px-3 py-1.5 outline-none text-sm font-medium cursor-pointer"
+                                    style={{ colorScheme: 'dark' }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 md:gap-4">
+                            <button onClick={() => setActiveTab('employee')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'employee' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>員工排休</button>
+                            <button onClick={() => setActiveTab('schedule')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'schedule' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>總班表管理</button>
+                            <button onClick={() => setActiveTab('stats')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'stats' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>人員統計</button>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="flex-1 p-6 overflow-hidden flex flex-col">
+                        
+                        {/* 員工排休頁面 */}
+                        {activeTab === 'employee' && (
+                            <EmployeeView 
+                                currentUser={currentUser} 
+                                setCurrentUser={setCurrentUser}
+                                currentSchedule={currentSchedule}
+                                daysInMonth={daysInMonth}
+                                onDayClick={handleEmployeeRequest}
+                                getLeaveData={(day, dept) => getLeaveData(currentSchedule, day, dept)}
+                                showToast={showToast}
+                                globalMaxLeave={globalMaxLeave}
+                                setGlobalMaxLeave={setGlobalMaxLeave}
+                                currentDaySettings={currentDaySettings}
+                                monthKey={monthKey}
+                                setAllDaySettings={(newSettingsResolver) => {
+                                    setAllDaySettings(prev => {
+                                        const newState = typeof newSettingsResolver === 'function' ? newSettingsResolver(prev) : newSettingsResolver;
+                                        saveToCloud('allDaySettings', newState);
+                                        return newState;
+                                    });
+                                }}
+                                year={year}
+                                month={month}
+                                lastSyncTime={lastSyncTime}
+                                isSyncing={isSyncing}
+                            />
+                        )}
+
+                        {/* 總班表管理頁面 */}
+                        {activeTab === 'schedule' && (
+                            <div className="flex flex-col h-full bg-white rounded-lg shadow border border-gray-200">
+                                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-lg flex-wrap gap-4">
+                                    <h2 className="text-lg font-semibold text-gray-700">{year}年 {month}月 總排班表</h2>
+                                    <div className="flex gap-2 flex-wrap">
+                                        <button onClick={requestClearSchedule} className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm transition font-medium">
+                                            <i data-lucide="trash-2" className="w-4 h-4"></i>一鍵清除
+                                        </button>
+                                        <div className="w-px h-8 bg-gray-300 mx-1"></div>
+                                        <button onClick={autoSchedule} className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm transition">
+                                            <i data-lucide="zap" className="w-4 h-4"></i>自動填滿出勤
+                                        </button>
+                                        <button onClick={exportToCSV} className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-sm transition">
+                                            <i data-lucide="file-spreadsheet" className="w-4 h-4"></i>匯出 Excel
+                                        </button>
+                                        <button onClick={exportToImage} className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm transition">
+                                            <i data-lucide="image-down" className="w-4 h-4"></i>匯出班表圖片
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 異常提示區塊 */}
+                                {anomalies.length > 0 && (
+                                    <div className="m-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                        <h3 className="text-red-800 font-bold flex items-center gap-2 mb-2">
+                                            <i data-lucide="alert-triangle" className="w-5 h-5"></i>
+                                            排班異常警告 (演算法妥協結果，建議手動微調)
+                                        </h3>
+                                        <ul className="list-disc pl-5 text-sm text-red-700 space-y-1">
+                                            {anomalies.map((msg, idx) => <li key={idx}>{msg}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                                
+                                <div className="flex-1 overflow-auto relative pb-8">
+                                    <div className="min-w-max">
+                                        {/* Header Row */}
+                                        <div className="flex sticky-header border-b border-gray-300 text-sm font-medium text-gray-600 shadow-sm">
+                                            <div className="w-32 flex-shrink-0 p-3 border-r border-gray-300 sticky-corner flex items-center justify-center">
+                                                部門 / 姓名
+                                            </div>
+                                            {Array.from({length: daysInMonth}, (_, i) => {
+                                                const dateObj = new Date(year, month - 1, i + 1);
+                                                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                                                const isHoliday = currentDaySettings[i+1]?.isHoliday;
+                                                const isRedDay = isWeekend || isHoliday;
+                                                
+                                                return (
+                                                    <div key={`h-${i+1}`} className="w-12 flex-shrink-0 p-2 border-r border-gray-300 text-center flex flex-col items-center overflow-hidden bg-gray-50">
+                                                        <span className={isRedDay ? 'text-red-600 font-bold' : ''}>{i+1}</span>
+                                                        {isHoliday && <span className="text-[9px] text-red-500">國定</span>}
+                                                        {currentDaySettings[i+1]?.isBanned && <span className="text-[9px] text-red-500 bg-red-100 rounded px-1 truncate w-full mt-0.5">禁休</span>}
+                                                        {currentDaySettings[i+1]?.activityNote && <span className="text-[9px] text-blue-500 bg-blue-50 rounded px-1 truncate w-full mt-0.5" title={currentDaySettings[i+1].activityNote}>活動</span>}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+
+                                        {/* Employee Rows */}
+                                        {EMPLOYEES.map(emp => (
+                                            <div key={emp.id} className="flex border-b border-gray-200 hover:bg-gray-50 transition">
+                                                <div className={`w-32 flex-shrink-0 p-2 border-r border-gray-300 sticky-col flex items-center justify-between px-3 ${emp.dept === '門市' ? 'bg-orange-50' : 'bg-teal-50'}`}>
+                                                    <span className="text-xs text-gray-500">{emp.dept}</span>
+                                                    <span className="font-medium text-gray-800">{emp.name}</span>
+                                                </div>
+                                                {Array.from({length: daysInMonth}, (_, i) => {
+                                                    const day = i + 1;
+                                                    const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
+                                                    const conf = SHIFT_TYPES[shift];
+                                                    return (
+                                                        <div key={`cell-${emp.id}-${day}`} className="w-12 flex-shrink-0 border-r border-gray-200 p-1 relative group cursor-pointer"
+                                                            onClick={(e) => {
+                                                                const types = Object.keys(SHIFT_TYPES);
+                                                                const currentIndex = types.indexOf(shift);
+                                                                const nextIndex = (currentIndex + 1) % types.length;
+                                                                updateSchedule(day, emp.id, types[nextIndex]);
+                                                            }}
+                                                        >
+                                                            <div className={`w-full h-full min-h-[32px] flex items-center justify-center text-xs rounded border ${conf.color} transition-colors`}>
+                                                                {conf.short}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        ))}
+
+                                        {/* 統計列：每日最低出勤人數 (可編輯, 低於底線顯示紅底白字) */}
+                                        <div className="flex border-b border-gray-300 bg-amber-50">
+                                            <div className="w-32 flex-shrink-0 p-2 border-r border-gray-300 sticky-col flex flex-col justify-center bg-amber-100">
+                                                <span className="text-xs font-bold text-gray-700 text-center">門市人數/底線</span>
+                                            </div>
+                                            {Array.from({length: daysInMonth}, (_, i) => {
+                                                const day = i + 1;
+                                                let workCount = 0;
+                                                EMPLOYEES.filter(emp => emp.dept === '門市').forEach(emp => {
+                                                    const shift = currentSchedule[day]?.[emp.id];
+                                                    if (shift === 'work' || shift === 'empty_work') workCount++;
+                                                });
+                                                const minS = getMinStaff('store', day);
+                                                const isShort = workCount < minS;
+                                                return (
+                                                    <div key={`stat-store-${day}`} className={`w-12 flex-shrink-0 border-r border-gray-300 p-1 flex flex-col items-center justify-center ${isShort ? 'bg-red-500 animate-pulse' : ''}`}>
+                                                        <span className={`font-bold text-sm ${isShort ? 'text-white' : 'text-emerald-700'}`}>{workCount}</span>
+                                                        <input 
+                                                            type="number" min="0" max="10" 
+                                                            className={`w-8 text-[10px] text-center border-b border-gray-300 bg-transparent outline-none mt-1 font-bold ${isShort ? 'text-white border-white placeholder-white' : 'text-gray-500 focus:border-amber-500'}`} 
+                                                            value={minS} 
+                                                            onChange={e => updateMinStaff('store', day, e.target.value)} 
+                                                            title="設定當日最低需求"
+                                                        />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        
+                                        <div className="flex border-b border-gray-300 bg-amber-50">
+                                            <div className="w-32 flex-shrink-0 p-2 border-r border-gray-300 sticky-col flex flex-col justify-center bg-amber-100">
+                                                <span className="text-xs font-bold text-gray-700 text-center">內場人數/底線</span>
+                                            </div>
+                                            {Array.from({length: daysInMonth}, (_, i) => {
+                                                const day = i + 1;
+                                                let workCount = 0;
+                                                EMPLOYEES.filter(emp => emp.dept === '內場').forEach(emp => {
+                                                    const shift = currentSchedule[day]?.[emp.id];
+                                                    if (shift === 'work' || shift === 'empty_work') workCount++;
+                                                });
+                                                const minK = getMinStaff('kitchen', day);
+                                                const isShort = workCount < minK;
+                                                return (
+                                                    <div key={`stat-kitchen-${day}`} className={`w-12 flex-shrink-0 border-r border-gray-300 p-1 flex flex-col items-center justify-center ${isShort ? 'bg-red-500 animate-pulse' : ''}`}>
+                                                        <span className={`font-bold text-sm ${isShort ? 'text-white' : 'text-emerald-700'}`}>{workCount}</span>
+                                                        <input 
+                                                            type="number" min="0" max="10" 
+                                                            className={`w-8 text-[10px] text-center border-b border-gray-300 bg-transparent outline-none mt-1 font-bold ${isShort ? 'text-white border-white placeholder-white' : 'text-gray-500 focus:border-amber-500'}`} 
+                                                            value={minK} 
+                                                            onChange={e => updateMinStaff('kitchen', day, e.target.value)} 
+                                                            title="設定當日最低需求"
+                                                        />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 統計頁面 */}
+                        {activeTab === 'stats' && (
+                            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                                    <h2 className="text-lg font-semibold text-gray-700">{year}年 {month}月 休假與出勤統計</h2>
+                                </div>
+                                <div className="p-4">
+                                    <table className="w-full text-left text-sm">
+                                        <thead>
+                                            <tr className="bg-gray-100 text-gray-700">
+                                                <th className="p-3 rounded-tl-lg">部門</th>
+                                                <th className="p-3">姓名</th>
+                                                <th className="p-3 text-center">出勤天數</th>
+                                                <th className="p-3 text-center text-red-600">例假</th>
+                                                <th className="p-3 text-center text-orange-600">休假</th>
+                                                <th className="p-3 text-center text-blue-600">空班(休)</th>
+                                                <th className="p-3 text-center text-purple-600">空班(勤)</th>
+                                                <th className="p-3 text-center rounded-tr-lg">總休假</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {EMPLOYEES.map(emp => {
+                                                const s = stats[emp.id];
+                                                return (
+                                                    <tr key={emp.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                        <td className="p-3 text-gray-500">{emp.dept}</td>
+                                                        <td className="p-3 font-medium">{emp.name} {emp.conflict && <span className="text-xs text-gray-400 font-normal ml-1">(錯休:{EMPLOYEES.find(e=>e.id===emp.conflict).name})</span>}</td>
+                                                        <td className="p-3 text-center font-bold text-green-700">{s.work}</td>
+                                                        <td className="p-3 text-center">{s.leave_li}</td>
+                                                        <td className="p-3 text-center">{s.leave_xiu}</td>
+                                                        <td className="p-3 text-center">{s.empty_rest}</td>
+                                                        <td className="p-3 text-center">{s.empty_work}</td>
+                                                        <td className="p-3 text-center font-medium bg-gray-50">{s.total_leave}</td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Toast Notification */}
+                    {toast && (
+                        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded shadow-lg animate-bounce z-[150]">
+                            {toast}
+                        </div>
+                    )}
+                    
+                    {/* Confirm Dialog */}
+                    {confirmDialog.isOpen && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200]">
+                            <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+                                <h3 className="text-lg font-bold mb-3 text-gray-800 flex items-center gap-2">
+                                    <i data-lucide="alert-circle" className="text-red-500 w-5 h-5"></i>確認操作
+                                </h3>
+                                <p className="mb-6 text-gray-600 text-sm leading-relaxed">{confirmDialog.message}</p>
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={() => setConfirmDialog({ isOpen: false })} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition font-medium">取消</button>
+                                    <button onClick={confirmDialog.onConfirm} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition font-medium">確定清除</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* 用於匯出圖片的隱藏區塊 (排版乾淨俐落) */}
+                    <div id="export-schedule-container" className="fixed top-0 bg-white p-8 w-max" style={{ left: '-10000px', zIndex: -9999 }}>
+                        <div className="text-3xl font-bold mb-6 text-center text-gray-800">{year}年 {month}月 排班總表</div>
+                        <table className="border-collapse border border-gray-400 bg-white">
+                            <thead>
+                                <tr className="bg-gray-200 text-gray-700">
+                                    <th className="border border-gray-400 p-3 min-w-[120px] font-bold">部門 / 姓名</th>
+                                    {Array.from({length: daysInMonth}, (_, i) => {
+                                        const dateObj = new Date(year, month - 1, i + 1);
+                                        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                                        const isHoliday = currentDaySettings[i+1]?.isHoliday;
+                                        const isRedDay = isWeekend || isHoliday;
+                                        return (
+                                            <th key={i} className={`border border-gray-400 p-2 min-w-[40px] text-center font-bold ${isRedDay ? 'text-red-600' : ''}`}>
+                                                {i+1}
+                                                {isHoliday && <div className="text-[10px] text-red-600 mt-1">國定</div>}
+                                                {currentDaySettings[i+1]?.activityNote && <div className="text-[10px] text-blue-600 mt-1 truncate">{currentDaySettings[i+1].activityNote}</div>}
+                                            </th>
+                                        )
+                                    })}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {EMPLOYEES.map(emp => (
+                                    <tr key={emp.id} className="hover:bg-gray-50">
+                                        <td className="border border-gray-400 p-3 text-center bg-gray-50">
+                                            <span className="text-gray-500 text-sm mr-2">{emp.dept}</span>
+                                            <span className="font-bold text-gray-800">{emp.name}</span>
+                                        </td>
+                                        {Array.from({length: daysInMonth}, (_, i) => {
+                                            const day = i + 1;
+                                            const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
+                                            const conf = SHIFT_TYPES[shift];
+                                            return (
+                                                <td key={day} className={`border border-gray-400 p-2 text-center font-bold align-middle ${shift !== 'none' ? conf.color : 'text-gray-300'}`}>
+                                                    {conf.short === '-' ? '' : conf.short}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                                {/* 圖片匯出用的統計列 (異常也用紅底白字呈現) */}
+                                <tr className="bg-gray-100">
+                                    <td className="border border-gray-400 p-2 text-center font-bold text-sm text-gray-700">門市出勤</td>
+                                    {Array.from({length: daysInMonth}, (_, i) => {
+                                        const day = i + 1;
+                                        let workCount = 0;
+                                        EMPLOYEES.filter(emp => emp.dept === '門市').forEach(emp => {
+                                            const shift = currentSchedule[day]?.[emp.id];
+                                            if (shift === 'work' || shift === 'empty_work') workCount++;
+                                        });
+                                        const minS = getMinStaff('store', day);
+                                        const isShort = workCount < minS;
+                                        return (
+                                            <td key={`img-store-${day}`} className={`border border-gray-400 p-2 text-center font-bold ${isShort ? 'bg-red-500 text-white' : 'text-gray-800'}`}>
+                                                {workCount}<br/><span className={`text-[9px] font-normal ${isShort ? 'text-white' : 'text-gray-500'}`}>底:{minS}</span>
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                                <tr className="bg-gray-100">
+                                    <td className="border border-gray-400 p-2 text-center font-bold text-sm text-gray-700">內場出勤</td>
+                                    {Array.from({length: daysInMonth}, (_, i) => {
+                                        const day = i + 1;
+                                        let workCount = 0;
+                                        EMPLOYEES.filter(emp => emp.dept === '內場').forEach(emp => {
+                                            const shift = currentSchedule[day]?.[emp.id];
+                                            if (shift === 'work' || shift === 'empty_work') workCount++;
+                                        });
+                                        const minK = getMinStaff('kitchen', day);
+                                        const isShort = workCount < minK;
+                                        return (
+                                            <td key={`img-kitchen-${day}`} className={`border border-gray-400 p-2 text-center font-bold ${isShort ? 'bg-red-500 text-white' : 'text-gray-800'}`}>
+                                                {workCount}<br/><span className={`text-[9px] font-normal ${isShort ? 'text-white' : 'text-gray-500'}`}>底:{minK}</span>
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div className="mt-6 flex flex-wrap gap-4 text-sm font-bold justify-center">
+                            {Object.entries(SHIFT_TYPES).filter(([k,v]) => k !== 'none').map(([k, v]) => (
+                                <div key={k} className={`px-4 py-2 border rounded-md shadow-sm ${v.color}`}>
+                                    {v.short}: {v.label}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 text-right text-gray-400 text-xs">產出時間：{new Date().toLocaleString()}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- 員工排休元件 ---
+        function EmployeeView({ currentUser, setCurrentUser, currentSchedule, daysInMonth, onDayClick, getLeaveData, showToast, globalMaxLeave, setGlobalMaxLeave, currentDaySettings, monthKey, setAllDaySettings, year, month, lastSyncTime, isSyncing }) {
+            const [selectedDay, setSelectedDay] = useState(null); 
+            
+            // 管理員設定表單狀態
+            const [adminDate, setAdminDate] = useState('1');
+            const [isAdminHoliday, setIsAdminHoliday] = useState(false);
+            const [isAdminBanned, setIsAdminBanned] = useState(false);
+            const [adminBanReason, setAdminBanReason] = useState('');
+            const [adminActivityNote, setAdminActivityNote] = useState('');
+            const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setSyncTime(new Date().toLocaleTimeString());
+                }, 15000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const currentEmp = EMPLOYEES.find(e => e.id === currentUser);
+
+            // 儲存特殊日期設定
+            const handleSaveDaySetting = () => {
+                setAllDaySettings(prev => ({
+                    ...prev,
+                    [monthKey]: {
+                        ...(prev[monthKey] || {}),
+                        [adminDate]: {
+                            isHoliday: isAdminHoliday,
+                            isBanned: isAdminBanned,
+                            banReason: adminBanReason,
+                            activityNote: adminActivityNote
+                        }
+                    }
+                }));
+                showToast(`已更新 ${adminDate} 日的特殊設定`);
+                setAdminBanReason('');
+                setAdminActivityNote('');
+                setIsAdminBanned(false);
+                setIsAdminHoliday(false);
+            };
+
+            return (
+                <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto w-full">
+                    {/* 左側操作區 */}
+                    <div className="w-full md:w-80 space-y-4 flex-shrink-0">
+                        {/* 模擬登入區塊 */}
+                        <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
+                            <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">身分切換 (模擬登入)</h2>
+                            <select 
+                                value={currentUser}
+                                onChange={(e) => setCurrentUser(e.target.value)}
+                                className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                {EMPLOYEES.map(emp => (
+                                    <option key={emp.id} value={emp.id}>
+                                        {emp.dept} - {emp.name}
+                                    </option>
+                                ))}
+                            </select>
+                            
+                            <div className="mt-4 p-3 bg-blue-50 rounded text-sm text-blue-800">
+                                <p><strong>目前身分：</strong>{currentEmp.name}</p>
+                                <p><strong>部門：</strong>{currentEmp.dept}</p>
+                                {currentEmp.conflict && (
+                                    <p className="text-red-600 mt-1">⚠️ 需與 <strong>{EMPLOYEES.find(e=>e.id===currentEmp.conflict).name}</strong> 錯開休假</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 排休規定與狀態 */}
+                        <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
+                            <h2 className="text-lg font-semibold mb-2 text-gray-800">排休規定與狀態</h2>
+                            <ul className="text-sm text-gray-600 space-y-2 mb-4">
+                                <li>• 點擊右側日曆選擇想要的假別。</li>
+                                <li>• 每日同部門最多 <strong className="text-red-500">{globalMaxLeave}</strong> 人同時排休。</li>
+                                <li>• <strong className="text-red-500">禁止選擇連續 3 天休假。</strong></li>
+                            </ul>
+                            <div className="text-xs text-gray-400 flex items-center gap-1 border-t pt-3">
+                                {isSyncing ? (
+                                    <i data-lucide="refresh-cw" className="w-3 h-3 animate-spin text-blue-500"></i>
+                                ) : (
+                                    <span className="relative flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                    </span>
+                                )}
+                                {isSyncing ? '同步儲存中...' : `雲端資料已連線 (最後更新: ${lastSyncTime})`}
+                            </div>
+                        </div>
+
+                        {/* 管理員設定區塊 */}
+                        <div className="bg-amber-50 p-4 rounded-lg shadow border border-amber-200">
+                            <div 
+                                className="flex justify-between items-center cursor-pointer"
+                                onClick={() => setShowAdminPanel(!showAdminPanel)}
+                            >
+                                <h2 className="text-md font-bold text-amber-800 flex items-center gap-2">
+                                    <i data-lucide="settings" className="w-4 h-4"></i> 模擬管理員設定
+                                </h2>
+                                <i data-lucide={showAdminPanel ? "chevron-up" : "chevron-down"} className="w-4 h-4 text-amber-800"></i>
+                            </div>
+                            
+                            {showAdminPanel && (
+                                <div className="mt-4 space-y-4 text-sm">
+                                    <div>
+                                        <label className="block text-gray-700 mb-1">每日部門休假上限人數：</label>
+                                        <input 
+                                            type="number" min="1" max="10" 
+                                            value={globalMaxLeave} 
+                                            onChange={(e) => setGlobalMaxLeave(Number(e.target.value))}
+                                            className="w-full border border-gray-300 rounded p-1.5 outline-none focus:ring-2 focus:ring-amber-500"
+                                        />
+                                        <p className="text-[10px] text-gray-500 mt-1">* 此上限為手動排休時的輔助防呆</p>
+                                    </div>
+                                    <hr className="border-amber-200" />
+                                    <div>
+                                        <label className="block text-gray-700 font-bold mb-2">特殊日期設定：</label>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span>日期：</span>
+                                            <select value={adminDate} onChange={e => setAdminDate(e.target.value)} className="border rounded p-1 flex-1 outline-none">
+                                                {Array.from({length: daysInMonth}, (_, i) => <option key={i+1} value={i+1}>{i+1} 日</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <input type="checkbox" id="isHol" checked={isAdminHoliday} onChange={e => setIsAdminHoliday(e.target.checked)} />
+                                            <label htmlFor="isHol" className="text-red-600 font-medium cursor-pointer">標記為國定假日</label>
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <input type="checkbox" id="isBan" checked={isAdminBanned} onChange={e => setIsAdminBanned(e.target.checked)} />
+                                            <label htmlFor="isBan" className="text-gray-700 cursor-pointer">當日禁止排休</label>
+                                        </div>
+                                        {isAdminBanned && (
+                                            <div className="mb-2">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="請輸入禁休原因 (如: 盤點)" 
+                                                    value={adminBanReason}
+                                                    onChange={e => setAdminBanReason(e.target.value)}
+                                                    className="w-full border rounded p-1.5 text-xs outline-none"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="mb-3">
+                                            <label className="block text-gray-700 text-xs mb-1">當日活動標註 (選填)：</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="如: 週年慶、包場 (提醒用)" 
+                                                value={adminActivityNote}
+                                                onChange={e => setAdminActivityNote(e.target.value)}
+                                                className="w-full border rounded p-1.5 text-xs outline-none"
+                                            />
+                                        </div>
+                                        <button onClick={handleSaveDaySetting} className="w-full bg-amber-600 text-white rounded p-1.5 hover:bg-amber-700 transition font-medium">
+                                            儲存日期設定
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 右側日曆區 */}
+                    <div className="flex-1 bg-white p-5 rounded-lg shadow border border-gray-200">
+                        <h2 className="text-lg font-semibold mb-4 text-gray-800 flex items-center justify-between">
+                            <span>選擇排休日期</span>
+                            <span className="text-sm font-normal text-gray-500">預覽顯示：同部門已休假人員</span>
+                        </h2>
+                        
+                        <div className="grid grid-cols-7 gap-2">
+                            {/* 日曆標頭 */}
+                            {['一', '二', '三', '四', '五', '六', '日'].map((d, i) => (
+                                <div key={d} className={`text-center font-medium py-2 ${i >= 5 ? 'text-red-500' : 'text-gray-500'}`}>{d}</div>
+                            ))}
+                            
+                            {/* 計算第一天是星期幾來補空白 */}
+                            {Array.from({length: new Date(year, month - 1, 1).getDay() === 0 ? 6 : new Date(year, month - 1, 1).getDay() - 1}, (_, i) => (
+                                <div key={`blank-${i}`} className="p-2"></div>
+                            ))}
+                            
+                            {/* 渲染天數 */}
+                            {Array.from({length: daysInMonth}, (_, i) => {
+                                const day = i + 1;
+                                const status = currentSchedule[day] ? currentSchedule[day][currentUser] : 'none';
+                                const conf = SHIFT_TYPES[status];
+                                
+                                const dateObj = new Date(year, month - 1, day);
+                                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                                
+                                const dSetting = currentDaySettings[day] || {};
+                                const isBanned = dSetting.isBanned;
+                                const isHoliday = dSetting.isHoliday;
+                                const activityNote = dSetting.activityNote;
+                                const isRedDay = isWeekend || isHoliday;
+                                
+                                const leaveData = getLeaveData(day, currentEmp.dept);
+                                const isFull = leaveData.count >= globalMaxLeave && !['leave_li', 'leave_xiu', 'empty_rest'].includes(status);
+                                const canClick = !isBanned && (!isFull || status !== 'none');
+                                
+                                return (
+                                    <div 
+                                        key={day} 
+                                        onClick={() => canClick && setSelectedDay(day)}
+                                        className={`
+                                            h-28 border rounded-md p-2 flex flex-col cursor-pointer transition relative overflow-hidden
+                                            ${status !== 'none' ? conf.color : 'bg-gray-50 hover:bg-gray-100 border-gray-200'}
+                                            ${isBanned ? 'bg-red-50 border-red-200 cursor-not-allowed opacity-80' : ''}
+                                            ${(isFull && !isBanned && status === 'none') ? 'opacity-60 cursor-not-allowed bg-gray-200' : ''}
+                                        `}
+                                    >
+                                        {/* 日期與國定假日標籤 */}
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className={`font-semibold ${isRedDay ? 'text-red-600' : ''}`}>
+                                                {day} {isHoliday && <span className="ml-1 text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded align-middle">國定</span>}
+                                            </span>
+                                            {status !== 'none' && <span className="text-xs px-1.5 py-0.5 rounded bg-white bg-opacity-70 font-bold">{conf.short}</span>}
+                                        </div>
+
+                                        {/* 禁休原因 */}
+                                        {isBanned && (
+                                            <div className="text-[10px] text-red-600 font-bold bg-red-100 rounded px-1 py-0.5 my-1 text-center truncate">
+                                                禁休: {dSetting.banReason}
+                                            </div>
+                                        )}
+
+                                        {/* 活動標註 */}
+                                        {activityNote && (
+                                            <div className="text-[10px] text-blue-700 font-bold bg-blue-100 border border-blue-200 rounded px-1 py-0.5 my-0.5 text-center truncate" title={activityNote}>
+                                                {activityNote}
+                                            </div>
+                                        )}
+
+                                        {/* 已排休人員預覽 */}
+                                        <div className="flex-1 overflow-y-auto mt-1 no-scrollbar">
+                                            <div className="flex flex-wrap gap-1">
+                                                {leaveData.emps.map(e => (
+                                                    <span key={e.id} className={`text-[10px] px-1 rounded ${e.id === currentUser ? 'bg-blue-200 text-blue-800 font-bold' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {e.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* 狀態列 */}
+                                        <div className="text-[10px] text-right mt-1 pt-1 border-t border-black/5">
+                                            {isBanned ? (
+                                                <span className="text-red-500 font-bold">不可排休</span>
+                                            ) : isFull && status === 'none' ? (
+                                                <span className="text-orange-500 font-bold">名額已滿</span>
+                                            ) : (
+                                                <span className="text-gray-500">已休: {leaveData.count}/{globalMaxLeave}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* 選擇假別 Modal */}
+                    {selectedDay && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+                            <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
+                                <h3 className="text-lg font-bold mb-4">選擇 {selectedDay} 日 班別</h3>
+                                <div className="space-y-2">
+                                    <button onClick={() => { onDayClick(selectedDay, 'empty_rest'); setSelectedDay(null); }} className="w-full text-left px-4 py-2 rounded hover:bg-blue-50 text-blue-700 border border-blue-200">空班 - 休息</button>
+                                    <hr className="my-2" />
+                                    <button onClick={() => { onDayClick(selectedDay, 'none'); setSelectedDay(null); }} className="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-gray-600 border border-gray-300">取消排休 (清空)</button>
+                                </div>
+                                <div className="mt-4 flex justify-end">
+                                    <button onClick={() => setSelectedDay(null)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded">關閉</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+        
+        // 確保 icons 正確渲染
+        setTimeout(() => lucide.createIcons(), 100);
+    </script>
+</body>
+</html>
