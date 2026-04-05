@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>餐飲排班系統原型</title>
+    <title>四維店排班系統初版</title>
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -33,15 +33,15 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- 資料定義 ---
-        const EMPLOYEES = [
+        // --- 初始預設資料定義 ---
+        const DEFAULT_EMPLOYEES = [
             { id: 'store_1', name: '林尚正', dept: '門市', conflict: 'store_2' },
             { id: 'store_2', name: '陳光庭', dept: '門市', conflict: 'store_1' },
             { id: 'store_3', name: '吳佳陵', dept: '門市', conflict: null },
             { id: 'store_4', name: '吳佩潔', dept: '門市', conflict: null },
             { id: 'store_5', name: '林佩妡', dept: '門市', conflict: null },
             { id: 'store_6', name: '馮麗平', dept: '門市', conflict: null },
-            { id: 'store_7', name: '陳南鶯', dept: '門市', conflict: null },
+            { id: 'store_7', name: '陳南鶯', dept: '內場', conflict: null }, // 已修改為內場
             { id: 'store_8', name: '辛瑄祺', dept: '門市', conflict: null },
             { id: 'kitchen_1', name: '霍磊', dept: '內場', conflict: 'kitchen_2' },
             { id: 'kitchen_2', name: '吳東紘', dept: '內場', conflict: 'kitchen_1' },
@@ -59,14 +59,17 @@
             'none': { label: '未排', color: 'bg-gray-50 text-gray-400 border-gray-200', short: '-' }
         };
 
-        // --- 雲端庫設定 (請貼上您的 Google Apps Script Web App URL) ---
+        // --- 雲端庫設定 ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbzpmhBN1J7voF-yshK1GZ67vi7Op20z74uQ55ujpiQWnTseBTLMmZb-caRhwCkFDRk/exec'; 
 
         // --- 主應用程式 ---
         function App() {
             const [activeTab, setActiveTab] = useState('schedule'); 
-            const [currentUser, setCurrentUser] = useState(EMPLOYEES[0].id); 
             const [toast, setToast] = useState(null);
+            
+            // --- 員工清單狀態 ---
+            const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
+            const [currentUser, setCurrentUser] = useState(DEFAULT_EMPLOYEES[0].id); 
             
             // --- 雲端同步狀態 ---
             const [isSyncing, setIsSyncing] = useState(false);
@@ -89,17 +92,20 @@
             const [globalMaxLeave, setGlobalMaxLeave] = useState(3); 
             const [allSchedules, setAllSchedules] = useState({}); 
             const [allDaySettings, setAllDaySettings] = useState({}); 
-            
-            // 每日最低出勤人數設定 (依月份儲存)
             const [minStaffSettings, setMinStaffSettings] = useState({}); 
 
             // 取得當前月份的資料
             const currentSchedule = allSchedules[monthKey] || {};
             const currentDaySettings = allDaySettings[monthKey] || {};
 
+            // 確保切換 Tab 或是員工資料變動時重新繪製 Icons
+            useEffect(() => {
+                setTimeout(() => lucide.createIcons(), 100);
+            }, [activeTab, employees]);
+
             // --- 雲端資料抓取 (GET) ---
             const fetchCloudData = async () => {
-                if (!API_URL) return; // 若未設定 API URL 則跳過
+                if (!API_URL) return; 
                 try {
                     const res = await fetch(API_URL);
                     const json = await res.json();
@@ -107,6 +113,13 @@
                         if (json.data.allSchedules) setAllSchedules(json.data.allSchedules);
                         if (json.data.allDaySettings) setAllDaySettings(json.data.allDaySettings);
                         if (json.data.minStaffSettings) setMinStaffSettings(json.data.minStaffSettings);
+                        if (json.data.employees) {
+                            setEmployees(json.data.employees);
+                            // 確保當前選擇的使用者依然存在，否則切換到第一個
+                            if (!json.data.employees.find(e => e.id === currentUser)) {
+                                setCurrentUser(json.data.employees[0]?.id || '');
+                            }
+                        }
                         setLastSyncTime(new Date().toLocaleTimeString());
                     }
                 } catch (error) {
@@ -122,7 +135,7 @@
                     await fetch(API_URL, {
                         method: 'POST',
                         body: JSON.stringify({ key, value }),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 避免 GAS CORS 問題
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                     });
                     setLastSyncTime(new Date().toLocaleTimeString());
                 } catch (error) {
@@ -140,32 +153,83 @@
                 return () => clearInterval(interval);
             }, []);
 
-            // 確保當前月份的班表有被初始化 (若雲端無資料時的後備方案)
+            // 確保當前月份的班表有被初始化
             useEffect(() => {
                 if (!allSchedules[monthKey]) {
                     const initialSchedule = {};
                     for (let d = 1; d <= daysInMonth; d++) {
                         initialSchedule[d] = {};
-                        EMPLOYEES.forEach(emp => {
+                        employees.forEach(emp => {
                             initialSchedule[d][emp.id] = 'none';
                         });
                     }
                     setAllSchedules(prev => ({ ...prev, [monthKey]: initialSchedule }));
                 }
-            }, [monthKey, daysInMonth, allSchedules]);
+            }, [monthKey, daysInMonth, allSchedules, employees]);
 
             const showToast = (msg) => {
                 setToast(msg);
                 setTimeout(() => setToast(null), 3000);
             };
 
+            // --- 員工分類與分隔線處理 ---
+            const storeEmployees = employees.filter(e => e.dept === '門市');
+            const kitchenEmployees = employees.filter(e => e.dept === '內場');
+            const otherEmployees = employees.filter(e => e.dept !== '門市' && e.dept !== '內場');
+            
+            const displayRows = [];
+            if (storeEmployees.length > 0) displayRows.push(...storeEmployees);
+            if (storeEmployees.length > 0 && kitchenEmployees.length > 0) displayRows.push({ isDivider: true, label: '門市內場' });
+            if (kitchenEmployees.length > 0) displayRows.push(...kitchenEmployees);
+            if ((storeEmployees.length > 0 || kitchenEmployees.length > 0) && otherEmployees.length > 0) displayRows.push({ isDivider: true, label: '其他區域' });
+            if (otherEmployees.length > 0) displayRows.push(...otherEmployees);
+
+            // --- 員工管理功能 ---
+            const handleEmployeeChange = (id, field, value) => {
+                const newEmployees = employees.map(emp => 
+                    emp.id === id ? { ...emp, [field]: value } : emp
+                );
+                setEmployees(newEmployees);
+                saveToCloud('employees', newEmployees);
+            };
+
+            const handleAddEmployee = () => {
+                const newEmp = {
+                    id: `emp_${Date.now()}`,
+                    name: '新員工',
+                    dept: '門市',
+                    conflict: null
+                };
+                const newEmployees = [...employees, newEmp];
+                setEmployees(newEmployees);
+                saveToCloud('employees', newEmployees);
+                showToast('已新增員工，請修改姓名與設定');
+            };
+
+            const handleDeleteEmployee = (id) => {
+                const empName = employees.find(e => e.id === id)?.name;
+                setConfirmDialog({
+                    isOpen: true,
+                    message: `確定要刪除員工「${empName}」嗎？此操作將會將該員工從名單中移除。`,
+                    onConfirm: () => {
+                        const newEmployees = employees.filter(e => e.id !== id);
+                        // 清除其他人的錯休設定如果是指向這位被刪除的員工
+                        const cleanedEmployees = newEmployees.map(e => 
+                            e.conflict === id ? { ...e, conflict: null } : e
+                        );
+                        setEmployees(cleanedEmployees);
+                        saveToCloud('employees', cleanedEmployees);
+                        setConfirmDialog({ isOpen: false, message: '', onConfirm: null });
+                        showToast(`已刪除員工 ${empName}`);
+                    }
+                });
+            };
+
             // 最低出勤人數 Getter/Setter
             const getMinStaff = (dept, day) => {
-                // 檢查是否手動設定過
                 const monthSettings = minStaffSettings[monthKey] || { store: {}, kitchen: {} };
                 if (monthSettings[dept]?.[day] !== undefined) return monthSettings[dept][day];
                 
-                // 動態預設：平日 門市4/內場3, 假日 門市5/內場4
                 const dateObj = new Date(year, month - 1, day);
                 const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
                 const isHoliday = currentDaySettings[day]?.isHoliday;
@@ -197,7 +261,7 @@
             const getLeaveData = (scheduleData, day, dept) => {
                 if (!scheduleData[day]) return { count: 0, emps: [] };
                 let emps = [];
-                EMPLOYEES.filter(e => e.dept === dept).forEach(e => {
+                employees.filter(e => e.dept === dept).forEach(e => {
                     const status = scheduleData[day][e.id];
                     if (['leave_li', 'leave_xiu', 'empty_rest'].includes(status)) {
                         emps.push(e);
@@ -226,7 +290,7 @@
                     return;
                 }
 
-                const emp = EMPLOYEES.find(e => e.id === currentUser);
+                const emp = employees.find(e => e.id === currentUser);
                 const currentType = currentSchedule[day]?.[currentUser] || 'none';
                 
                 if (type === 'none') {
@@ -237,13 +301,11 @@
                 const isLeave = ['leave_li', 'leave_xiu', 'empty_rest'].includes(type);
                 const wasLeave = ['leave_li', 'leave_xiu', 'empty_rest'].includes(currentType);
                 
-                // 員工手動排休防呆 (不擋底線讓管理員保留彈性，異常會在下方紅底顯示)
                 if (isLeave && !wasLeave && getLeaveData(currentSchedule, day, emp.dept).count >= globalMaxLeave) {
                     alert(`${emp.dept} 當天休假人數已達上限 (${globalMaxLeave}人)`);
                     return;
                 }
 
-                // 檢查連續三天休假 (支援跨月)
                 if (isLeave) {
                     const tempSchedule = { ...currentSchedule };
                     tempSchedule[day] = { ...tempSchedule[day], [currentUser]: type };
@@ -283,7 +345,7 @@
                             const monthData = {};
                             for (let d = 1; d <= daysInMonth; d++) {
                                 monthData[d] = {};
-                                EMPLOYEES.forEach(emp => { monthData[d][emp.id] = 'none'; });
+                                employees.forEach(emp => { monthData[d][emp.id] = 'none'; });
                             }
                             const newState = { ...prev, [monthKey]: monthData };
                             saveToCloud('allSchedules', newState);
@@ -301,9 +363,8 @@
                 let monthData = JSON.parse(JSON.stringify(currentSchedule));
                 let newAnomalies = [];
 
-                // 取得當天特定部門潛在上班人數 (把 'none' 當作準備要上班的人力)
                 const getPotentialWorkers = (d, dept) => {
-                    return EMPLOYEES.filter(e => e.dept === dept).reduce((acc, e) => {
+                    return employees.filter(e => e.dept === dept).reduce((acc, e) => {
                         const s = monthData[d]?.[e.id];
                         if (['work', 'empty_work', 'none'].includes(s)) return acc + 1;
                         return acc;
@@ -312,15 +373,16 @@
 
                 const isLeaveType = (s) => ['leave_li', 'leave_xiu', 'empty_rest'].includes(s);
 
-                // 決定演算順序 (林尚正/陳光庭 放最後，自然達成隨時補上機制)
-                const regularStaff = EMPLOYEES.filter(e => !['store_1', 'store_2', 'kitchen_1', 'kitchen_2'].includes(e.id));
+                // 動態處理特殊人員 (即便未來名稱變更或被刪除，也能安全過濾)
+                const specialNames = ['林尚正', '陳光庭', '霍磊', '吳東紘'];
+                const regularStaff = employees.filter(e => !specialNames.includes(e.name));
                 const processOrder = [
                     ...regularStaff,
-                    EMPLOYEES.find(e => e.id === 'kitchen_1'),
-                    EMPLOYEES.find(e => e.id === 'kitchen_2'),
-                    EMPLOYEES.find(e => e.id === 'store_1'),
-                    EMPLOYEES.find(e => e.id === 'store_2')
-                ].filter(Boolean);
+                    employees.find(e => e.name === '霍磊'),
+                    employees.find(e => e.name === '吳東紘'),
+                    employees.find(e => e.name === '林尚正'),
+                    employees.find(e => e.name === '陳光庭')
+                ].filter(Boolean); // 過濾掉找不到的人員
 
                 processOrder.forEach(emp => {
                     let counts = { leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0 };
@@ -329,7 +391,6 @@
                         if (counts[s] !== undefined) counts[s]++;
                     }
 
-                    // 空班池總數 4
                     const MAX_EMPTY_POOL = 4;
                     const targets = { leave_li: 4, leave_xiu: 4 };
 
@@ -367,15 +428,19 @@
                                 }
 
                                 // 【特殊原則】: 霍磊/吳東紘 互斥原則
-                                if (emp.id === 'kitchen_1' && isLeaveType(monthData[d]?.['kitchen_2'])) canPlace = false;
-                                if (emp.id === 'kitchen_2' && isLeaveType(monthData[d]?.['kitchen_1'])) canPlace = false;
+                                const kitchen1 = employees.find(e => e.name === '霍磊');
+                                const kitchen2 = employees.find(e => e.name === '吳東紘');
+                                if (kitchen1 && kitchen2) {
+                                    if (emp.id === kitchen1.id && isLeaveType(monthData[d]?.[kitchen2.id])) canPlace = false;
+                                    if (emp.id === kitchen2.id && isLeaveType(monthData[d]?.[kitchen1.id])) canPlace = false;
+                                }
 
                                 if (!canPlace) continue;
 
-                                // --- 簡化計分制 (正向加分，移除扣分機制) ---
-                                let score = Math.random() * 10; // 基礎擾動打亂分佈
+                                // --- 簡化計分制 (正向加分，移除孤島扣分機制) ---
+                                let score = Math.random() * 10; 
 
-                                // 【優先級】：避免超過 6 天連續上班 (權重最高)
+                                // 【優先級】：避免超過 6 天連續上班
                                 let streak = 0;
                                 for (let p = d - 1; p >= Math.max(1, d - 6); p--) {
                                     const ps = monthData[p]?.[emp.id];
@@ -385,9 +450,12 @@
                                 }
                                 if (streak >= 6) score += 10000;
 
-                                // 【優先級】：錯休人員盡量錯開 (對方沒休才加分)
-                                if (emp.conflict && !isLeaveType(monthData[d]?.[emp.conflict])) {
-                                    score += 5000;
+                                // 【優先級】：錯休人員盡量錯開
+                                if (emp.conflict) {
+                                    const conflictEmp = employees.find(e => e.id === emp.conflict);
+                                    if (conflictEmp && !isLeaveType(monthData[d]?.[conflictEmp.id])) {
+                                        score += 5000;
+                                    }
                                 }
 
                                 // 【優先級】：鼓勵連續休假 (最多2天)
@@ -410,10 +478,10 @@
                                 monthData[bestDay][emp.id] = type;
                                 needed--;
                             } else {
-                                break; // 該假別真的塞不下去了
+                                break; 
                             }
                         }
-                        return needed; // 回傳沒塞成功的數量
+                        return needed; 
                     };
 
                     let missingLi = placeLeaves('leave_li', Math.max(0, targets.leave_li - counts.leave_li));
@@ -423,14 +491,11 @@
 
                     // --- 動態分配空班 (空班休 vs 空班勤) ---
                     let currentEmptyRest = counts.empty_rest;
-                    
-                    // 確保至少有 1 天空班休 (若尚未排)
                     if (currentEmptyRest < 1) {
                         let missingER = placeLeaves('empty_rest', 1);
                         if (missingER === 0) currentEmptyRest++;
                     }
 
-                    // 檢查並打斷超過 6 天的長班 (轉為空班休)
                     const checkAnyStreak = () => {
                         let currentStreak = 0;
                         for (let d = 1; d <= daysInMonth; d++) {
@@ -448,10 +513,9 @@
                     while (currentEmptyRest < MAX_EMPTY_POOL && checkAnyStreak()) {
                         let missingER = placeLeaves('empty_rest', 1);
                         if (missingER === 0) currentEmptyRest++;
-                        else break; // 塞不下
+                        else break; 
                     }
 
-                    // 剩餘的空班額度全部轉為空班勤
                     let emptyWorkTarget = MAX_EMPTY_POOL - currentEmptyRest - counts.empty_work;
                     let availableDays = Array.from({length: daysInMonth}, (_,i)=>i+1).filter(d => monthData[d]?.[emp.id] === 'none');
                     availableDays.sort(() => Math.random() - 0.5); 
@@ -462,20 +526,20 @@
                     }
                 });
 
-                // 將未排的日子全部填入「出勤 (work)」
+                // 將未排的日子填入出勤
                 for (let d = 1; d <= daysInMonth; d++) {
                     if (!monthData[d]) monthData[d] = {};
-                    EMPLOYEES.forEach(emp => {
+                    employees.forEach(emp => {
                         if (monthData[d][emp.id] === 'none' || monthData[d][emp.id] === undefined) {
                             monthData[d][emp.id] = 'work';
                         }
                     });
                 }
 
-                // --- 產生事後異常報告 ---
+                // --- 產生異常報告 ---
                 for (let d = 1; d <= daysInMonth; d++) {
                     let storeCount = 0; let kitchenCount = 0;
-                    EMPLOYEES.forEach(emp => {
+                    employees.forEach(emp => {
                         const s = monthData[d][emp.id];
                         if (s === 'work' || s === 'empty_work') {
                             emp.dept === '門市' ? storeCount++ : kitchenCount++;
@@ -487,7 +551,7 @@
                     if (kitchenCount < minK) newAnomalies.push(`${month}/${d} 內場出勤人數不足 (實際:${kitchenCount}, 底線:${minK})`);
                 }
 
-                EMPLOYEES.forEach(emp => {
+                employees.forEach(emp => {
                     let consecutiveWork = 0;
                     for (let d = 1; d <= daysInMonth; d++) {
                         const s = monthData[d][emp.id];
@@ -495,7 +559,7 @@
                             consecutiveWork++;
                             if (consecutiveWork > 6) {
                                 newAnomalies.push(`${emp.name} 連續上班超過 6 天 (發生於 ${month}/${d} 區間)`);
-                                consecutiveWork = 0; // 重置避免同區段洗版
+                                consecutiveWork = 0; 
                             }
                         } else {
                             consecutiveWork = 0;
@@ -518,7 +582,8 @@
                 let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
                 csvContent += `部門,姓名,` + Array.from({length: daysInMonth}, (_, i) => i + 1).join(",") + "\n";
 
-                EMPLOYEES.forEach(emp => {
+                const exportEmployees = displayRows.filter(r => !r.isDivider);
+                exportEmployees.forEach(emp => {
                     let row = `${emp.dept},${emp.name}`;
                     for (let d = 1; d <= daysInMonth; d++) {
                         const shift = currentSchedule[d] ? currentSchedule[d][emp.id] : 'none';
@@ -562,13 +627,13 @@
             // 統計計算
             const stats = useMemo(() => {
                 const res = {};
-                EMPLOYEES.forEach(emp => {
+                employees.forEach(emp => {
                     res[emp.id] = { work: 0, leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0, total_leave: 0 };
                 });
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     if(!currentSchedule[d]) continue;
-                    EMPLOYEES.forEach(emp => {
+                    employees.forEach(emp => {
                         const s = currentSchedule[d][emp.id];
                         if (s === 'work') res[emp.id].work++;
                         if (s === 'leave_li') { res[emp.id].leave_li++; res[emp.id].total_leave++; }
@@ -578,13 +643,13 @@
                     });
                 }
                 return res;
-            }, [currentSchedule, daysInMonth]);
+            }, [currentSchedule, daysInMonth, employees]);
 
             return (
                 <div className="min-h-screen flex flex-col relative">
                     {/* Header */}
-                    <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-40">
-                        <div className="flex items-center gap-4">
+                    <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-40 overflow-x-auto">
+                        <div className="flex items-center gap-4 flex-shrink-0">
                             <div className="flex items-center gap-2">
                                 <i data-lucide="calendar-days" className="w-6 h-6"></i>
                                 <h1 className="text-xl font-bold hidden md:block">餐飲排班與排休系統</h1>
@@ -606,10 +671,11 @@
                             </div>
                         </div>
 
-                        <div className="flex gap-2 md:gap-4">
+                        <div className="flex gap-2 md:gap-4 flex-shrink-0 ml-4">
                             <button onClick={() => setActiveTab('employee')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'employee' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>員工排休</button>
                             <button onClick={() => setActiveTab('schedule')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'schedule' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>總班表管理</button>
                             <button onClick={() => setActiveTab('stats')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'stats' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>人員統計</button>
+                            <button onClick={() => setActiveTab('manage_emp')} className={`px-3 py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'manage_emp' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>員工管理</button>
                         </div>
                     </header>
 
@@ -619,6 +685,7 @@
                         {/* 員工排休頁面 */}
                         {activeTab === 'employee' && (
                             <EmployeeView 
+                                employees={employees}
                                 currentUser={currentUser} 
                                 setCurrentUser={setCurrentUser}
                                 currentSchedule={currentSchedule}
@@ -642,6 +709,79 @@
                                 lastSyncTime={lastSyncTime}
                                 isSyncing={isSyncing}
                             />
+                        )}
+
+                        {/* 員工管理頁籤 (新增) */}
+                        {activeTab === 'manage_emp' && (
+                            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden flex flex-col h-full max-w-5xl mx-auto w-full">
+                                <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-700">員工名單與設定管理</h2>
+                                        <p className="text-xs text-gray-500 mt-1">在此處進行的任何修改，皆會即時同步至雲端資料庫</p>
+                                    </div>
+                                    <button onClick={handleAddEmployee} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition flex items-center gap-1">
+                                        <i data-lucide="user-plus" className="w-4 h-4"></i> 新增員工
+                                    </button>
+                                </div>
+                                <div className="p-4 flex-1 overflow-auto">
+                                    <table className="w-full text-left text-sm border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-100 text-gray-700">
+                                                <th className="p-3 border-b rounded-tl-lg">姓名</th>
+                                                <th className="p-3 border-b">所屬部門</th>
+                                                <th className="p-3 border-b">綁定錯休對象</th>
+                                                <th className="p-3 border-b text-center rounded-tr-lg w-20">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {employees.map(emp => (
+                                                <tr key={emp.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                    <td className="p-2">
+                                                        <input 
+                                                            type="text" 
+                                                            value={emp.name} 
+                                                            onChange={(e) => handleEmployeeChange(emp.id, 'name', e.target.value)} 
+                                                            className="border border-gray-300 p-2 rounded w-full outline-none focus:ring-2 focus:ring-blue-400" 
+                                                            placeholder="請輸入姓名"
+                                                        />
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <select 
+                                                            value={emp.dept} 
+                                                            onChange={(e) => handleEmployeeChange(emp.id, 'dept', e.target.value)} 
+                                                            className="border border-gray-300 p-2 rounded w-full outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                                                        >
+                                                            <option value="門市">門市</option>
+                                                            <option value="內場">內場</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <select 
+                                                            value={emp.conflict || ''} 
+                                                            onChange={(e) => handleEmployeeChange(emp.id, 'conflict', e.target.value || null)} 
+                                                            className="border border-gray-300 p-2 rounded w-full outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-700"
+                                                        >
+                                                            <option value="">無綁定</option>
+                                                            {employees.filter(e => e.id !== emp.id).map(e => (
+                                                                <option key={e.id} value={e.id}>{e.name} ({e.dept})</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-2 text-center">
+                                                        <button 
+                                                            onClick={() => handleDeleteEmployee(emp.id)} 
+                                                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
+                                                            title="刪除員工"
+                                                        >
+                                                            <i data-lucide="trash-2" className="w-5 h-5 mx-auto"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         )}
 
                         {/* 總班表管理頁面 */}
@@ -704,33 +844,47 @@
                                         </div>
 
                                         {/* Employee Rows */}
-                                        {EMPLOYEES.map(emp => (
-                                            <div key={emp.id} className="flex border-b border-gray-200 hover:bg-gray-50 transition">
-                                                <div className={`w-32 flex-shrink-0 p-2 border-r border-gray-300 sticky-col flex items-center justify-between px-3 ${emp.dept === '門市' ? 'bg-orange-50' : 'bg-teal-50'}`}>
-                                                    <span className="text-xs text-gray-500">{emp.dept}</span>
-                                                    <span className="font-medium text-gray-800">{emp.name}</span>
-                                                </div>
-                                                {Array.from({length: daysInMonth}, (_, i) => {
-                                                    const day = i + 1;
-                                                    const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
-                                                    const conf = SHIFT_TYPES[shift];
-                                                    return (
-                                                        <div key={`cell-${emp.id}-${day}`} className="w-12 flex-shrink-0 border-r border-gray-200 p-1 relative group cursor-pointer"
-                                                            onClick={(e) => {
-                                                                const types = Object.keys(SHIFT_TYPES);
-                                                                const currentIndex = types.indexOf(shift);
-                                                                const nextIndex = (currentIndex + 1) % types.length;
-                                                                updateSchedule(day, emp.id, types[nextIndex]);
-                                                            }}
-                                                        >
-                                                            <div className={`w-full h-full min-h-[32px] flex items-center justify-center text-xs rounded border ${conf.color} transition-colors`}>
-                                                                {conf.short}
-                                                            </div>
+                                        {displayRows.map(emp => {
+                                            if (emp.isDivider) {
+                                                return (
+                                                    <div key={`divider-${emp.label}`} className="flex border-b-2 border-t-2 border-gray-300 bg-gray-200/80">
+                                                        <div className="w-32 flex-shrink-0 p-1 border-r border-gray-300 sticky-col flex items-center justify-center bg-gray-200/80">
+                                                            <span className="text-[10px] font-bold text-gray-500 tracking-widest">{emp.label}</span>
                                                         </div>
-                                                    )
-                                                })}
-                                            </div>
-                                        ))}
+                                                        {Array.from({length: daysInMonth}, (_, i) => (
+                                                            <div key={`div-${i+1}`} className="w-12 flex-shrink-0 border-r border-gray-300 bg-gray-200/50"></div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div key={emp.id} className="flex border-b border-gray-200 hover:bg-gray-50 transition">
+                                                    <div className={`w-32 flex-shrink-0 p-2 border-r border-gray-300 sticky-col flex items-center justify-between px-3 ${emp.dept === '門市' ? 'bg-orange-50' : (emp.dept === '內場' ? 'bg-teal-50' : 'bg-gray-100')}`}>
+                                                        <span className="text-xs text-gray-500">{emp.dept}</span>
+                                                        <span className="font-medium text-gray-800">{emp.name}</span>
+                                                    </div>
+                                                    {Array.from({length: daysInMonth}, (_, i) => {
+                                                        const day = i + 1;
+                                                        const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
+                                                        const conf = SHIFT_TYPES[shift];
+                                                        return (
+                                                            <div key={`cell-${emp.id}-${day}`} className="w-12 flex-shrink-0 border-r border-gray-200 p-1 relative group cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    const types = Object.keys(SHIFT_TYPES);
+                                                                    const currentIndex = types.indexOf(shift);
+                                                                    const nextIndex = (currentIndex + 1) % types.length;
+                                                                    updateSchedule(day, emp.id, types[nextIndex]);
+                                                                }}
+                                                            >
+                                                                <div className={`w-full h-full min-h-[32px] flex items-center justify-center text-xs rounded border ${conf.color} transition-colors`}>
+                                                                    {conf.short}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            );
+                                        })}
 
                                         {/* 統計列：每日最低出勤人數 (可編輯, 低於底線顯示紅底白字) */}
                                         <div className="flex border-b border-gray-300 bg-amber-50">
@@ -740,7 +894,7 @@
                                             {Array.from({length: daysInMonth}, (_, i) => {
                                                 const day = i + 1;
                                                 let workCount = 0;
-                                                EMPLOYEES.filter(emp => emp.dept === '門市').forEach(emp => {
+                                                employees.filter(emp => emp.dept === '門市').forEach(emp => {
                                                     const shift = currentSchedule[day]?.[emp.id];
                                                     if (shift === 'work' || shift === 'empty_work') workCount++;
                                                 });
@@ -768,7 +922,7 @@
                                             {Array.from({length: daysInMonth}, (_, i) => {
                                                 const day = i + 1;
                                                 let workCount = 0;
-                                                EMPLOYEES.filter(emp => emp.dept === '內場').forEach(emp => {
+                                                employees.filter(emp => emp.dept === '內場').forEach(emp => {
                                                     const shift = currentSchedule[day]?.[emp.id];
                                                     if (shift === 'work' || shift === 'empty_work') workCount++;
                                                 });
@@ -814,12 +968,20 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {EMPLOYEES.map(emp => {
+                                            {displayRows.map(emp => {
+                                                if (emp.isDivider) {
+                                                    return (
+                                                        <tr key={`divider-${emp.label}`} className="bg-gray-200 border-y border-gray-300">
+                                                            <td colSpan="8" className="p-1.5 text-center text-[10px] font-bold text-gray-500 tracking-widest">{emp.label}</td>
+                                                        </tr>
+                                                    );
+                                                }
                                                 const s = stats[emp.id];
+                                                const conflictEmp = employees.find(e => e.id === emp.conflict);
                                                 return (
                                                     <tr key={emp.id} className="border-b border-gray-100 hover:bg-gray-50">
                                                         <td className="p-3 text-gray-500">{emp.dept}</td>
-                                                        <td className="p-3 font-medium">{emp.name} {emp.conflict && <span className="text-xs text-gray-400 font-normal ml-1">(錯休:{EMPLOYEES.find(e=>e.id===emp.conflict).name})</span>}</td>
+                                                        <td className="p-3 font-medium">{emp.name} {emp.conflict && conflictEmp && <span className="text-xs text-gray-400 font-normal ml-1">(錯休:{conflictEmp.name})</span>}</td>
                                                         <td className="p-3 text-center font-bold text-green-700">{s.work}</td>
                                                         <td className="p-3 text-center">{s.leave_li}</td>
                                                         <td className="p-3 text-center">{s.leave_xiu}</td>
@@ -853,7 +1015,7 @@
                                 <p className="mb-6 text-gray-600 text-sm leading-relaxed">{confirmDialog.message}</p>
                                 <div className="flex justify-end gap-3">
                                     <button onClick={() => setConfirmDialog({ isOpen: false })} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition font-medium">取消</button>
-                                    <button onClick={confirmDialog.onConfirm} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition font-medium">確定清除</button>
+                                    <button onClick={confirmDialog.onConfirm} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition font-medium">確定</button>
                                 </div>
                             </div>
                         </div>
@@ -882,31 +1044,40 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {EMPLOYEES.map(emp => (
-                                    <tr key={emp.id} className="hover:bg-gray-50">
-                                        <td className="border border-gray-400 p-3 text-center bg-gray-50">
-                                            <span className="text-gray-500 text-sm mr-2">{emp.dept}</span>
-                                            <span className="font-bold text-gray-800">{emp.name}</span>
-                                        </td>
-                                        {Array.from({length: daysInMonth}, (_, i) => {
-                                            const day = i + 1;
-                                            const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
-                                            const conf = SHIFT_TYPES[shift];
-                                            return (
-                                                <td key={day} className={`border border-gray-400 p-2 text-center font-bold align-middle ${shift !== 'none' ? conf.color : 'text-gray-300'}`}>
-                                                    {conf.short === '-' ? '' : conf.short}
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                ))}
+                                {displayRows.map(emp => {
+                                    if (emp.isDivider) {
+                                        return (
+                                            <tr key={`divider-${emp.label}`} className="bg-gray-300 border-y-2 border-gray-400">
+                                                <td className="border border-gray-400 p-1.5 text-center font-bold text-gray-600 text-xs tracking-widest" colSpan={daysInMonth + 1}>{emp.label}</td>
+                                            </tr>
+                                        );
+                                    }
+                                    return (
+                                        <tr key={emp.id} className="hover:bg-gray-50">
+                                            <td className="border border-gray-400 p-3 text-center bg-gray-50">
+                                                <span className="text-gray-500 text-sm mr-2">{emp.dept}</span>
+                                                <span className="font-bold text-gray-800">{emp.name}</span>
+                                            </td>
+                                            {Array.from({length: daysInMonth}, (_, i) => {
+                                                const day = i + 1;
+                                                const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
+                                                const conf = SHIFT_TYPES[shift];
+                                                return (
+                                                    <td key={day} className={`border border-gray-400 p-2 text-center font-bold align-middle ${shift !== 'none' ? conf.color : 'text-gray-300'}`}>
+                                                        {conf.short === '-' ? '' : conf.short}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    );
+                                })}
                                 {/* 圖片匯出用的統計列 (異常也用紅底白字呈現) */}
                                 <tr className="bg-gray-100">
                                     <td className="border border-gray-400 p-2 text-center font-bold text-sm text-gray-700">門市出勤</td>
                                     {Array.from({length: daysInMonth}, (_, i) => {
                                         const day = i + 1;
                                         let workCount = 0;
-                                        EMPLOYEES.filter(emp => emp.dept === '門市').forEach(emp => {
+                                        employees.filter(emp => emp.dept === '門市').forEach(emp => {
                                             const shift = currentSchedule[day]?.[emp.id];
                                             if (shift === 'work' || shift === 'empty_work') workCount++;
                                         });
@@ -924,7 +1095,7 @@
                                     {Array.from({length: daysInMonth}, (_, i) => {
                                         const day = i + 1;
                                         let workCount = 0;
-                                        EMPLOYEES.filter(emp => emp.dept === '內場').forEach(emp => {
+                                        employees.filter(emp => emp.dept === '內場').forEach(emp => {
                                             const shift = currentSchedule[day]?.[emp.id];
                                             if (shift === 'work' || shift === 'empty_work') workCount++;
                                         });
@@ -953,7 +1124,7 @@
         }
 
         // --- 員工排休元件 ---
-        function EmployeeView({ currentUser, setCurrentUser, currentSchedule, daysInMonth, onDayClick, getLeaveData, showToast, globalMaxLeave, setGlobalMaxLeave, currentDaySettings, monthKey, setAllDaySettings, year, month, lastSyncTime, isSyncing }) {
+        function EmployeeView({ employees, currentUser, setCurrentUser, currentSchedule, daysInMonth, onDayClick, getLeaveData, showToast, globalMaxLeave, setGlobalMaxLeave, currentDaySettings, monthKey, setAllDaySettings, year, month, lastSyncTime, isSyncing }) {
             const [selectedDay, setSelectedDay] = useState(null); 
             
             // 管理員設定表單狀態
@@ -964,14 +1135,8 @@
             const [adminActivityNote, setAdminActivityNote] = useState('');
             const [showAdminPanel, setShowAdminPanel] = useState(false);
 
-            useEffect(() => {
-                const interval = setInterval(() => {
-                    setSyncTime(new Date().toLocaleTimeString());
-                }, 15000);
-                return () => clearInterval(interval);
-            }, []);
-
-            const currentEmp = EMPLOYEES.find(e => e.id === currentUser);
+            const currentEmp = employees.find(e => e.id === currentUser) || employees[0];
+            const currentConflictEmp = employees.find(e => e.id === currentEmp?.conflict);
 
             // 儲存特殊日期設定
             const handleSaveDaySetting = () => {
@@ -993,6 +1158,10 @@
                 setIsAdminBanned(false);
                 setIsAdminHoliday(false);
             };
+            
+            const storeEmployees = employees.filter(e => e.dept === '門市');
+            const kitchenEmployees = employees.filter(e => e.dept === '內場');
+            const otherEmployees = employees.filter(e => e.dept !== '門市' && e.dept !== '內場');
 
             return (
                 <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto w-full">
@@ -1006,20 +1175,34 @@
                                 onChange={(e) => setCurrentUser(e.target.value)}
                                 className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                             >
-                                {EMPLOYEES.map(emp => (
-                                    <option key={emp.id} value={emp.id}>
-                                        {emp.dept} - {emp.name}
-                                    </option>
-                                ))}
+                                <optgroup label="門市">
+                                    {storeEmployees.map(emp => (
+                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="內場">
+                                    {kitchenEmployees.map(emp => (
+                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                    ))}
+                                </optgroup>
+                                {otherEmployees.length > 0 && (
+                                    <optgroup label="其他">
+                                        {otherEmployees.map(emp => (
+                                            <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                        ))}
+                                    </optgroup>
+                                )}
                             </select>
                             
-                            <div className="mt-4 p-3 bg-blue-50 rounded text-sm text-blue-800">
-                                <p><strong>目前身分：</strong>{currentEmp.name}</p>
-                                <p><strong>部門：</strong>{currentEmp.dept}</p>
-                                {currentEmp.conflict && (
-                                    <p className="text-red-600 mt-1">⚠️ 需與 <strong>{EMPLOYEES.find(e=>e.id===currentEmp.conflict).name}</strong> 錯開休假</p>
-                                )}
-                            </div>
+                            {currentEmp && (
+                                <div className="mt-4 p-3 bg-blue-50 rounded text-sm text-blue-800">
+                                    <p><strong>目前身分：</strong>{currentEmp.name}</p>
+                                    <p><strong>部門：</strong>{currentEmp.dept}</p>
+                                    {currentEmp.conflict && currentConflictEmp && (
+                                        <p className="text-red-600 mt-1">⚠️ 需與 <strong>{currentConflictEmp.name}</strong> 錯開休假</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* 排休規定與狀態 */}
@@ -1147,9 +1330,9 @@
                                 const activityNote = dSetting.activityNote;
                                 const isRedDay = isWeekend || isHoliday;
                                 
-                                const leaveData = getLeaveData(day, currentEmp.dept);
+                                const leaveData = getLeaveData(day, currentEmp?.dept);
                                 const isFull = leaveData.count >= globalMaxLeave && !['leave_li', 'leave_xiu', 'empty_rest'].includes(status);
-                                const canClick = !isBanned && (!isFull || status !== 'none');
+                                const canClick = !isBanned && (!isFull || status !== 'none') && currentEmp;
                                 
                                 return (
                                     <div 
@@ -1234,8 +1417,6 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
         
-        // 確保 icons 正確渲染
-        setTimeout(() => lucide.createIcons(), 100);
     </script>
 </body>
 </html>
