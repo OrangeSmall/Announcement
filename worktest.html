@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四維店-排班系統 初版</title>
+    <title>餐飲排班系統原型</title>
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -390,14 +390,16 @@
                 ].filter(Boolean); // 過濾掉找不到的人員
 
                 processOrder.forEach(emp => {
-                    let counts = { leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0 };
-                    for (let d = 1; d <= daysInMonth; d++) {
-                        const s = monthData[d]?.[emp.id];
-                        if (counts[s] !== undefined) counts[s]++;
-                    }
+                    const getCount = (t) => {
+                        let c = 0;
+                        for (let d = 1; d <= daysInMonth; d++) {
+                            if (monthData[d]?.[emp.id] === t) c++;
+                        }
+                        return c;
+                    };
 
                     const MAX_EMPTY_POOL = 4;
-                    const targets = { leave_li: 4, leave_xiu: 4 };
+                    const TARGET_TOTAL_LEAVE = 10;
 
                     const placeLeaves = (type, amount) => {
                         let needed = amount;
@@ -473,8 +475,7 @@
                                 else if (potential - 1 >= minReq + 2) score += 1000;
                                 else if (potential - 1 >= minReq + 1) score += 500;
 
-                                // 【新增最低優先級】：避免「休-勤-休」的孤島班表 (若非人力需求禁止休假後上一天班又休假)
-                                // 若排下去會形成孤島，扣除輕微分數 (讓系統在人力許可時自動避開)
+                                // 【最低優先級】：避免「休-勤-休」的孤島班表
                                 if ((lPrev2 && !lPrev1) || (lNext2 && !lNext1)) {
                                     score -= 400;
                                 }
@@ -495,18 +496,18 @@
                         return needed; 
                     };
 
-                    let missingLi = placeLeaves('leave_li', Math.max(0, targets.leave_li - counts.leave_li));
-                    let missingXiu = placeLeaves('leave_xiu', Math.max(0, targets.leave_xiu - counts.leave_xiu));
-                    if (missingLi > 0) newAnomalies.push(`${emp.name} 的 [例假] 無法排滿 (缺 ${missingLi} 天)`);
-                    if (missingXiu > 0) newAnomalies.push(`${emp.name} 的 [休假] 無法排滿 (缺 ${missingXiu} 天)`);
+                    // 1. 先排滿基本 4 例 4 休
+                    let missingLi = placeLeaves('leave_li', Math.max(0, 4 - getCount('leave_li')));
+                    let missingXiu = placeLeaves('leave_xiu', Math.max(0, 4 - getCount('leave_xiu')));
 
-                    // --- 動態分配空班 (空班休 vs 空班勤) ---
-                    let currentEmptyRest = counts.empty_rest;
+                    // 2. 確保至少 1 天空班休
+                    let currentEmptyRest = getCount('empty_rest');
                     if (currentEmptyRest < 1) {
                         let missingER = placeLeaves('empty_rest', 1);
                         if (missingER === 0) currentEmptyRest++;
                     }
 
+                    // 3. 檢查並打斷超過 6 天的長班 (轉為空班休)
                     const checkAnyStreak = () => {
                         let currentStreak = 0;
                         for (let d = 1; d <= daysInMonth; d++) {
@@ -527,7 +528,38 @@
                         else break; 
                     }
 
-                    let emptyWorkTarget = MAX_EMPTY_POOL - currentEmptyRest - counts.empty_work;
+                    // 4. 【新增】：盡可能將總休假天數補齊至 10 天
+                    let currentTotalLeave = getCount('leave_li') + getCount('leave_xiu') + currentEmptyRest;
+                    let extraAttempts = 0;
+                    while (currentTotalLeave < TARGET_TOTAL_LEAVE && extraAttempts < 5) {
+                        extraAttempts++;
+                        // 優先用「休假」來補
+                        if (placeLeaves('leave_xiu', 1) === 0) {
+                            currentTotalLeave++;
+                        } else if (currentEmptyRest < MAX_EMPTY_POOL) {
+                            // 若一般休假塞不進去，嘗試用「空班休」補
+                            if (placeLeaves('empty_rest', 1) === 0) {
+                                currentEmptyRest++;
+                                currentTotalLeave++;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // 記錄異常 (保留基礎配額的警告，以及未達 10 天的警告)
+                    let finalLi = getCount('leave_li');
+                    let finalXiu = getCount('leave_xiu');
+                    if (finalLi < 4) newAnomalies.push(`${emp.name} 的 [例假] 未達基本 4 天 (缺 ${4 - finalLi} 天)`);
+                    if (finalXiu < 4) newAnomalies.push(`${emp.name} 的 [休假] 未達基本 4 天 (僅 ${finalXiu} 天)`);
+                    if (currentTotalLeave < TARGET_TOTAL_LEAVE) {
+                        newAnomalies.push(`${emp.name} 總休假未達 10 天 (僅 ${currentTotalLeave} 天)`);
+                    }
+
+                    // 5. 剩餘的空班額度全部轉為空班勤
+                    let emptyWorkTarget = MAX_EMPTY_POOL - currentEmptyRest - getCount('empty_work');
                     let availableDays = Array.from({length: daysInMonth}, (_,i)=>i+1).filter(d => monthData[d]?.[emp.id] === 'none');
                     availableDays.sort(() => Math.random() - 0.5); 
                     for(let d of availableDays) {
@@ -585,7 +617,7 @@
                     saveToCloud('allSchedules', newState);
                     return newState;
                 });
-                showToast('自動排班運算完成，已套用不孤島原則限制');
+                showToast('自動排班運算完成，休假已盡可能補齊 10 天');
             };
 
             // 匯出 CSV
