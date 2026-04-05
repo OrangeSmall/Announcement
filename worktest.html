@@ -321,8 +321,15 @@
                     const d4 = isDayLeaveGlobal(tempSchedule, year, month, day + 1, currentUser);
                     const d5 = isDayLeaveGlobal(tempSchedule, year, month, day + 2, currentUser);
 
+                    // 檢查連續三天休假
                     if ((d1 && d2 && d3) || (d2 && d3 && d4) || (d3 && d4 && d5)) {
                         alert('排班規定：禁止選擇連續3天休假！');
+                        return;
+                    }
+
+                    // 檢查休假後必須出勤兩天的規定 (不可休-勤-休)
+                    if ((d1 && !d2 && d3) || (d3 && !d4 && d5)) {
+                        alert('排班規定：休假後必須至少出勤兩天才能再次排休！');
                         return;
                     }
                 }
@@ -426,7 +433,12 @@
                                     canPlace = false;
                                 }
 
-                                // 【第一優先】: 每天最少上班人數 (絕對限制)
+                                // 【絕對限制 2】: 休假後一定需要出勤兩天 (避免休-勤-休)
+                                if ((lPrev2 && !lPrev1) || (lNext2 && !lNext1)) {
+                                    canPlace = false;
+                                }
+
+                                // 【絕對限制 3】: 每天最少上班人數
                                 const deptKey = emp.dept === '門市' ? 'store' : 'kitchen';
                                 const minReq = getMinStaff(deptKey, d);
                                 const potential = getPotentialWorkers(d, emp.dept);
@@ -474,11 +486,6 @@
                                 if (potential - 1 >= minReq + 3) score += 2000;
                                 else if (potential - 1 >= minReq + 2) score += 1000;
                                 else if (potential - 1 >= minReq + 1) score += 500;
-
-                                // 【最低優先級】：避免「休-勤-休」的孤島班表
-                                if ((lPrev2 && !lPrev1) || (lNext2 && !lNext1)) {
-                                    score -= 400;
-                                }
 
                                 if (score > bestScore) {
                                     bestScore = score;
@@ -528,7 +535,7 @@
                         else break; 
                     }
 
-                    // 4. 【新增】：盡可能將總休假天數補齊至 10 天
+                    // 4. 盡可能將總休假天數補齊至 10 天
                     let currentTotalLeave = getCount('leave_li') + getCount('leave_xiu') + currentEmptyRest;
                     let extraAttempts = 0;
                     while (currentTotalLeave < TARGET_TOTAL_LEAVE && extraAttempts < 5) {
@@ -617,7 +624,7 @@
                     saveToCloud('allSchedules', newState);
                     return newState;
                 });
-                showToast('自動排班運算完成，休假已盡可能補齊 10 天');
+                showToast('自動排班運算完成，已套用最少出勤兩天限制');
             };
 
             // 匯出 CSV
