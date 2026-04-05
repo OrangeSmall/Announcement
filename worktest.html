@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四維店-排班系統初版</title>
+    <title>四維店-排班系統 初版</title>
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -184,7 +184,7 @@
             
             const displayRows = [];
             if (storeEmployees.length > 0) displayRows.push(...storeEmployees);
-            if (storeEmployees.length > 0 && kitchenEmployees.length > 0) displayRows.push({ isDivider: true, label: '二樓內場' });
+            if (storeEmployees.length > 0 && kitchenEmployees.length > 0) displayRows.push({ isDivider: true, label: '內場區域' });
             if (kitchenEmployees.length > 0) displayRows.push(...kitchenEmployees);
             if ((storeEmployees.length > 0 || kitchenEmployees.length > 0) && otherEmployees.length > 0) displayRows.push({ isDivider: true, label: '其他區域' });
             if (otherEmployees.length > 0) displayRows.push(...otherEmployees);
@@ -442,7 +442,7 @@
 
                                 if (!canPlace) continue;
 
-                                // --- 簡化計分制 (正向加分，移除孤島扣分機制) ---
+                                // --- 計分制 (Soft Constraints) ---
                                 let score = Math.random() * 10; 
 
                                 // 【優先級】：避免超過 6 天連續上班
@@ -472,6 +472,12 @@
                                 if (potential - 1 >= minReq + 3) score += 2000;
                                 else if (potential - 1 >= minReq + 2) score += 1000;
                                 else if (potential - 1 >= minReq + 1) score += 500;
+
+                                // 【新增最低優先級】：避免「休-勤-休」的孤島班表 (若非人力需求禁止休假後上一天班又休假)
+                                // 若排下去會形成孤島，扣除輕微分數 (讓系統在人力許可時自動避開)
+                                if ((lPrev2 && !lPrev1) || (lNext2 && !lNext1)) {
+                                    score -= 400;
+                                }
 
                                 if (score > bestScore) {
                                     bestScore = score;
@@ -579,7 +585,7 @@
                     saveToCloud('allSchedules', newState);
                     return newState;
                 });
-                showToast('自動排班運算完成，已同步至雲端');
+                showToast('自動排班運算完成，已套用不孤島原則限制');
             };
 
             // 匯出 CSV
