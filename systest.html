@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1F 熟食部前台點單系統</title>
+    <style>
+        :root {
+            --primary: #d97706; 
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            height: 100vh;
+            box-sizing: border-box;
+            gap: 15px;
+        }
+        /* 左側：菜單區 */
+        .menu-section {
+            flex: 2;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .tab-btn {
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            background: #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .item-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+        }
+        .item-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            word-break: keep-all;
+        }
+        .qty-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        .qty-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            background: #e5e7eb;
+            cursor: pointer;
+        }
+        .qty-btn.add { background: var(--primary); color: white; }
+        
+        /* 數量輸入框樣式 */
+        .qty-input { 
+            font-size: 18px; 
+            font-weight: bold; 
+            width: 45px; 
+            height: 33px;
+            text-align: center;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+        }
+        /* 隱藏原生數字輸入框的上下箭頭 */
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .qty-input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        .add-item-card {
+            border: 2px dashed #9ca3af;
+            background: #f9fafb;
+            cursor: pointer;
+        }
+        
+        /* 右側：購物車與狀態區 */
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 300px;
+        }
+        .cart-section, .status-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        .cart-section { flex: 3; }
+        .status-section { flex: 2; overflow-y: auto; }
+        h2 { margin: 0 0 15px 0; font-size: 22px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;}
+        
+        .cart-list { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; }
+        .cart-item { display: flex; justify-content: space-between; font-size: 18px; margin-bottom: 10px; padding: 5px 0; border-bottom: 1px solid #f3f4f6;}
+        
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+            resize: none;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .submit-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .submit-btn:active { background: #059669; }
+
+        /* 訂單狀態樣式 */
+        .order-status-card {
+            border-left: 5px solid #d1d5db;
+            background: #f9fafb;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            margin-top: 5px;
+        }
+        .status-waiting { background: #f59e0b; border-left-color: #f59e0b; }
+        .status-cooking { background: #3b82f6; border-left-color: #3b82f6; }
+        .status-done { background: #10b981; border-left-color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <div class="menu-section">
+        <div class="tabs" id="categoryTabs">
+            <!-- 頁籤將由 JS 動態生成 -->
+        </div>
+        <div class="items-grid" id="itemsGrid">
+            <!-- 品項將由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="cart-section">
+            <h2>🛒 本次下單</h2>
+            <div class="cart-list" id="cartList">
+                <div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側選擇品項</div>
+            </div>
+            <textarea id="orderRemarks" placeholder="輸入備註（如：預約12:30取餐、客人等候過久...）"></textarea>
+            <button class="submit-btn" onclick="submitOrder()">送出至 2F 廚房</button>
+        </div>
+
+        <div class="status-section">
+            <h2>📡 訂單狀態追蹤</h2>
+            <div id="statusList">
+                <!-- 模擬收單狀態 -->
+                <div style="color: #9ca3af; text-align: center; margin-top: 20px;">目前無進行中的訂單</div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notifySound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+    <script>
+        const menuData = {
+            "主食": ["雙拼便當(雞+魚)", "雙拼便當(魚+魚)", "純雞腿便當", "純魚便當", "便當(不限品項)", "和風牛肉丼飯", "薑汁豬肉丼飯"],
+            "炸物": ["酥炸白身魚", "酥炸牡蠣", "酥炸牛肉餅", "酥炸竹筴魚", "酥炸蟹味棒", "極厚蝦排", "咖哩可樂餅", "日式炸蝦"],
+            "烤物": ["烤虱目魚肚", "烤鯖魚", "烤鮭魚頭", "烤鮭魚", "茶碗蒸", "烤秋刀魚", "烤一夜干", "焗烤龍蝦", "烘蛋一張"],
+            "壽司": ["特製壽司", "豆皮壽司", "海老壽司", "唐揚雞壽司"],
+            "限定品項": ["(暫無項目，請新增)"]
+        };
+
+        let currentCategory = "主食";
+        let cart = {}; 
+        let orderCount = 0;
+
+        function init() {
+            renderTabs();
+            renderItems();
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById("categoryTabs");
+            tabsContainer.innerHTML = "";
+            for (let category in menuData) {
+                const btn = document.createElement("button");
+                btn.className = `tab-btn ${category === currentCategory ? "active" : ""}`;
+                btn.innerText = category;
+                btn.onclick = () => {
+                    currentCategory = category;
+                    renderTabs();
+                    renderItems();
+                };
+                tabsContainer.appendChild(btn);
+            }
+        }
+
+        function renderItems() {
+            const grid = document.getElementById("itemsGrid");
+            grid.innerHTML = "";
+            
+            menuData[currentCategory].forEach(item => {
+                if(item === "(暫無項目，請新增)") return;
+                const qty = cart[item] || 0;
+                grid.innerHTML += `
+                    <div class="item-card">
+                        <div class="item-name">${item}</div>
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="updateQty('${item}', -1)">-</button>
+                            <!-- 變更：改為可直接輸入的 number 欄位，並加上 onchange 監聽器 -->
+                            <input type="number" class="qty-input" value="${qty}" min="0" onchange="setQty('${item}', this.value)" onclick="this.select()">
+                            <button class="qty-btn add" onclick="updateQty('${item}', 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML += `
+                <div class="item-card add-item-card" onclick="addNewItem()">
+                    <div class="item-name" style="color: #6b7280; margin-top: 15px;">➕<br>新增品項</div>
+                </div>
+            `;
+        }
+
+        // 按鈕增減數量
+        function updateQty(item, change) {
+            if (!cart[item]) cart[item] = 0;
+            cart[item] += change;
+            if (cart[item] <= 0) delete cart[item];
+            renderItems();
+            renderCart();
+        }
+
+        // 直接輸入數字
+        function setQty(item, value) {
+            let num = parseInt(value, 10);
+            if (isNaN(num) || num <= 0) {
+                delete cart[item];
+            } else {
+                cart[item] = num;
+            }
+            renderItems();
+            renderCart();
+        }
+
+        function addNewItem() {
+            const newItem = prompt(`請輸入要在「${currentCategory}」新增的品項名稱：`);
+            if (newItem && newItem.trim() !== "") {
+                menuData[currentCategory].push(newItem.trim());
+                renderItems();
+            }
+        }
+
+        function renderCart() {
+            const cartList = document.getElementById("cartList");
+            cartList.innerHTML = "";
+            const items = Object.keys(cart);
+            
+            if (items.length === 0) {
+                cartList.innerHTML = '<div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側選擇品項</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                cartList.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item}</span>
+                        <span style="font-weight: bold; color: var(--primary);">x ${cart[item]}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function submitOrder() {
+            if (Object.keys(cart).length === 0) {
+                alert("請先選擇品項！");
+                return;
+            }
+            const remarks = document.getElementById("orderRemarks").value;
+            orderCount++;
+            
+            playNotifySound();
+
+            const statusList = document.getElementById("statusList");
+            if(orderCount === 1) statusList.innerHTML = ""; 
+            
+            const timeStr = new Date().toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'});
+            let itemsText = Object.keys(cart).map(k => `${k} x${cart[k]}`).join(', ');
+            
+            const orderHTML = `
+                <div class="order-status-card status-waiting" id="order-${orderCount}">
+                    <div style="font-size: 14px; color: #6b7280;">單號 #${orderCount} · ${timeStr}</div>
+                    <div style="font-weight: bold; margin: 5px 0;">${itemsText}</div>
+                    ${remarks ? `<div style="font-size: 14px; color: #dc2626;">備註：${remarks}</div>` : ''}
+                    <div class="status-badge status-waiting">待 2F 接收</div>
+                </div>
+            `;
+            
+            statusList.insertAdjacentHTML('afterbegin', orderHTML);
+
+            cart = {};
+            document.getElementById("orderRemarks").value = "";
+            renderItems();
+            renderCart();
+
+            simulate2FResponse(orderCount);
+        }
+
+        function playNotifySound() {
+            const sound = document.getElementById("notifySound");
+            sound.currentTime = 0;
+            sound.play();
+            setTimeout(() => { sound.currentTime = 0; sound.play(); }, 300);
+            setTimeout(() => { sound.currentTime = 0; sound.play(); }, 600);
+        }
+
+        function simulate2FResponse(id) {
+            setTimeout(() => {
+                const orderCard = document.getElementById(`order-${id}`);
+                if(orderCard) {
+                    orderCard.className = "order-status-card status-cooking";
+                    orderCard.querySelector('.status-badge').className = "status-badge status-cooking";
+                    orderCard.querySelector('.status-badge').innerText = "👨‍🍳 製作中 (預計 15 分鐘)";
+                    playNotifySound(); 
+                }
+            }, 4000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
