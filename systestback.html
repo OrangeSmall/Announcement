@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2F 熟食部廚房出餐系統</title>
+    <style>
+        :root {
+            --bg-dark: #1f2937; /* 廚房通常適合較深色或高對比的背景，降低刺眼感 */
+            --card-bg: #ffffff;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #111827;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-dark);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        /* 頂部導覽列 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #374151;
+        }
+        .header h1 { margin: 0; font-size: 28px; letter-spacing: 2px;}
+        .clock { font-size: 24px; font-weight: bold; color: #9ca3af; }
+
+        /* 訂單網格 (最多5單，使用適應性網格) */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            flex-grow: 1;
+            align-items: start;
+            overflow-y: auto;
+        }
+
+        /* 單張訂單卡片 */
+        .order-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            border-top: 8px solid var(--warning); /* 預設新訂單為橘黃色 */
+            transition: all 0.3s ease;
+        }
+        .order-card.status-cooking { border-top-color: var(--primary); }
+
+        /* 卡片標頭 */
+        .card-header {
+            padding: 15px;
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-id { font-size: 28px; font-weight: 900; color: var(--text-main); }
+        .order-time { font-size: 18px; color: #6b7280; font-weight: bold; }
+        
+        /* 整單備註區 */
+        .order-main-remark {
+            padding: 10px 15px;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #fca5a5;
+            display: none; /* 預設隱藏，有備註時才顯示 */
+        }
+
+        /* 品項列表 */
+        .items-list {
+            padding: 15px;
+            flex-grow: 1;
+            font-size: 22px;
+        }
+        .item-row {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 0;
+            border-bottom: 1px dashed #d1d5db;
+            cursor: pointer; /* 讓廚師可以點擊劃線 */
+            user-select: none;
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-row.done {
+            opacity: 0.4;
+            text-decoration: line-through;
+        }
+        .item-main {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .item-qty { color: var(--primary); font-size: 26px; }
+        .item-remark {
+            font-size: 16px;
+            color: var(--danger);
+            margin-top: 5px;
+        }
+
+        /* 底部操作區 */
+        .card-actions {
+            padding: 15px;
+            background: #f3f4f6;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* 狀態1：新進訂單 (選擇時間) */
+        .action-eta {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .action-title { font-size: 16px; font-weight: bold; color: #4b5563; margin-bottom: 5px; text-align: center;}
+        .eta-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .btn {
+            padding: 12px 5px;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-eta { background: #e5e7eb; color: #374151; }
+        .btn-eta:active { background: #d1d5db; }
+        .btn-danger { background: var(--danger); color: white; grid-column: span 3; padding: 15px; font-size: 20px;}
+        
+        /* 狀態2：製作中 (顯示出餐按鈕) */
+        .action-cooking {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .cooking-status {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .btn-success { background: var(--success); color: white; padding: 20px; font-size: 24px; width: 100%; }
+
+        /* 右下角模擬產生新單按鈕 */
+        .sim-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4b5563;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>👨‍🍳 2F 廚房出餐系統</h1>
+        <div class="clock" id="clock">00:00:00</div>
+    </div>
+
+    <div class="orders-grid" id="ordersGrid">
+        <!-- 訂單卡片將由 JS 渲染 -->
+    </div>
+
+    <!-- 模擬測試用按鈕 -->
+    <button class="sim-btn" onclick="simulateNewOrder()">🔔 模擬 1F 送來新訂單</button>
+
+    <!-- 2F 專屬提示音 (門鈴聲) -->
+    <audio id="kitchenSound" src="https://actions.google.com/sounds/v1/door_bells/doorbell.ogg" preload="auto"></audio>
+    <!-- 完成提示音 (短鈴聲) -->
+    <audio id="doneSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg" preload="auto"></audio>
+
+    <script>
+        // 模擬的訂單資料庫
+        let orders = [
+            {
+                id: 101,
+                time: "12:05",
+                status: "waiting", // waiting 或 cooking
+                eta: null,
+                mainRemark: "預約 12:30 取餐",
+                items: [
+                    { name: "和風牛肉丼飯", qty: 2, remark: "一個不要洋蔥", done: false },
+                    { name: "烤鯖魚", qty: 1, remark: "", done: false },
+                    { name: "酥炸牡蠣", qty: 1, remark: "", done: false }
+                ]
+            },
+            {
+                id: 102,
+                time: "12:08",
+                status: "waiting",
+                eta: null,
+                mainRemark: "",
+                items: [
+                    { name: "雙拼便當(雞+魚)", qty: 5, remark: "", done: false },
+                    { name: "茶碗蒸", qty: 5, remark: "", done: false }
+                ]
+            }
+        ];
+
+        let nextOrderId = 103;
+
+        // 初始化
+        function init() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            renderOrders();
+        }
+
+        // 時鐘
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('zh-TW', { hour12: false });
+        }
+
+        // 渲染所有訂單卡片
+        function renderOrders() {
+            const grid = document.getElementById('ordersGrid');
+            grid.innerHTML = '';
+
+            if(orders.length === 0) {
+                grid.innerHTML = '<div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">目前無待處理訂單 😊</div>';
+                return;
+            }
+
+            orders.forEach((order, index) => {
+                // 產生品項 HTML
+                let itemsHTML = order.items.map((item, itemIndex) => `
+                    <div class="item-row ${item.done ? 'done' : ''}" onclick="toggleItemDone(${index}, ${itemIndex})">
+                        <div class="item-main">
+                            <span>${item.name}</span>
+                            <span class="item-qty">x${item.qty}</span>
+                        </div>
+                        ${item.remark ? `<div class="item-remark">備註：${item.remark}</div>` : ''}
+                    </div>
+                `).join('');
+
+                // 產生卡片 HTML
+                const isWaiting = order.status === 'waiting';
+                const cardHTML = `
+                    <div class="order-card ${!isWaiting ? 'status-cooking' : ''}">
+                        <div class="card-header">
+                            <div class="order-id">#${order.id}</div>
+                            <div class="order-time">📥 ${order.time}</div>
+                        </div>
+                        
+                        ${order.mainRemark ? `<div class="order-main-remark" style="display:block;">⚠️ ${order.mainRemark}</div>` : ''}
+                        
+                        <div class="items-list">
+                            ${itemsHTML}
+                        </div>
+
+                        <div class="card-actions">
+                            <!-- 狀態1：等待接收 -->
+                            <div class="action-eta" style="display: ${isWaiting ? 'flex' : 'none'};">
+                                <div class="action-title">預估製作時間並回傳 1F</div>
+                                <div class="eta-buttons">
+                                    <button class="btn btn-eta" onclick="acceptOrder(${index}, '5 分鐘')">5 分</button>
+                                    <button class="btn btn-eta" onclick="acceptOrder(${index}, '10 分鐘')">10 分</button>
+                                    <button class="btn btn-eta" onclick="acceptOrder(${index}, '15 分鐘')">15 分</button>
+                                    <button class="btn btn-eta" onclick="acceptOrder(${index}, '20 分鐘')">20 分</button>
+                                    <button class="btn btn-eta" onclick="acceptOrder(${index}, '30 分鐘')">30 分</button>
+                                    <button class="btn btn-eta" onclick="acceptOrder(${index}, '40 分以上')">40+ 分</button>
+                                    <button class="btn btn-danger" onclick="acceptOrder(${index}, '⚠️ 內場忙碌需久候')">⚠️ 內場忙碌，需久候</button>
+                                </div>
+                            </div>
+
+                            <!-- 狀態2：製作中 -->
+                            <div class="action-cooking" style="display: ${!isWaiting ? 'flex' : 'none'};">
+                                <div class="cooking-status">👨‍🍳 製作中 (回傳：${order.eta})</div>
+                                <button class="btn btn-success" onclick="finishOrder(${index})">✅ 完成出餐</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        // 點擊品項劃線 (單品完成)
+        function toggleItemDone(orderIndex, itemIndex) {
+            orders[orderIndex].items[itemIndex].done = !orders[orderIndex].items[itemIndex].done;
+            renderOrders();
+        }
+
+        // 接收訂單並回傳時間
+        function acceptOrder(index, timeStr) {
+            orders[index].status = 'cooking';
+            orders[index].eta = timeStr;
+            renderOrders();
+            // 這裡未來將加入雲端連動程式碼，將 timeStr 寫入 Google Sheets
+        }
+
+        // 完成出餐 (從畫面移除)
+        function finishOrder(index) {
+            const sound = document.getElementById("doneSound");
+            sound.currentTime = 0;
+            sound.play();
+
+            // 移除該訂單
+            orders.splice(index, 1);
+            renderOrders();
+            // 這裡未來將加入雲端連動程式碼，通知 1F 可取餐
+        }
+
+        // 模擬 1F 送來新單
+        function simulateNewOrder() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute:'2-digit', hour12: false });
+            
+            orders.push({
+                id: nextOrderId++,
+                time: timeStr,
+                status: "waiting",
+                eta: null,
+                mainRemark: "客人趕時間",
+                items: [
+                    { name: "酥炸牛肉餅", qty: 2, remark: "", done: false },
+                    { name: "烤鮭魚頭", qty: 1, remark: "要烤酥一點", done: false }
+                ]
+            });
+            
+            // 播放門鈴聲
+            const sound = document.getElementById("kitchenSound");
+            sound.currentTime = 0;
+            sound.play();
+
+            renderOrders();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
