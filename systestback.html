@@ -5,301 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2F 熟食部廚房出餐系統</title>
     <style>
-        :root {
-            --bg-dark: #1f2937;
-            --card-bg: #ffffff;
-            --primary: #3b82f6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --text-main: #111827;
-        }
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-dark);
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-        
-        /* 頂部導覽列 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #374151;
-        }
+        :root { --bg-dark: #1f2937; --card-bg: #ffffff; --primary: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --text-main: #111827; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-dark); margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #374151; }
         .header-left { display: flex; align-items: center; gap: 20px; }
         .header h1 { margin: 0; font-size: 28px; letter-spacing: 2px;}
         .clock { font-size: 24px; font-weight: bold; color: #9ca3af; }
-        .btn-inventory {
-            background: #4b5563;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .btn-inventory { background: #4b5563; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
         .btn-inventory:active { background: #374151; }
-
-        /* 訂單網格 */
-        .orders-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-            flex-grow: 1;
-            align-items: start;
-            overflow-y: auto;
-        }
-
-        /* 單張訂單卡片 */
-        .order-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            border-top: 8px solid var(--warning); 
-            transition: all 0.3s ease;
-        }
+        
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; flex-grow: 1; align-items: start; overflow-y: auto; }
+        .order-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; border-top: 8px solid var(--warning); transition: all 0.3s ease; }
         .order-card.status-cooking { border-top-color: var(--primary); }
-
-        .card-header {
-            padding: 15px;
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .card-header { padding: 15px; background: #f9fafb; border-bottom: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
         .order-id { font-size: 28px; font-weight: 900; color: var(--text-main); }
         .order-time { font-size: 18px; color: #6b7280; font-weight: bold; }
+        .order-main-remark { padding: 10px 15px; background: #fee2e2; color: #b91c1c; font-size: 16px; font-weight: bold; border-bottom: 1px solid #fca5a5; }
         
-        .order-main-remark {
-            padding: 10px 15px;
-            background: #fee2e2;
-            color: #b91c1c;
-            font-size: 16px;
-            font-weight: bold;
-            border-bottom: 1px solid #fca5a5;
-        }
-
-        .items-list {
-            padding: 15px;
-            flex-grow: 1;
-            font-size: 22px;
-        }
-        .item-row {
-            display: flex;
-            flex-direction: column;
-            padding: 12px 0;
-            border-bottom: 1px dashed #d1d5db;
-            cursor: pointer; 
-            user-select: none;
-        }
+        .items-list { padding: 15px; flex-grow: 1; font-size: 22px; }
+        .item-row { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px dashed #d1d5db; cursor: pointer; user-select: none; }
         .item-row:last-child { border-bottom: none; }
-        .item-row.done {
-            opacity: 0.4;
-            text-decoration: line-through;
-        }
-        .item-main {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-        }
+        .item-row.done { opacity: 0.4; text-decoration: line-through; }
+        .item-main { display: flex; justify-content: space-between; font-weight: bold; }
         .item-qty { color: var(--primary); font-size: 26px; }
         .item-remark { font-size: 16px; color: var(--danger); margin-top: 5px; }
 
-        .card-actions {
-            padding: 15px;
-            background: #f3f4f6;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        /* 狀態1：新進訂單 */
-        .action-eta {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+        .card-actions { padding: 15px; background: #f3f4f6; border-top: 1px solid #e5e7eb; }
+        .action-eta { display: flex; flex-direction: column; gap: 10px; }
         .action-title { font-size: 16px; font-weight: bold; color: #4b5563; margin-bottom: 5px; text-align: center;}
-        .eta-buttons {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
-        .btn {
-            padding: 12px 5px;
-            border: none;
-            border-radius: 6px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-        }
+        .eta-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .btn { padding: 12px 5px; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; text-align: center; }
         .btn-eta { background: #e5e7eb; color: #374151; }
         .btn-eta:active { background: #d1d5db; }
         .btn-danger { background: var(--danger); color: white; grid-column: span 5; padding: 15px; font-size: 20px;}
+        .action-cooking { display: none; flex-direction: column; gap: 10px; }
+        .cooking-status { text-align: center; font-size: 20px; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
         
-        /* 狀態2：製作中 */
-        .action-cooking {
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .cooking-status {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 5px;
-        }
-        
-        /* 倒數計時條 */
-        .progress-container {
-            width: 100%;
-            height: 12px;
-            background-color: #d1d5db;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 5px;
-        }
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: var(--success);
-            transition: width 1s linear, background-color 0.5s ease;
-        }
-        .timer-text {
-            text-align: right;
-            font-size: 14px;
-            color: #4b5563;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
+        .progress-container { width: 100%; height: 12px; background-color: #d1d5db; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
+        .progress-bar { height: 100%; width: 0%; background-color: var(--danger); transition: width 1s linear, background-color 0.5s ease; }
+        .timer-text { text-align: right; font-size: 14px; color: #4b5563; font-weight: bold; margin-bottom: 10px; }
         .btn-success { background: var(--success); color: white; padding: 20px; font-size: 24px; width: 100%; }
 
-        .sim-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #4b5563;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 50px;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        /* 庫存管理彈出視窗 */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #f3f4f6;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; padding: 20px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 15px; }
         .modal-header h2 { margin: 0; font-size: 24px; color: var(--text-main); }
         .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #6b7280; }
-        .inventory-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding-right: 10px;
-        }
+        .inventory-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-right: 10px; }
         .inv-category h3 { margin: 0 0 10px 0; color: #374151; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 10px;}
-        .inv-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-        .inv-item {
-            position: relative;
-            padding: 15px 10px;
-            border-radius: 8px;
-            border: 2px solid #e5e7eb;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            background: #f9fafb;
-            color: #374151;
-            transition: all 0.2s;
-        }
-        .inv-item.out-of-stock {
-            background: #fee2e2;
-            border-color: #ef4444;
-            color: #b91c1c;
-        }
-        .delete-item-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .add-inv-item {
-            border: 2px dashed #9ca3af;
-            background: #f9fafb;
-            color: #6b7280;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            border-radius: 8px;
-            padding: 12px 10px;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .add-inv-item:hover { background: #e5e7eb; }
+        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .inv-item { position: relative; padding: 15px 10px; border-radius: 8px; border: 2px solid #e5e7eb; text-align: center; font-size: 16px; font-weight: bold; cursor: pointer; background: #f9fafb; color: #374151; transition: all 0.2s; }
+        .inv-item.out-of-stock { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .delete-item-btn { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .add-inv-item { border: 2px dashed #9ca3af; background: #f9fafb; color: #6b7280; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 8px; padding: 12px 10px; font-weight: bold; font-size: 16px; }
+        
+        .sync-indicator { color: #10b981; font-size: 14px; position: absolute; right: 15px; top: 15px; font-weight: bold;}
     </style>
 </head>
 <body>
-
     <div class="header">
         <div class="header-left">
             <h1>👨‍🍳 2F 廚房出餐系統</h1>
@@ -307,9 +70,10 @@
         </div>
         <div class="clock" id="clock">00:00:00</div>
     </div>
+    <div class="sync-indicator" id="syncStatus">● 雲端連線中</div>
 
     <div class="orders-grid" id="ordersGrid">
-        <!-- 訂單卡片將由 JS 渲染 -->
+        <div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">載入雲端資料中... ⏳</div>
     </div>
 
     <!-- 庫存設定 Modal -->
@@ -320,59 +84,41 @@
                 <button class="close-modal" onclick="closeInventoryModal()">✖</button>
             </div>
             <div style="margin-bottom: 15px; color: #6b7280; font-size: 16px;">
-                💡 點擊品項可切換【正常】與【缺貨】狀態；點擊右上角「✖」可刪除品項；點擊「➕」可新增品項。<br>
-                <span style="color: var(--danger); font-weight: bold;">(所有變動將同步更新至 1F 點單系統)</span>
+                💡 點擊品項可切換【正常】與【缺貨】狀態；點擊「✖」可刪除；點擊「➕」可新增。<br>
+                <span style="color: var(--danger); font-weight: bold;">(所有變動將立刻上傳雲端並同步至 1F 點單系統)</span>
             </div>
-            <div class="inventory-list" id="inventoryList">
-                <!-- 由 JS 渲染 -->
-            </div>
+            <div class="inventory-list" id="inventoryList"></div>
         </div>
     </div>
-
-    <!-- 模擬測試用按鈕 -->
-    <button class="sim-btn" onclick="simulateNewOrder()">🔔 模擬 1F 送來新訂單</button>
 
     <audio id="kitchenSound" src="https://actions.google.com/sounds/v1/door_bells/doorbell.ogg" preload="auto"></audio>
     <audio id="doneSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg" preload="auto"></audio>
 
     <script>
-        // 模擬菜單與庫存狀態 (未來與 Google Sheets 連動)
-        let menuData = {
+        // --- 填入您的 Google Apps Script Web App URL ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzvmu2NXvJ6hiD23fgCFfuHD5vpvkuLxPP6Iiq67MBn24GG-uorUjK7OZPm9Zb0b8bP/exec';
+
+        // 內建的基本款菜單防護網
+        const defaultMenuData = {
             "主食": ["雙拼便當(雞+魚)", "雙拼便當(魚+魚)", "純雞腿便當", "純魚便當", "便當(不限品項)", "和風牛肉丼飯", "薑汁豬肉丼飯"],
             "炸物": ["酥炸白身魚", "酥炸牡蠣", "酥炸牛肉餅", "酥炸竹筴魚", "酥炸蟹味棒", "極厚蝦排", "咖哩可樂餅", "日式炸蝦"],
             "烤物": ["烤虱目魚肚", "烤鯖魚", "烤鮭魚頭", "烤鮭魚", "茶碗蒸", "烤秋刀魚", "烤一夜干", "焗烤龍蝦", "烘蛋一張"],
             "壽司": ["特製壽司", "豆皮壽司", "海老壽司", "唐揚雞壽司"],
             "限定品項": []
         };
-        let outOfStockItems = new Set(); // 儲存缺貨品項
 
-        // 模擬的訂單資料庫
-        let orders = [
-            {
-                id: 101, time: "12:05", status: "waiting", etaStr: null, targetTime: null, totalDuration: null,
-                mainRemark: "預約 12:30 取餐",
-                items: [
-                    { name: "和風牛肉丼飯", qty: 2, remark: "一個不要洋蔥", done: false },
-                    { name: "烤鯖魚", qty: 1, remark: "", done: false }
-                ]
-            },
-            {
-                id: 102, time: "12:08", status: "waiting", etaStr: null, targetTime: null, totalDuration: null,
-                mainRemark: "",
-                items: [
-                    { name: "雙拼便當(雞+魚)", qty: 5, remark: "", done: false }
-                ]
-            }
-        ];
+        let menuData = JSON.parse(JSON.stringify(defaultMenuData));
+        let outOfStockItems = new Set();
+        let orders = [];
 
-        let nextOrderId = 103;
-
-        function init() {
+        async function init() {
             updateClock();
             setInterval(updateClock, 1000);
-            setInterval(updateTimers, 1000); // 每秒更新進度條
-            renderOrders();
-            renderInventoryModal();
+            setInterval(updateTimers, 1000); 
+            
+            await fetchSyncData();
+            // 每 5 秒自動向雲端抓取一次最新資料
+            setInterval(fetchSyncData, 5000);
         }
 
         function updateClock() {
@@ -380,22 +126,92 @@
             document.getElementById('clock').innerText = now.toLocaleTimeString('zh-TW', { hour12: false });
         }
 
+        // 呼叫雲端 API 抓取最新狀態
+        async function fetchSyncData() {
+            try {
+                const res = await fetch(API_URL + '?action=getSyncData');
+                const json = await res.json();
+                
+                if (json.status === 'success') {
+                    const serverMenu = json.data.menu.list;
+                    const serverOOS = json.data.menu.outOfStock;
+                    
+                    // 關鍵防護：如果雲端資料庫不是空的，才用雲端覆蓋本地；如果是空的，就保持本地的基本款
+                    if (Object.keys(serverMenu).length > 0) {
+                        if (!serverMenu["限定品項"]) serverMenu["限定品項"] = [];
+                        menuData = serverMenu;
+                        outOfStockItems = new Set(serverOOS);
+                    }
+                    
+                    // 為了不蓋掉 2F 廚師「已經劃掉(done)」的品項狀態，做一次狀態合併
+                    const serverOrders = json.data.orders;
+                    let hasNewOrder = false;
+
+                    serverOrders.forEach(so => {
+                        const localOrder = orders.find(o => o.id == so.id);
+                        if (localOrder) {
+                            // 保留劃單狀態
+                            so.items.forEach((item, i) => {
+                                item.done = localOrder.items[i] ? localOrder.items[i].done : false;
+                            });
+                        } else {
+                            hasNewOrder = true;
+                        }
+                    });
+
+                    // 如果訂單內容有變動，重新渲染
+                    if (JSON.stringify(orders) !== JSON.stringify(serverOrders)) {
+                        orders = serverOrders;
+                        renderOrders();
+                        if (hasNewOrder) {
+                            const sound = document.getElementById("kitchenSound");
+                            sound.currentTime = 0; sound.play();
+                        }
+                    }
+
+                    // 如果 Modal 開著，順便刷新庫存狀態
+                    if(document.getElementById('inventoryModal').style.display === 'flex') renderInventoryModal();
+
+                    // 更新連線狀態燈號
+                    const syncEl = document.getElementById('syncStatus');
+                    syncEl.style.color = '#10b981';
+                    syncEl.innerText = `● 同步成功 ${new Date().toLocaleTimeString('zh-TW', {hour12:false})}`;
+                }
+            } catch (error) {
+                console.error("同步失敗", error);
+                const syncEl = document.getElementById('syncStatus');
+                syncEl.style.color = '#ef4444';
+                syncEl.innerText = "● 雲端連線中斷";
+            }
+        }
+
+        // POST 送出 API 封裝
+        async function apiPost(payload) {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                fetchSyncData();
+            } catch(e) {
+                console.error("API POST Error:", e);
+                alert("雲端連線失敗，請檢查網路狀態！");
+            }
+        }
+
         function renderOrders() {
             const grid = document.getElementById('ordersGrid');
             grid.innerHTML = '';
 
             if(orders.length === 0) {
-                grid.innerHTML = '<div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">目前無待處理訂單 😊</div>';
+                grid.innerHTML = '<div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">雲端目前無待處理訂單 😊</div>';
                 return;
             }
 
             orders.forEach((order, index) => {
                 let itemsHTML = order.items.map((item, itemIndex) => `
                     <div class="item-row ${item.done ? 'done' : ''}" onclick="toggleItemDone(${index}, ${itemIndex})">
-                        <div class="item-main">
-                            <span>${item.name}</span>
-                            <span class="item-qty">x${item.qty}</span>
-                        </div>
+                        <div class="item-main"><span>${item.name}</span><span class="item-qty">x${item.qty}</span></div>
                         ${item.remark ? `<div class="item-remark">備註：${item.remark}</div>` : ''}
                     </div>
                 `).join('');
@@ -403,20 +219,15 @@
                 const isWaiting = order.status === 'waiting';
                 const isOutOfStock = order.etaStr === '缺貨';
                 
-                // 動態產生時間回報與進度條區塊
                 let cookingAreaHTML = '';
                 if (!isWaiting) {
                     if (isOutOfStock) {
-                        cookingAreaHTML = `
-                            <div class="cooking-status" style="color: var(--danger);">❌ 此單已標記：有品項無庫存</div>
-                        `;
+                        cookingAreaHTML = `<div class="cooking-status" style="color: var(--danger);">❌ 此單已標記：有品項無庫存</div>`;
                     } else {
                         cookingAreaHTML = `
                             <div class="cooking-status">👨‍🍳 製作中 (回傳：${order.etaStr}分)</div>
                             ${order.targetTime ? `
-                                <div class="progress-container">
-                                    <div class="progress-bar" id="progress-${order.id}"></div>
-                                </div>
+                                <div class="progress-container"><div class="progress-bar" id="progress-${order.id}"></div></div>
                                 <div class="timer-text" id="timer-text-${order.id}">計算中...</div>
                             ` : ''}
                         `;
@@ -425,19 +236,10 @@
 
                 const cardHTML = `
                     <div class="order-card ${!isWaiting ? 'status-cooking' : ''}">
-                        <div class="card-header">
-                            <div class="order-id">#${order.id}</div>
-                            <div class="order-time">📥 ${order.time}</div>
-                        </div>
-                        
+                        <div class="card-header"><div class="order-id">#${order.id}</div><div class="order-time">📥 ${order.time}</div></div>
                         ${order.mainRemark ? `<div class="order-main-remark" style="display:block;">⚠️ ${order.mainRemark}</div>` : ''}
-                        
-                        <div class="items-list">
-                            ${itemsHTML}
-                        </div>
-
+                        <div class="items-list">${itemsHTML}</div>
                         <div class="card-actions">
-                            <!-- 狀態1：等待接收 -->
                             <div class="action-eta" style="display: ${isWaiting ? 'flex' : 'none'};">
                                 <div class="action-title">預估製作時間並回傳 1F</div>
                                 <div class="eta-buttons">
@@ -449,8 +251,6 @@
                                     <button class="btn btn-danger" onclick="acceptOrder(${index}, '缺貨')">❌ 此單有品項無庫存</button>
                                 </div>
                             </div>
-
-                            <!-- 狀態2：製作中 -->
                             <div class="action-cooking" style="display: ${!isWaiting ? 'flex' : 'none'};">
                                 ${cookingAreaHTML}
                                 <button class="btn btn-success" onclick="finishOrder(${index})">✅ 完成處理出餐</button>
@@ -460,10 +260,10 @@
                 `;
                 grid.innerHTML += cardHTML;
             });
-            updateTimers(); // 渲染完立刻更新一次進度條
+            updateTimers(); 
         }
 
-        // 倒數計時條更新邏輯
+        // 倒數計時條更新邏輯 (從0增長, 紅->黃->綠)
         function updateTimers() {
             const now = Date.now();
             orders.forEach(order => {
@@ -478,144 +278,101 @@
                             text.innerText = '✅ 已達預估時間 (可出餐)';
                             text.style.color = 'var(--success)';
                         } else {
-                            // 計算已進行時間的百分比 (初始0% -> 增長至100%)
                             const elapsed = order.totalDuration - remaining;
                             const percent = Math.min(100, Math.max(0, (elapsed / order.totalDuration) * 100));
                             bar.style.width = percent + '%';
-                            
                             const minsLeft = Math.ceil(remaining / 60000);
                             text.innerText = `剩餘約 ${minsLeft} 分鐘`;
                             
-                            // 顏色變化：對應已進行時間比例 (紅 -> 黃 -> 綠)
-                            if (percent <= 35) {
-                                bar.style.backgroundColor = 'var(--danger)';  // 0% ~ 35% 顯示紅色
-                            } else if (percent <= 70) {
-                                bar.style.backgroundColor = 'var(--warning)'; // 36% ~ 70% 顯示黃色
-                            } else {
-                                bar.style.backgroundColor = 'var(--success)'; // 71% ~ 100% 顯示綠色
-                            }
+                            if (percent <= 35) bar.style.backgroundColor = 'var(--danger)'; 
+                            else if (percent <= 70) bar.style.backgroundColor = 'var(--warning)';
+                            else bar.style.backgroundColor = 'var(--success)'; 
                         }
                     }
                 }
             });
         }
 
+        // 點擊品項劃線 (純本地暫存操作)
         function toggleItemDone(orderIndex, itemIndex) {
             orders[orderIndex].items[itemIndex].done = !orders[orderIndex].items[itemIndex].done;
             renderOrders();
         }
 
-        // 接收訂單，設定時間與進度條
+        // 2F 回傳時間 (上傳雲端)
         function acceptOrder(index, valueStr) {
-            orders[index].status = 'cooking';
-            orders[index].etaStr = valueStr;
-            
+            let totalDur = null; let targetT = null;
             if (valueStr !== '缺貨') {
-                // 解析分鐘數 (處理 "30+" 為 30)
                 let mins = parseInt(valueStr.replace('+', ''));
                 if (!isNaN(mins)) {
-                    orders[index].totalDuration = mins * 60000;
-                    orders[index].targetTime = Date.now() + orders[index].totalDuration;
+                    totalDur = mins * 60000;
+                    targetT = Date.now() + totalDur;
                 }
-            } else {
-                orders[index].targetTime = null;
             }
+            apiPost({
+                action: 'acceptOrder',
+                orderId: orders[index].id,
+                etaStr: valueStr,
+                targetTime: targetT,
+                totalDuration: totalDur
+            });
+            // 讓按鈕先消失提升UX
+            orders[index].status = 'cooking';
             renderOrders();
         }
 
+        // 2F 完成出餐 (上傳雲端歸檔)
         function finishOrder(index) {
             const sound = document.getElementById("doneSound");
-            sound.currentTime = 0;
-            sound.play();
+            sound.currentTime = 0; sound.play();
+            
+            apiPost({ action: 'finishOrder', orderId: orders[index].id });
+            // 本地先移除提升UX
             orders.splice(index, 1);
             renderOrders();
         }
 
-        function simulateNewOrder() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute:'2-digit', hour12: false });
-            orders.push({
-                id: nextOrderId++, time: timeStr, status: "waiting", etaStr: null, targetTime: null, totalDuration: null,
-                mainRemark: "客人趕時間",
-                items: [
-                    { name: "酥炸牛肉餅", qty: 2, remark: "", done: false },
-                    { name: "烤鮭魚頭", qty: 1, remark: "要烤酥一點", done: false }
-                ]
-            });
-            const sound = document.getElementById("kitchenSound");
-            sound.currentTime = 0;
-            sound.play();
-            renderOrders();
-        }
-
-        /* ----- 庫存管理與菜單編輯相關功能 ----- */
-        function openInventoryModal() {
-            document.getElementById('inventoryModal').style.display = 'flex';
-        }
-
-        function closeInventoryModal() {
-            document.getElementById('inventoryModal').style.display = 'none';
-        }
-
+        /* ----- 庫存管理與菜單編輯 (連動雲端) ----- */
+        function openInventoryModal() { document.getElementById('inventoryModal').style.display = 'flex'; renderInventoryModal(); }
+        function closeInventoryModal() { document.getElementById('inventoryModal').style.display = 'none'; }
+        
         function renderInventoryModal() {
             const container = document.getElementById('inventoryList');
             container.innerHTML = '';
-            
             for (let category in menuData) {
                 let categoryHTML = `<div class="inv-category"><h3>${category}</h3><div class="inv-grid">`;
                 menuData[category].forEach(item => {
                     const isOut = outOfStockItems.has(item);
                     categoryHTML += `
-                        <div class="inv-item ${isOut ? 'out-of-stock' : ''}" onclick="toggleStock('${item}')">
+                        <div class="inv-item ${isOut ? 'out-of-stock' : ''}" onclick="toggleStock('${item}', ${isOut})">
                             <button class="delete-item-btn" onclick="deleteMenuItem('${category}', '${item}', event)">✖</button>
-                            ${item}<br>
-                            <span style="font-size:12px;">${isOut ? '❌ 缺貨中' : '✅ 正常供應'}</span>
+                            ${item}<br><span style="font-size:12px;">${isOut ? '❌ 缺貨中' : '✅ 正常供應'}</span>
                         </div>
                     `;
                 });
-                // 新增品項按鈕
-                categoryHTML += `
-                    <div class="add-inv-item" onclick="addMenuItem('${category}')">
-                        ➕ 新增品項
-                    </div>
-                </div></div>`;
+                categoryHTML += `<div class="add-inv-item" onclick="addMenuItem('${category}')">➕ 新增品項</div></div></div>`;
                 container.innerHTML += categoryHTML;
             }
         }
 
-        function toggleStock(itemName) {
-            if (outOfStockItems.has(itemName)) {
-                outOfStockItems.delete(itemName);
-            } else {
-                outOfStockItems.add(itemName);
-            }
-            renderInventoryModal();
-            // 未來加入雲端同步： updateSheet_ToggleStock(itemName, status)
+        function toggleStock(itemName, currentlyOut) {
+            // 切換狀態並上傳雲端
+            apiPost({ action: 'updateStock', itemName: itemName, isOutOfStock: !currentlyOut });
         }
 
         function addMenuItem(category) {
             const newItem = prompt(`請輸入要在「${category}」新增的品項名稱：`);
             if (newItem && newItem.trim() !== "") {
-                const itemTrimmed = newItem.trim();
-                if (!menuData[category].includes(itemTrimmed)) {
-                    menuData[category].push(itemTrimmed);
-                    renderInventoryModal();
-                    // 未來加入雲端同步： updateSheet_AddItem(category, itemTrimmed)
-                } else {
-                    alert("⚠️ 此品項已經存在了！");
-                }
+                if (!menuData[category].includes(newItem.trim())) {
+                    apiPost({ action: 'editMenu', category: category, itemName: newItem.trim(), type: 'add' });
+                } else { alert("⚠️ 此品項已經存在了！"); }
             }
         }
 
         function deleteMenuItem(category, itemName, event) {
-            event.stopPropagation(); // 阻止觸發庫存切換
-            if (confirm(`確定要刪除「${itemName}」嗎？這將同步移除前台的該品項。`)) {
-                menuData[category] = menuData[category].filter(item => item !== itemName);
-                if (outOfStockItems.has(itemName)) {
-                    outOfStockItems.delete(itemName);
-                }
-                renderInventoryModal();
-                // 未來加入雲端同步： updateSheet_DeleteItem(category, itemName)
+            event.stopPropagation();
+            if (confirm(`確定要刪除「${itemName}」嗎？這將同步移除 1F 的該品項。`)) {
+                apiPost({ action: 'editMenu', category: category, itemName: itemName, type: 'delete' });
             }
         }
 
