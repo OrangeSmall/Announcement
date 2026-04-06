@@ -141,11 +141,37 @@
         h2 { margin: 0 0 15px 0; font-size: 22px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;}
         
         .cart-list { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; }
-        .cart-item { display: flex; justify-content: space-between; font-size: 18px; margin-bottom: 10px; padding: 5px 0; border-bottom: 1px solid #f3f4f6;}
+        
+        /* 購物車品項與單品備註樣式 */
+        .cart-item-container {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .cart-item { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 18px; 
+            margin-bottom: 5px; 
+        }
+        .item-remark-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px dashed #9ca3af;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #f9fafb;
+        }
+        .item-remark-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+        }
         
         textarea {
             width: 100%;
-            height: 80px;
+            height: 60px;
             padding: 10px;
             border-radius: 8px;
             border: 1px solid #d1d5db;
@@ -206,7 +232,7 @@
             <div class="cart-list" id="cartList">
                 <div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側選擇品項</div>
             </div>
-            <textarea id="orderRemarks" placeholder="輸入備註（如：預約12:30取餐、客人等候過久...）"></textarea>
+            <textarea id="orderRemarks" placeholder="整單備註（如：預約12:30取餐）"></textarea>
             <button class="submit-btn" onclick="submitOrder()">送出至 2F 廚房</button>
         </div>
 
@@ -231,6 +257,7 @@
         };
 
         let currentCategory = "主食";
+        // cart 資料結構改為 { 品項名: { qty: 數量, remark: '單品備註' } }
         let cart = {}; 
         let orderCount = 0;
 
@@ -261,13 +288,12 @@
             
             menuData[currentCategory].forEach(item => {
                 if(item === "(暫無項目，請新增)") return;
-                const qty = cart[item] || 0;
+                const qty = cart[item] ? cart[item].qty : 0;
                 grid.innerHTML += `
                     <div class="item-card">
                         <div class="item-name">${item}</div>
                         <div class="qty-controls">
                             <button class="qty-btn" onclick="updateQty('${item}', -1)">-</button>
-                            <!-- 變更：改為可直接輸入的 number 欄位，並加上 onchange 監聽器 -->
                             <input type="number" class="qty-input" value="${qty}" min="0" onchange="setQty('${item}', this.value)" onclick="this.select()">
                             <button class="qty-btn add" onclick="updateQty('${item}', 1)">+</button>
                         </div>
@@ -284,9 +310,9 @@
 
         // 按鈕增減數量
         function updateQty(item, change) {
-            if (!cart[item]) cart[item] = 0;
-            cart[item] += change;
-            if (cart[item] <= 0) delete cart[item];
+            if (!cart[item]) cart[item] = { qty: 0, remark: "" };
+            cart[item].qty += change;
+            if (cart[item].qty <= 0) delete cart[item];
             renderItems();
             renderCart();
         }
@@ -297,10 +323,18 @@
             if (isNaN(num) || num <= 0) {
                 delete cart[item];
             } else {
-                cart[item] = num;
+                if (!cart[item]) cart[item] = { qty: 0, remark: "" };
+                cart[item].qty = num;
             }
             renderItems();
             renderCart();
+        }
+
+        // 更新單品備註
+        function setItemRemark(item, value) {
+            if (cart[item]) {
+                cart[item].remark = value;
+            }
         }
 
         function addNewItem() {
@@ -323,9 +357,12 @@
 
             items.forEach(item => {
                 cartList.innerHTML += `
-                    <div class="cart-item">
-                        <span>${item}</span>
-                        <span style="font-weight: bold; color: var(--primary);">x ${cart[item]}</span>
+                    <div class="cart-item-container">
+                        <div class="cart-item">
+                            <span>${item}</span>
+                            <span style="font-weight: bold; color: var(--primary);">x ${cart[item].qty}</span>
+                        </div>
+                        <input type="text" class="item-remark-input" placeholder="單品備註 (如: 不加蔥、少飯)" value="${cart[item].remark}" oninput="setItemRemark('${item}', this.value)">
                     </div>
                 `;
             });
@@ -345,13 +382,21 @@
             if(orderCount === 1) statusList.innerHTML = ""; 
             
             const timeStr = new Date().toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'});
-            let itemsText = Object.keys(cart).map(k => `${k} x${cart[k]}`).join(', ');
+            
+            // 組合品項與單品備註的 HTML
+            let itemsTextHTML = Object.keys(cart).map(k => {
+                let res = `${k} x${cart[k].qty}`;
+                if(cart[k].remark) {
+                    res += ` <span style="color: #ef4444; font-size: 13px; font-weight: normal;">(${cart[k].remark})</span>`;
+                }
+                return `<div>${res}</div>`;
+            }).join('');
             
             const orderHTML = `
                 <div class="order-status-card status-waiting" id="order-${orderCount}">
                     <div style="font-size: 14px; color: #6b7280;">單號 #${orderCount} · ${timeStr}</div>
-                    <div style="font-weight: bold; margin: 5px 0;">${itemsText}</div>
-                    ${remarks ? `<div style="font-size: 14px; color: #dc2626;">備註：${remarks}</div>` : ''}
+                    <div style="font-weight: bold; margin: 5px 0;">${itemsTextHTML}</div>
+                    ${remarks ? `<div style="font-size: 14px; color: #dc2626; border-top: 1px dashed #d1d5db; padding-top: 5px; margin-top: 5px;">整單備註：${remarks}</div>` : ''}
                     <div class="status-badge status-waiting">待 2F 接收</div>
                 </div>
             `;
