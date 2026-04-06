@@ -12,300 +12,76 @@
             --text-main: #1f2937;
             --danger: #ef4444;
         }
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            height: 100vh;
-            box-sizing: border-box;
-            gap: 15px;
-        }
-        /* 左側：菜單區 */
-        .menu-section {
-            flex: 2;
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            overflow: hidden;
-            position: relative;
-        }
-        .menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .edit-menu-btn {
-            background: #e5e7eb;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            color: #4b5563;
-            cursor: pointer;
-            font-size: 16px;
-        }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 10px; display: flex; height: 100vh; box-sizing: border-box; gap: 15px; }
+        .menu-section { flex: 2; background: var(--card-bg); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; position: relative; }
+        .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .edit-menu-btn { background: #e5e7eb; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: #4b5563; cursor: pointer; font-size: 16px; }
         .edit-menu-btn:active { background: #d1d5db; }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-        .tab-btn {
-            padding: 12px 20px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            background: #e5e7eb;
-            border-radius: 8px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            overflow-y: auto;
-            padding-right: 5px;
-            padding-bottom: 20px;
-        }
-        .item-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 15px 10px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 120px;
-            position: relative;
-            background: white;
-        }
-        .item-card.out-of-stock {
-            background: #f9fafb;
-            border-color: #d1d5db;
-            opacity: 0.8;
-        }
-        .oos-text {
-            color: var(--danger);
-            font-weight: bold;
-            font-size: 18px;
-            margin-top: 10px;
-        }
-        .item-name {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            word-break: keep-all;
-        }
-        .qty-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-        .qty-btn {
-            width: 35px;
-            height: 35px;
-            font-size: 20px;
-            border: none;
-            border-radius: 5px;
-            background: #e5e7eb;
-            cursor: pointer;
-        }
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { padding: 12px 20px; font-size: 18px; font-weight: bold; border: none; background: #e5e7eb; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; overflow-y: auto; padding-right: 5px; padding-bottom: 20px; }
+        .item-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 15px 10px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; min-height: 120px; position: relative; background: white; }
+        .item-card.out-of-stock { background: #f9fafb; border-color: #d1d5db; opacity: 0.8; }
+        .oos-text { color: var(--danger); font-weight: bold; font-size: 18px; margin-top: 10px; }
+        .item-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; word-break: keep-all; }
+        .qty-controls { display: flex; justify-content: center; align-items: center; gap: 5px; }
+        .qty-btn { width: 35px; height: 35px; font-size: 20px; border: none; border-radius: 5px; background: #e5e7eb; cursor: pointer; }
         .qty-btn.add { background: var(--primary); color: white; }
-        
-        .qty-input { 
-            font-size: 18px; 
-            font-weight: bold; 
-            width: 45px; 
-            height: 33px;
-            text-align: center;
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-        }
-        .qty-input::-webkit-outer-spin-button,
-        .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .qty-input { font-size: 18px; font-weight: bold; width: 45px; height: 33px; text-align: center; border: 1px solid #d1d5db; border-radius: 5px; }
+        .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .qty-input[type=number] { -moz-appearance: textfield; }
         
-        /* 右側：購物車與狀態區 */
-        .sidebar {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 300px;
-        }
-        .cart-section, .status-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-        }
+        .sidebar { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 300px; }
+        .cart-section, .status-section { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         .cart-section { flex: 3; }
         .status-section { flex: 2; overflow-y: auto; }
         h2 { margin: 0 0 15px 0; font-size: 22px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;}
-        
         .cart-list { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; }
-        .cart-item-container {
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .cart-item { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 18px; 
-            margin-bottom: 5px; 
-        }
-        .item-remark-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px dashed #9ca3af;
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-            background-color: #f9fafb;
-        }
+        .cart-item-container { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f3f4f6; }
+        .cart-item { display: flex; justify-content: space-between; font-size: 18px; margin-bottom: 5px; }
+        .item-remark-input { width: 100%; padding: 8px; border: 1px dashed #9ca3af; border-radius: 6px; font-size: 14px; box-sizing: border-box; background-color: #f9fafb; }
         .item-remark-input:focus { outline: none; border-color: var(--primary); background-color: #fff; }
-        
-        textarea {
-            width: 100%;
-            height: 60px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-            font-size: 16px;
-            resize: none;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-        .submit-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 22px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-        }
+        textarea { width: 100%; height: 60px; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 16px; resize: none; margin-bottom: 10px; box-sizing: border-box; }
+        .submit-btn { background: #10b981; color: white; border: none; padding: 15px; font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s;}
         .submit-btn:active { background: #059669; }
-
-        .order-status-card {
-            border-left: 5px solid #d1d5db;
-            background: #f9fafb;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-            color: white;
-            margin-top: 5px;
-        }
+        .submit-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        
+        .order-status-card { border-left: 5px solid #d1d5db; background: #f9fafb; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; color: white; margin-top: 5px; }
         .status-waiting { background: #f59e0b; border-left-color: #f59e0b; }
         .status-cooking { background: #3b82f6; border-left-color: #3b82f6; }
+        .status-danger { background: #ef4444; border-left-color: #ef4444; }
 
-        /* 菜單編輯 Modal */
-        .modal-overlay {
-            position: absolute; /* 相對於 menu-section */
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.95);
-            display: none;
-            flex-direction: column;
-            z-index: 100;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px;
-        }
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: none; flex-direction: column; z-index: 100; padding: 15px; box-sizing: border-box; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
         .modal-header h2 { margin: 0; color: #1f2937; border: none; padding: 0;}
         .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #6b7280; }
-        
-        .edit-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 10px;
-            overflow-y: auto;
-            align-content: start;
-        }
-        .edit-item-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            position: relative;
-            background: white;
-            font-weight: bold;
-        }
-        .delete-btn {
-            position: absolute; top: -8px; right: -8px;
-            background: var(--danger); color: white;
-            border: none; border-radius: 50%; width: 24px; height: 24px;
-            cursor: pointer; font-size: 12px; display: flex; justify-content: center; align-items: center;
-        }
-        .add-item-card {
-            border: 2px dashed #9ca3af; background: #f9fafb; cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            height: 100%; min-height: 40px; font-weight: bold; color: #6b7280;
-        }
-
-        /* 模擬測試按鈕 */
-        .sim-btn {
-            position: fixed; bottom: 20px; right: 20px;
-            background: #4b5563; color: white; padding: 12px 20px;
-            border-radius: 50px; border: none; font-size: 14px; cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 1000;
-        }
+        .edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; overflow-y: auto; align-content: start; }
+        .edit-item-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; text-align: center; position: relative; background: white; font-weight: bold; }
+        .delete-btn { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px; display: flex; justify-content: center; align-items: center; }
+        .add-item-card { border: 2px dashed #9ca3af; background: #f9fafb; cursor: pointer; display: flex; justify-content: center; align-items: center; height: 100%; min-height: 40px; font-weight: bold; color: #6b7280; }
+        .sync-indicator { font-size: 12px; color: #10b981; font-weight: bold; text-align: right; margin-top: 5px;}
     </style>
 </head>
 <body>
-
     <div class="menu-section">
         <div class="menu-header">
-            <div class="tabs" id="categoryTabs" style="margin-bottom: 0;">
-                <!-- 頁籤將由 JS 動態生成 -->
-            </div>
+            <div class="tabs" id="categoryTabs" style="margin-bottom: 0;"></div>
             <button class="edit-menu-btn" onclick="openEditModal()">⚙️ 編輯菜單</button>
         </div>
+        <div class="items-grid" id="itemsGrid"></div>
 
-        <div class="items-grid" id="itemsGrid">
-            <!-- 品項將由 JS 動態生成 -->
-        </div>
-
-        <!-- 編輯菜單覆蓋層 -->
         <div class="modal-overlay" id="editModal">
             <div class="modal-header">
                 <h2>⚙️ 編輯【<span id="editCategoryName">主食</span>】菜單</h2>
                 <button class="close-modal" onclick="closeEditModal()">✖</button>
             </div>
-            <div style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">新增或刪除品項後，將自動同步更新至 2F 後台。</div>
-            <div class="edit-grid" id="editGrid">
-                <!-- 編輯項目由 JS 生成 -->
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">
+                新增或刪除品項後，將自動同步至雲端與 2F 後台。
+                <button onclick="uploadDefaultMenu()" style="margin-left: 10px; padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">☁️ 一鍵寫入預設菜單至雲端</button>
             </div>
+            <div class="edit-grid" id="editGrid"></div>
         </div>
     </div>
 
@@ -316,43 +92,121 @@
                 <div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側選擇品項</div>
             </div>
             <textarea id="orderRemarks" placeholder="整單備註（如：預約12:30取餐）"></textarea>
-            <button class="submit-btn" onclick="submitOrder()">送出至 2F 廚房</button>
+            <button class="submit-btn" id="submitBtn" onclick="submitOrder()">送出至 2F 廚房</button>
         </div>
 
         <div class="status-section">
-            <h2>📡 訂單狀態追蹤</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="border: none; margin: 0; padding: 0;">📡 訂單狀態追蹤</h2>
+                <span class="sync-indicator" id="syncStatus">● 雲端連線中</span>
+            </div>
             <div id="statusList">
-                <div style="color: #9ca3af; text-align: center; margin-top: 20px;">目前無進行中的訂單</div>
+                <div style="color: #9ca3af; text-align: center; margin-top: 20px;">資料同步中...</div>
             </div>
         </div>
     </div>
 
     <audio id="notifySound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-    
-    <!-- 模擬接收雲端資料按鈕 -->
-    <button class="sim-btn" onclick="simulateCloudSync()">📡 模擬接收 2F 庫存更新</button>
 
     <script>
-        // 模擬共用資料庫 (與 2F 結構一致)
-        let menuData = {
+        // --- 填入您的 Google Apps Script Web App URL ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzvmu2NXvJ6hiD23fgCFfuHD5vpvkuLxPP6Iiq67MBn24GG-uorUjK7OZPm9Zb0b8bP/exec';
+        
+        // 內建的基本款菜單防護網
+        const defaultMenuData = {
             "主食": ["雙拼便當(雞+魚)", "雙拼便當(魚+魚)", "純雞腿便當", "純魚便當", "便當(不限品項)", "和風牛肉丼飯", "薑汁豬肉丼飯"],
             "炸物": ["酥炸白身魚", "酥炸牡蠣", "酥炸牛肉餅", "酥炸竹筴魚", "酥炸蟹味棒", "極厚蝦排", "咖哩可樂餅", "日式炸蝦"],
             "烤物": ["烤虱目魚肚", "烤鯖魚", "烤鮭魚頭", "烤鮭魚", "茶碗蒸", "烤秋刀魚", "烤一夜干", "焗烤龍蝦", "烘蛋一張"],
             "壽司": ["特製壽司", "豆皮壽司", "海老壽司", "唐揚雞壽司"],
             "限定品項": []
         };
-        let outOfStockItems = new Set(); // 從雲端同步的缺貨名單
 
+        // 初始狀態先載入基本款
+        let menuData = JSON.parse(JSON.stringify(defaultMenuData));
+        let outOfStockItems = new Set();
         let currentCategory = "主食";
         let cart = {}; 
-        let orderCount = 0;
-
-        function init() {
+        
+        // 初始載入與定時同步
+        async function init() {
             renderTabs();
             renderItems();
+            await fetchSyncData();
+            // 每 5 秒自動向雲端抓取一次最新資料
+            setInterval(fetchSyncData, 5000);
         }
 
-        // 渲染分類頁籤
+        // 呼叫雲端 API 抓取最新狀態
+        async function fetchSyncData() {
+            try {
+                const res = await fetch(API_URL + '?action=getSyncData');
+                const json = await res.json();
+                
+                if (json.status === 'success') {
+                    const serverMenu = json.data.menu.list;
+                    const serverOOS = json.data.menu.outOfStock;
+                    const serverOrders = json.data.orders;
+                    
+                    // 關鍵防護：如果雲端資料庫不是空的，才用雲端覆蓋本地；如果是空的，就保持本地的基本款
+                    if (Object.keys(serverMenu).length > 0) {
+                        // 確保「限定品項」頁籤就算在雲端沒資料也不會消失
+                        if (!serverMenu["限定品項"]) serverMenu["限定品項"] = [];
+
+                        const menuChanged = JSON.stringify(menuData) !== JSON.stringify(serverMenu);
+                        const oosChanged = JSON.stringify(Array.from(outOfStockItems)) !== JSON.stringify(serverOOS);
+                        
+                        if (menuChanged || oosChanged) {
+                            menuData = serverMenu;
+                            outOfStockItems = new Set(serverOOS);
+                            if(!currentCategory && Object.keys(menuData).length > 0) {
+                                currentCategory = Object.keys(menuData)[0];
+                            }
+                            
+                            // 清理購物車中已缺貨或被刪除的品項
+                            Object.keys(cart).forEach(item => {
+                                let itemExists = false;
+                                for(let cat in menuData) { if(menuData[cat].includes(item)) itemExists = true; }
+                                if (!itemExists || outOfStockItems.has(item)) delete cart[item];
+                            });
+                            
+                            renderTabs();
+                            renderItems();
+                            renderCart();
+                            if(document.getElementById('editModal').style.display === 'flex') renderEditGrid();
+                        }
+                    }
+                    
+                    // 每次同步都更新右側的狀態追蹤列表
+                    updateStatusList(serverOrders);
+                    
+                    // 更新連線狀態燈號
+                    const syncEl = document.getElementById('syncStatus');
+                    syncEl.style.color = '#10b981';
+                    syncEl.innerText = `● 同步成功 ${new Date().toLocaleTimeString('zh-TW', {hour12:false})}`;
+                }
+            } catch (error) {
+                console.error("同步失敗", error);
+                const syncEl = document.getElementById('syncStatus');
+                syncEl.style.color = '#ef4444';
+                syncEl.innerText = "● 雲端連線中斷";
+            }
+        }
+
+        // POST 送出 API 封裝
+        async function apiPost(payload) {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                // 送出後立即強制更新一次畫面
+                fetchSyncData();
+            } catch(e) {
+                console.error("API POST Error:", e);
+                alert("雲端連線失敗，請檢查網路狀態！");
+            }
+        }
+
         function renderTabs() {
             const tabsContainer = document.getElementById("categoryTabs");
             tabsContainer.innerHTML = "";
@@ -364,33 +218,24 @@
                     currentCategory = category;
                     renderTabs();
                     renderItems();
-                    if(document.getElementById('editModal').style.display === 'flex') {
-                        renderEditGrid(); // 若正在編輯模式，切換頁籤同步更新編輯區
-                    }
+                    if(document.getElementById('editModal').style.display === 'flex') renderEditGrid();
                 };
                 tabsContainer.appendChild(btn);
             }
         }
 
-        // 渲染點單品項
         function renderItems() {
             const grid = document.getElementById("itemsGrid");
             grid.innerHTML = "";
-            
+            if(!menuData[currentCategory]) return;
+
             menuData[currentCategory].forEach(item => {
                 const isOut = outOfStockItems.has(item);
                 const qty = cart[item] ? cart[item].qty : 0;
                 
                 if (isOut) {
-                    // 缺貨狀態：灰底、無數量按鈕、顯示提示字
-                    grid.innerHTML += `
-                        <div class="item-card out-of-stock">
-                            <div class="item-name" style="color: #9ca3af; text-decoration: line-through;">${item}</div>
-                            <div class="oos-text">❌ 暫無庫存</div>
-                        </div>
-                    `;
+                    grid.innerHTML += `<div class="item-card out-of-stock"><div class="item-name" style="color: #9ca3af; text-decoration: line-through;">${item}</div><div class="oos-text">❌ 暫無庫存</div></div>`;
                 } else {
-                    // 正常狀態
                     grid.innerHTML += `
                         <div class="item-card">
                             <div class="item-name">${item}</div>
@@ -403,215 +248,163 @@
                     `;
                 }
             });
-
-            // 若該分類無品項的提示
-            if(menuData[currentCategory].length === 0) {
-                grid.innerHTML = `<div style="color: #9ca3af; padding: 20px; grid-column: 1 / -1;">此分類目前無品項，請點擊上方「⚙️ 編輯菜單」新增。</div>`;
-            }
+            if(menuData[currentCategory].length === 0) grid.innerHTML = `<div style="color: #9ca3af; padding: 20px; grid-column: 1 / -1;">此分類目前無品項，請點擊上方「⚙️ 編輯菜單」新增。</div>`;
         }
 
-        /* 購物車邏輯 */
         function updateQty(item, change) {
             if (!cart[item]) cart[item] = { qty: 0, remark: "" };
             cart[item].qty += change;
             if (cart[item].qty <= 0) delete cart[item];
-            renderItems();
-            renderCart();
+            renderItems(); renderCart();
         }
 
         function setQty(item, value) {
             let num = parseInt(value, 10);
-            if (isNaN(num) || num <= 0) {
-                delete cart[item];
-            } else {
-                if (!cart[item]) cart[item] = { qty: 0, remark: "" };
-                cart[item].qty = num;
-            }
-            renderItems();
-            renderCart();
+            if (isNaN(num) || num <= 0) delete cart[item];
+            else { if (!cart[item]) cart[item] = { qty: 0, remark: "" }; cart[item].qty = num; }
+            renderItems(); renderCart();
         }
 
-        function setItemRemark(item, value) {
-            if (cart[item]) cart[item].remark = value;
-        }
+        function setItemRemark(item, value) { if (cart[item]) cart[item].remark = value; }
 
         function renderCart() {
             const cartList = document.getElementById("cartList");
             cartList.innerHTML = "";
             const items = Object.keys(cart);
-            
             if (items.length === 0) {
                 cartList.innerHTML = '<div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側選擇品項</div>';
                 return;
             }
-
             items.forEach(item => {
                 cartList.innerHTML += `
                     <div class="cart-item-container">
-                        <div class="cart-item">
-                            <span>${item}</span>
-                            <span style="font-weight: bold; color: var(--primary);">x ${cart[item].qty}</span>
-                        </div>
-                        <input type="text" class="item-remark-input" placeholder="單品備註 (如: 不加蔥、少飯)" value="${cart[item].remark}" oninput="setItemRemark('${item}', this.value)">
+                        <div class="cart-item"><span>${item}</span><span style="font-weight: bold; color: var(--primary);">x ${cart[item].qty}</span></div>
+                        <input type="text" class="item-remark-input" placeholder="單品備註 (如: 不加蔥)" value="${cart[item].remark}" oninput="setItemRemark('${item}', this.value)">
                     </div>
                 `;
             });
         }
 
-        // 送出訂單
-        function submitOrder() {
-            if (Object.keys(cart).length === 0) {
-                alert("請先選擇品項！");
-                return;
-            }
+        async function submitOrder() {
+            if (Object.keys(cart).length === 0) { alert("請先選擇品項！"); return; }
+            
+            const btn = document.getElementById("submitBtn");
+            btn.innerText = "傳送中...";
+            btn.disabled = true;
+
             const remarks = document.getElementById("orderRemarks").value;
-            orderCount++;
+            // 產生單號 (MMDD-HHMMSS 格式)
+            const now = new Date();
+            const idStr = `${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+            const timeStr = now.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', hour12: false});
+            
+            // 轉換購物車格式以符合雲端
+            let orderItems = [];
+            for(let key in cart) { orderItems.push({ name: key, qty: cart[key].qty, remark: cart[key].remark, done: false }); }
+
+            const payload = {
+                action: 'newOrder',
+                order: { id: idStr, time: timeStr, items: orderItems, mainRemark: remarks }
+            };
+
+            await apiPost(payload);
             playNotifySound();
 
-            const statusList = document.getElementById("statusList");
-            if(orderCount === 1) statusList.innerHTML = ""; 
-            
-            const timeStr = new Date().toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'});
-            let itemsTextHTML = Object.keys(cart).map(k => {
-                let res = `${k} x${cart[k].qty}`;
-                if(cart[k].remark) {
-                    res += ` <span style="color: #ef4444; font-size: 13px; font-weight: normal;">(${cart[k].remark})</span>`;
-                }
-                return `<div>${res}</div>`;
-            }).join('');
-            
-            const orderHTML = `
-                <div class="order-status-card status-waiting" id="order-${orderCount}">
-                    <div style="font-size: 14px; color: #6b7280;">單號 #${orderCount} · ${timeStr}</div>
-                    <div style="font-weight: bold; margin: 5px 0;">${itemsTextHTML}</div>
-                    ${remarks ? `<div style="font-size: 14px; color: #dc2626; border-top: 1px dashed #d1d5db; padding-top: 5px; margin-top: 5px;">整單備註：${remarks}</div>` : ''}
-                    <div class="status-badge status-waiting">待 2F 接收</div>
-                </div>
-            `;
-            
-            statusList.insertAdjacentHTML('afterbegin', orderHTML);
             cart = {};
             document.getElementById("orderRemarks").value = "";
-            renderItems();
-            renderCart();
-            simulate2FResponse(orderCount);
+            renderItems(); renderCart();
+            btn.innerText = "送出至 2F 廚房";
+            btn.disabled = false;
         }
 
         function playNotifySound() {
             const sound = document.getElementById("notifySound");
-            sound.currentTime = 0;
-            sound.play();
+            sound.currentTime = 0; sound.play();
             setTimeout(() => { sound.currentTime = 0; sound.play(); }, 300);
             setTimeout(() => { sound.currentTime = 0; sound.play(); }, 600);
         }
 
-        function simulate2FResponse(id) {
-            setTimeout(() => {
-                const orderCard = document.getElementById(`order-${id}`);
-                if(orderCard) {
-                    orderCard.className = "order-status-card status-cooking";
-                    orderCard.querySelector('.status-badge').className = "status-badge status-cooking";
-                    orderCard.querySelector('.status-badge').innerText = "👨‍🍳 製作中 (預計 15 分鐘)";
-                    playNotifySound(); 
-                }
-            }, 4000);
+        // 渲染右下角進行中訂單
+        function updateStatusList(serverOrders) {
+            const list = document.getElementById("statusList");
+            if(serverOrders.length === 0) {
+                list.innerHTML = '<div style="color: #9ca3af; text-align: center; margin-top: 20px;">雲端目前無進行中的訂單</div>';
+                return;
+            }
+            list.innerHTML = "";
+            // 反轉陣列，讓最新的單在最上面
+            [...serverOrders].reverse().forEach(o => {
+                let isWaiting = o.status === 'waiting';
+                let isOos = o.etaStr === '缺貨';
+                let statusClass = isWaiting ? 'status-waiting' : (isOos ? 'status-danger' : 'status-cooking');
+                let statusText = isWaiting ? '待 2F 接收' : (isOos ? '❌ 含有缺貨品項' : `👨‍🍳 製作中 (預計 ${o.etaStr}分)`);
+                
+                let itemsTextHTML = o.items.map(item => {
+                    let res = `${item.name} x${item.qty}`;
+                    if(item.remark) res += ` <span style="color: #ef4444; font-size: 13px;">(${item.remark})</span>`;
+                    return `<div>${res}</div>`;
+                }).join('');
+                
+                list.innerHTML += `
+                    <div class="order-status-card ${statusClass}">
+                        <div style="font-size: 14px; color: #6b7280;">單號 #${o.id} · ${o.time}</div>
+                        <div style="font-weight: bold; margin: 5px 0;">${itemsTextHTML}</div>
+                        ${o.mainRemark ? `<div style="font-size: 14px; color: #dc2626; border-top: 1px dashed #d1d5db; padding-top: 5px; margin-top: 5px;">備註：${o.mainRemark}</div>` : ''}
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            });
         }
 
-        /* ----- 編輯菜單功能 (同步至雲端) ----- */
-        function openEditModal() {
-            document.getElementById('editModal').style.display = 'flex';
-            renderEditGrid();
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
+        /* ----- 編輯菜單功能 (連動雲端 API) ----- */
+        function openEditModal() { document.getElementById('editModal').style.display = 'flex'; renderEditGrid(); }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
         function renderEditGrid() {
             document.getElementById('editCategoryName').innerText = currentCategory;
             const grid = document.getElementById('editGrid');
             grid.innerHTML = '';
-
             menuData[currentCategory].forEach(item => {
-                grid.innerHTML += `
-                    <div class="edit-item-card">
-                        <button class="delete-btn" onclick="deleteItem('${item}')">✖</button>
-                        ${item}
-                    </div>
-                `;
+                grid.innerHTML += `<div class="edit-item-card"><button class="delete-btn" onclick="deleteItem('${item}')">✖</button>${item}</div>`;
             });
-
-            grid.innerHTML += `
-                <div class="add-item-card" onclick="addItem()">
-                    ➕ 新增
-                </div>
-            `;
+            grid.innerHTML += `<div class="add-item-card" onclick="addItem()">➕ 新增</div>`;
         }
-
         function addItem() {
             const newItem = prompt(`請輸入要在「${currentCategory}」新增的品項名稱：`);
             if (newItem && newItem.trim() !== "") {
                 const itemTrimmed = newItem.trim();
                 if (!menuData[currentCategory].includes(itemTrimmed)) {
-                    menuData[currentCategory].push(itemTrimmed);
-                    renderEditGrid();
-                    renderItems(); // 更新底層主畫面
-                    // 未來：上傳至 Google Sheets
-                } else {
-                    alert("⚠️ 此品項已經存在了！");
-                }
+                    // 呼叫雲端寫入
+                    apiPost({ action: 'editMenu', category: currentCategory, itemName: itemTrimmed, type: 'add' });
+                } else { alert("⚠️ 此品項已經存在了！"); }
             }
         }
-
         function deleteItem(itemName) {
-            if(confirm(`確定要刪除「${itemName}」嗎？`)) {
-                menuData[currentCategory] = menuData[currentCategory].filter(i => i !== itemName);
-                if (outOfStockItems.has(itemName)) outOfStockItems.delete(itemName);
-                // 若購物車內有該品項，一併清除
-                if (cart[itemName]) {
-                    delete cart[itemName];
-                    renderCart();
-                }
-                renderEditGrid();
-                renderItems();
-                // 未來：上傳至 Google Sheets 通知 2F
+            if(confirm(`確定要刪除「${itemName}」嗎？這將從雲端資料庫移除。`)) {
+                apiPost({ action: 'editMenu', category: currentCategory, itemName: itemName, type: 'delete' });
             }
         }
 
-        /* ----- 模擬接收 2F 庫存更新 ----- */
-        let simStep = 0;
-        function simulateCloudSync() {
-            if(simStep === 0) {
-                // 模擬 2F 點選了「烤鯖魚」缺貨
-                alert("📡 [系統模擬] 接收到 2F 更新：將「烤鯖魚」與「和風牛肉丼飯」設為缺貨。");
-                outOfStockItems.add("烤鯖魚");
-                outOfStockItems.add("和風牛肉丼飯");
-                
-                // 如果購物車剛好有這兩樣，強制清出 (防呆)
-                if(cart["烤鯖魚"]) delete cart["烤鯖魚"];
-                if(cart["和風牛肉丼飯"]) delete cart["和風牛肉丼飯"];
-                
-                simStep = 1;
-            } else if (simStep === 1) {
-                // 模擬 2F 新增了限定品項
-                alert("📡 [系統模擬] 接收到 2F 更新：「限定品項」新增了【炸廣島牡蠣】。");
-                menuData["限定品項"].push("炸廣島牡蠣");
-                simStep = 2;
-            } else {
-                // 恢復原狀
-                alert("📡 [系統模擬] 接收到 2F 更新：「烤鯖魚」重新到貨！");
-                outOfStockItems.delete("烤鯖魚");
-                outOfStockItems.delete("和風牛肉丼飯");
-                simStep = 0;
+        async function uploadDefaultMenu() {
+            if(!confirm("確定要將這套基本款菜單批次寫入您的 Google Sheets 嗎？(約需 2~3 秒)")) return;
+            
+            // 顯示上傳中提示
+            document.getElementById('editGrid').innerHTML = "<div style='grid-column: 1/-1; text-align: center; color: #3b82f6; font-size: 18px; font-weight: bold; padding: 20px;'>☁️ 正在將菜單批次寫入雲端，請稍候...</div>";
+            
+            let promises = [];
+            for (let cat in defaultMenuData) {
+                for (let item of defaultMenuData[cat]) {
+                    promises.push(fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'editMenu', category: cat, itemName: item, type: 'add' })
+                    }));
+                }
             }
-            renderItems();
-            renderCart();
-            // 切換頁籤看效果
-            if(simStep === 2 && currentCategory !== "限定品項") {
-                currentCategory = "限定品項";
-                renderTabs();
-                renderItems();
-            }
+            
+            await Promise.all(promises);
+            alert("✅ 基本款菜單已成功上傳至雲端！未來請直接使用介面新增或刪改。");
+            
+            // 重新抓取雲端資料以更新畫面
+            fetchSyncData();
         }
 
         window.onload = init;
