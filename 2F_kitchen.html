@@ -129,28 +129,27 @@
         // 呼叫雲端 API 抓取最新狀態
         async function fetchSyncData() {
             try {
-                const res = await fetch(API_URL + '?action=getSyncData');
+                // 加上隨機參數強制破解瀏覽器快取
+                const noCacheUrl = API_URL + '?action=getSyncData&t=' + new Date().getTime();
+                const res = await fetch(noCacheUrl, { cache: 'no-store' });
                 const json = await res.json();
                 
                 if (json.status === 'success') {
                     const serverMenu = json.data.menu.list;
                     const serverOOS = json.data.menu.outOfStock;
                     
-                    // 關鍵防護：如果雲端資料庫不是空的，才用雲端覆蓋本地；如果是空的，就保持本地的基本款
                     if (Object.keys(serverMenu).length > 0) {
                         if (!serverMenu["限定品項"]) serverMenu["限定品項"] = [];
                         menuData = serverMenu;
                         outOfStockItems = new Set(serverOOS);
                     }
                     
-                    // 為了不蓋掉 2F 廚師「已經劃掉(done)」的品項狀態，做一次狀態合併
                     const serverOrders = json.data.orders;
                     let hasNewOrder = false;
 
                     serverOrders.forEach(so => {
                         const localOrder = orders.find(o => o.id == so.id);
                         if (localOrder) {
-                            // 保留劃單狀態
                             so.items.forEach((item, i) => {
                                 item.done = localOrder.items[i] ? localOrder.items[i].done : false;
                             });
@@ -159,7 +158,6 @@
                         }
                     });
 
-                    // 如果訂單內容有變動，重新渲染
                     if (JSON.stringify(orders) !== JSON.stringify(serverOrders)) {
                         orders = serverOrders;
                         renderOrders();
@@ -169,19 +167,26 @@
                         }
                     }
 
-                    // 如果 Modal 開著，順便刷新庫存狀態
                     if(document.getElementById('inventoryModal').style.display === 'flex') renderInventoryModal();
 
-                    // 更新連線狀態燈號
                     const syncEl = document.getElementById('syncStatus');
                     syncEl.style.color = '#10b981';
                     syncEl.innerText = `● 同步成功 ${new Date().toLocaleTimeString('zh-TW', {hour12:false})}`;
+                } else {
+                    // 後端回傳錯誤 (例如 Google Sheets 格式出問題)
+                    throw new Error(json.message);
                 }
             } catch (error) {
                 console.error("同步失敗", error);
                 const syncEl = document.getElementById('syncStatus');
                 syncEl.style.color = '#ef4444';
-                syncEl.innerText = "● 雲端連線中斷";
+                syncEl.innerText = "● 雲端連線異常";
+                
+                // 如果畫面還卡在載入中，替換為錯誤提示
+                const grid = document.getElementById('ordersGrid');
+                if (grid.innerHTML.includes('載入雲端資料中')) {
+                    grid.innerHTML = `<div style="color: var(--danger); font-size: 20px; text-align: center; width: 100%; margin-top: 50px;">⚠️ 讀取失敗<br><span style="font-size:16px; color:#6b7280;">錯誤訊息：${error.message}<br>請確認 Google Sheets 第一列是否有輸入標題。</span></div>`;
+                }
             }
         }
 
@@ -356,7 +361,6 @@
         }
 
         function toggleStock(itemName, currentlyOut) {
-            // 切換狀態並上傳雲端
             apiPost({ action: 'updateStock', itemName: itemName, isOutOfStock: !currentlyOut });
         }
 
