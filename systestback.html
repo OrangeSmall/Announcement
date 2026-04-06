@@ -217,7 +217,7 @@
             background: white;
             border-radius: 12px;
             width: 90%;
-            max-width: 700px;
+            max-width: 800px;
             max-height: 85vh;
             display: flex;
             flex-direction: column;
@@ -231,7 +231,7 @@
             padding-bottom: 15px;
             margin-bottom: 15px;
         }
-        .modal-header h2 { margin: 0; font-size: 24px; }
+        .modal-header h2 { margin: 0; font-size: 24px; color: var(--text-main); }
         .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #6b7280; }
         .inventory-list {
             flex-grow: 1;
@@ -239,15 +239,17 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            padding-right: 10px;
         }
         .inv-category h3 { margin: 0 0 10px 0; color: #374151; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 10px;}
         .inv-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
         }
         .inv-item {
-            padding: 12px 10px;
+            position: relative;
+            padding: 15px 10px;
             border-radius: 8px;
             border: 2px solid #e5e7eb;
             text-align: center;
@@ -263,6 +265,37 @@
             border-color: #ef4444;
             color: #b91c1c;
         }
+        .delete-item-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .add-inv-item {
+            border: 2px dashed #9ca3af;
+            background: #f9fafb;
+            color: #6b7280;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 12px 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .add-inv-item:hover { background: #e5e7eb; }
     </style>
 </head>
 <body>
@@ -286,7 +319,10 @@
                 <h2>📦 品項庫存狀態設定</h2>
                 <button class="close-modal" onclick="closeInventoryModal()">✖</button>
             </div>
-            <div style="margin-bottom: 15px; color: #6b7280; font-size: 16px;">點擊品項可切換【正常】與【缺貨】狀態，將同步更新至 1F 點單系統。</div>
+            <div style="margin-bottom: 15px; color: #6b7280; font-size: 16px;">
+                💡 點擊品項可切換【正常】與【缺貨】狀態；點擊右上角「✖」可刪除品項；點擊「➕」可新增品項。<br>
+                <span style="color: var(--danger); font-weight: bold;">(所有變動將同步更新至 1F 點單系統)</span>
+            </div>
             <div class="inventory-list" id="inventoryList">
                 <!-- 由 JS 渲染 -->
             </div>
@@ -301,11 +337,12 @@
 
     <script>
         // 模擬菜單與庫存狀態 (未來與 Google Sheets 連動)
-        const menuData = {
+        let menuData = {
             "主食": ["雙拼便當(雞+魚)", "雙拼便當(魚+魚)", "純雞腿便當", "純魚便當", "便當(不限品項)", "和風牛肉丼飯", "薑汁豬肉丼飯"],
             "炸物": ["酥炸白身魚", "酥炸牡蠣", "酥炸牛肉餅", "酥炸竹筴魚", "酥炸蟹味棒", "極厚蝦排", "咖哩可樂餅", "日式炸蝦"],
             "烤物": ["烤虱目魚肚", "烤鯖魚", "烤鮭魚頭", "烤鮭魚", "茶碗蒸", "烤秋刀魚", "烤一夜干", "焗烤龍蝦", "烘蛋一張"],
-            "壽司": ["特製壽司", "豆皮壽司", "海老壽司", "唐揚雞壽司"]
+            "壽司": ["特製壽司", "豆皮壽司", "海老壽司", "唐揚雞壽司"],
+            "限定品項": []
         };
         let outOfStockItems = new Set(); // 儲存缺貨品項
 
@@ -437,11 +474,11 @@
                         const remaining = order.targetTime - now;
                         if (remaining <= 0) {
                             bar.style.width = '100%';
-                            bar.style.backgroundColor = 'var(--danger)';
-                            text.innerText = '⚠️ 已到達預估時間';
-                            text.style.color = 'var(--danger)';
+                            bar.style.backgroundColor = 'var(--success)';
+                            text.innerText = '✅ 已達預估時間 (可出餐)';
+                            text.style.color = 'var(--success)';
                         } else {
-                            // 計算已進行的百分比 (初始0% -> 滿100%)
+                            // 計算已進行時間的百分比 (初始0% -> 增長至100%)
                             const elapsed = order.totalDuration - remaining;
                             const percent = Math.min(100, Math.max(0, (elapsed / order.totalDuration) * 100));
                             bar.style.width = percent + '%';
@@ -449,9 +486,14 @@
                             const minsLeft = Math.ceil(remaining / 60000);
                             text.innerText = `剩餘約 ${minsLeft} 分鐘`;
                             
-                            // 顏色變化：後段變橘
-                            if (percent > 80) bar.style.backgroundColor = 'var(--warning)';
-                            else bar.style.backgroundColor = 'var(--success)';
+                            // 顏色變化：對應已進行時間比例 (紅 -> 黃 -> 綠)
+                            if (percent <= 35) {
+                                bar.style.backgroundColor = 'var(--danger)';  // 0% ~ 35% 顯示紅色
+                            } else if (percent <= 70) {
+                                bar.style.backgroundColor = 'var(--warning)'; // 36% ~ 70% 顯示黃色
+                            } else {
+                                bar.style.backgroundColor = 'var(--success)'; // 71% ~ 100% 顯示綠色
+                            }
                         }
                     }
                 }
@@ -506,7 +548,7 @@
             renderOrders();
         }
 
-        /* ----- 庫存管理相關功能 ----- */
+        /* ----- 庫存管理與菜單編輯相關功能 ----- */
         function openInventoryModal() {
             document.getElementById('inventoryModal').style.display = 'flex';
         }
@@ -525,12 +567,18 @@
                     const isOut = outOfStockItems.has(item);
                     categoryHTML += `
                         <div class="inv-item ${isOut ? 'out-of-stock' : ''}" onclick="toggleStock('${item}')">
+                            <button class="delete-item-btn" onclick="deleteMenuItem('${category}', '${item}', event)">✖</button>
                             ${item}<br>
                             <span style="font-size:12px;">${isOut ? '❌ 缺貨中' : '✅ 正常供應'}</span>
                         </div>
                     `;
                 });
-                categoryHTML += `</div></div>`;
+                // 新增品項按鈕
+                categoryHTML += `
+                    <div class="add-inv-item" onclick="addMenuItem('${category}')">
+                        ➕ 新增品項
+                    </div>
+                </div></div>`;
                 container.innerHTML += categoryHTML;
             }
         }
@@ -542,7 +590,33 @@
                 outOfStockItems.add(itemName);
             }
             renderInventoryModal();
-            // 這裡未來會加入雲端同步邏輯，通知 1F
+            // 未來加入雲端同步： updateSheet_ToggleStock(itemName, status)
+        }
+
+        function addMenuItem(category) {
+            const newItem = prompt(`請輸入要在「${category}」新增的品項名稱：`);
+            if (newItem && newItem.trim() !== "") {
+                const itemTrimmed = newItem.trim();
+                if (!menuData[category].includes(itemTrimmed)) {
+                    menuData[category].push(itemTrimmed);
+                    renderInventoryModal();
+                    // 未來加入雲端同步： updateSheet_AddItem(category, itemTrimmed)
+                } else {
+                    alert("⚠️ 此品項已經存在了！");
+                }
+            }
+        }
+
+        function deleteMenuItem(category, itemName, event) {
+            event.stopPropagation(); // 阻止觸發庫存切換
+            if (confirm(`確定要刪除「${itemName}」嗎？這將同步移除前台的該品項。`)) {
+                menuData[category] = menuData[category].filter(item => item !== itemName);
+                if (outOfStockItems.has(itemName)) {
+                    outOfStockItems.delete(itemName);
+                }
+                renderInventoryModal();
+                // 未來加入雲端同步： updateSheet_DeleteItem(category, itemName)
+            }
         }
 
         window.onload = init;
