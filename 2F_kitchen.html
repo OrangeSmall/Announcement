@@ -82,7 +82,6 @@
         <div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">載入雲端資料中... ⏳</div>
     </div>
 
-    <!-- 庫存設定 Modal -->
     <div class="modal-overlay" id="inventoryModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -135,9 +134,9 @@
         // 呼叫雲端 API 抓取最新狀態
         async function fetchSyncData() {
             try {
-                // 加上隨機參數強制破解瀏覽器快取
+                // 加上隨機參數強制破解瀏覽器快取 (移除了 cache: 'no-store' 以避免瀏覽器跨網域限制阻擋)
                 const noCacheUrl = API_URL + '?action=getSyncData&t=' + new Date().getTime();
-                const res = await fetch(noCacheUrl, { cache: 'no-store' });
+                const res = await fetch(noCacheUrl);
                 const json = await res.json();
                 
                 if (json.status === 'success') {
@@ -189,8 +188,13 @@
                 syncEl.innerText = "● 雲端連線異常";
                 
                 const grid = document.getElementById('ordersGrid');
-                if (grid.innerHTML.includes('載入雲端資料中')) {
-                    grid.innerHTML = `<div style="color: var(--danger); font-size: 20px; text-align: center; width: 100%; margin-top: 50px;">⚠️ 讀取失敗<br><span style="font-size:16px; color:#6b7280;">錯誤訊息：${error.message}<br>請確認 Google Sheets 第一列是否有輸入標題。</span></div>`;
+                // 優化：如果目前畫面沒有任何訂單才顯示大錯誤畫面，以免蓋掉正在處理中的訂單
+                if (orders.length === 0) {
+                    let errorHelp = "請確認 Google Sheets 第一列是否有輸入標題。";
+                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        errorHelp = "連線被拒絕 (Failed to fetch)。<br><br>💡 <b>解決方式：</b><br>1. 已經為您移除了可能衝突的快取參數。<br>2. 若仍出現此錯誤，請至 GAS 點擊「管理部署作業」>「編輯」，<br>將版本設為「<b>建立新版本</b>」，<br>且存取權限務必設為「<b>所有人 (Anyone)</b>」。";
+                    }
+                    grid.innerHTML = `<div style="color: var(--danger); font-size: 20px; text-align: center; width: 100%; margin-top: 50px;">⚠️ 讀取失敗<br><br><span style="font-size:16px; color:#6b7280;">錯誤訊息：${error.message}<br><br>${errorHelp}</span></div>`;
                 }
             }
         }
@@ -214,7 +218,7 @@
             grid.innerHTML = '';
 
             if(orders.length === 0) {
-                grid.innerHTML = '<div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">雲端目前無待處理訂單 😊</div>';
+                grid.innerHTML = '<div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">目前熟食區暫無需求❤️</div>';
                 return;
             }
 
@@ -371,6 +375,7 @@
                 targetTime: targetT,
                 totalDuration: totalDur
             });
+            // 讓按鈕先消失提升UX
             orders[index].status = 'cooking';
             renderOrders();
         }
