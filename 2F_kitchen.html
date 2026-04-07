@@ -60,10 +60,15 @@
         .inventory-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-right: 10px; }
         .inv-category h3 { margin: 0 0 10px 0; color: #374151; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 10px;}
         .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-        .inv-item { position: relative; padding: 15px 10px; border-radius: 8px; border: 2px solid #e5e7eb; text-align: center; font-size: 16px; font-weight: bold; cursor: pointer; background: #f9fafb; color: #374151; transition: all 0.2s; }
+        .inv-item-wrapper { position: relative; height: 100%; }
+        .inv-item { height: 100%; box-sizing: border-box; padding: 15px 10px; border-radius: 8px; border: 2px solid #e5e7eb; text-align: center; font-size: 16px; font-weight: bold; cursor: pointer; background: #f9fafb; color: #374151; transition: all 0.2s; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; }
+        .inv-item:hover { border-color: var(--primary); }
         .inv-item.out-of-stock { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
-        .delete-item-btn { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .add-inv-item { border: 2px dashed #9ca3af; background: #f9fafb; color: #6b7280; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 8px; padding: 12px 10px; font-weight: bold; font-size: 16px; }
+        .stock-badge { font-size: 13px; padding: 4px 8px; border-radius: 20px; background: #d1fae5; color: #065f46; width: 80%; display: inline-block; }
+        .out-of-stock .stock-badge { background: #fef2f2; color: #dc2626; }
+        .delete-item-btn { position: absolute; top: -10px; right: -10px; background: white; color: #6b7280; border: 1px solid #d1d5db; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10; transition: 0.2s; padding: 0;}
+        .delete-item-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+        .add-inv-item { border: 2px dashed #9ca3af; background: #f9fafb; color: #6b7280; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 8px; padding: 12px 10px; font-weight: bold; font-size: 16px; min-height: 80px;}
         
         .sync-indicator { color: #10b981; font-size: 14px; position: absolute; right: 15px; top: 15px; font-weight: bold;}
     </style>
@@ -88,9 +93,11 @@
                 <h2>📦 品項庫存狀態設定</h2>
                 <button class="close-modal" onclick="closeInventoryModal()">✖</button>
             </div>
-            <div style="margin-bottom: 15px; color: #6b7280; font-size: 16px;">
-                💡 點擊品項可切換【正常】與【缺貨】狀態；點擊「✖」可刪除；點擊「➕」可新增。<br>
-                <span style="color: var(--danger); font-weight: bold;">(所有變動將立刻上傳雲端並同步至 1F 點單系統)</span>
+            <div style="margin-bottom: 15px; color: #6b7280; font-size: 16px; line-height: 1.5;">
+                💡 <b>切換供貨</b>：直接點擊方塊，即可切換【⏸ 暫停供貨】與【▶ 正常供應】。<br>
+                ⚠️ <b>永久刪除</b>：點擊右上角的「🗑️」會將該品項從菜單上永遠移除。<br>
+                <span style="color: var(--danger); font-weight: bold;">(所有變動將立刻上傳雲端並同步至 1F 點單系統)</span><br>
+                <span style="color: var(--warning); font-weight: bold; background: #fffbeb; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 5px;">⏳ 提醒：上傳誤差時間約 5-10 秒，點擊後請稍候，勿連續重複點擊。</span>
             </div>
             <div class="inventory-list" id="inventoryList"></div>
         </div>
@@ -386,9 +393,12 @@
                 menuData[category].forEach(item => {
                     const isOut = outOfStockItems.has(item);
                     categoryHTML += `
-                        <div class="inv-item ${isOut ? 'out-of-stock' : ''}" onclick="toggleStock('${item}', ${isOut})">
-                            <button class="delete-item-btn" onclick="deleteMenuItem('${category}', '${item}', event)">✖</button>
-                            ${item}<br><span style="font-size:12px;">${isOut ? '❌ 缺貨中' : '✅ 正常供應'}</span>
+                        <div class="inv-item-wrapper">
+                            <button class="delete-item-btn" onclick="deleteMenuItem('${category}', '${item}', event)" title="永久刪除此品項">🗑️</button>
+                            <div class="inv-item ${isOut ? 'out-of-stock' : ''}" onclick="toggleStock('${item}', ${isOut})" title="點擊切換供貨狀態">
+                                <span>${item}</span>
+                                <div class="stock-badge">${isOut ? '⏸ 暫停供貨' : '▶ 正常供應'}</div>
+                            </div>
                         </div>
                     `;
                 });
