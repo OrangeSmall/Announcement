@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新品成本試算公版</title>
+    <title>新品成本試算工具 v2</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 html2canvas 供截圖使用 -->
@@ -23,6 +23,10 @@
         }
     </script>
     <style>
+        /* 隱藏捲軸但保持可捲動 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         /* 隱藏列印模式下的無關元素 */
         .export-mode .no-export {
             display: none !important;
@@ -54,64 +58,78 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+        
+        /* 出圖專用的固定寬度樣式 (強制電腦版排版) */
+        .export-desktop-force {
+            width: 1024px !important;
+            max-width: none !important;
+            margin: 0 !important;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans p-4 md:p-8">
+<body class="bg-gray-100 text-gray-800 font-sans p-2 md:p-8">
 
     <div class="max-w-4xl mx-auto">
+        <!-- 頁籤區域 (10個方案) -->
+        <div id="tab-container" class="flex overflow-x-auto gap-1 mb-2 px-2 snap-x hide-scrollbar text-sm">
+            <!-- 頁籤將由 JS 動態生成 -->
+        </div>
+
         <!-- 截圖區域 -->
-        <div id="capture-area" class="bg-white rounded-xl shadow-lg p-6 md:p-8 relative">
-            
-            <!-- 標題區 -->
-            <div class="border-b-2 border-primary pb-4 mb-6">
-                <input type="text" id="product-name" value="海鮮味噌烏龍麵" class="w-full text-2xl md:text-3xl font-bold text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-primary focus:outline-none transition-colors text-left" placeholder="請輸入產品名稱">
-                <div class="text-gray-500 mt-2 text-sm flex justify-between items-end">
-                    <span>日期：<span id="current-date"></span></span>
-                    <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded hidden md:inline-block">💡 系統會自動計算：原裝價格 ÷ 包裝規格 = 單位成本</span>
-                </div>
-            </div>
-
-            <!-- 標題列 (Desktop) -->
-            <div class="hidden md:flex gap-4 text-sm font-semibold text-gray-600 border-b pb-2 mb-4 pr-6">
-                <div class="w-3/12">材料名稱</div>
-                <div class="w-2/12 text-center text-green-600">原裝價格</div>
-                <div class="w-2/12 text-center text-green-600">包裝規格</div>
-                <div class="w-2/12 text-center text-blue-600">本次用量</div>
-                <div class="w-1/12 text-center">單位</div>
-                <div class="w-2/12 text-right">小計</div>
-            </div>
-
-            <!-- 材料列表 -->
-            <div id="ingredients-list" class="space-y-4 md:space-y-2">
-                <!-- JavaScript 將在這裡動態生成材料列表 -->
-            </div>
-
-            <!-- 新增按鈕 -->
-            <button onclick="addIngredient()" class="no-export mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-primary hover:border-primary hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
-                <i class="ph ph-plus-circle text-xl"></i> 新增材料
-            </button>
-
-            <!-- 總計區塊 -->
-            <div class="mt-8 bg-orange-50 rounded-lg p-5 border border-orange-100">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <!-- 左側：總成本 -->
-                    <div class="w-full md:w-1/2">
-                        <div class="text-gray-600 text-sm font-medium mb-1">總成本 (A)</div>
-                        <div class="text-3xl font-bold text-gray-900">$ <span id="total-cost">0.00</span></div>
+        <div id="capture-container" class="overflow-hidden rounded-xl shadow-lg">
+            <div id="capture-area" class="bg-white p-6 md:p-8 relative">
+                
+                <!-- 標題區 -->
+                <div class="border-b-2 border-primary pb-4 mb-6">
+                    <input type="text" id="product-name" oninput="window.updateMeta('name', this.value)" class="w-full text-2xl md:text-3xl font-bold text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-primary focus:outline-none transition-colors text-left" placeholder="請輸入產品名稱">
+                    <div class="text-gray-500 mt-2 text-sm flex justify-between items-end">
+                        <span>日期：<span id="current-date"></span> <span class="ml-2 text-xs text-green-600 font-medium" id="cloud-status"><i class="ph ph-cloud-check"></i> 雲端已同步</span></span>
+                        <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded hidden md:inline-block">💡 系統會自動計算：原裝價格 ÷ 包裝規格 = 單位成本</span>
                     </div>
-                    
-                    <!-- 右側：售價與毛利 -->
-                    <div class="w-full md:w-1/2 space-y-3">
-                        <div class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
-                            <span class="text-gray-600 text-sm">目標毛利率</span>
-                            <div class="flex items-center">
-                                <input type="number" id="target-margin" value="18" class="w-16 text-right font-bold text-gray-900 border-b border-gray-300 focus:border-primary focus:outline-none" oninput="calculate()">
-                                <span class="ml-1 text-gray-600">%</span>
-                            </div>
+                </div>
+
+                <!-- 標題列 (Desktop) -->
+                <div class="hidden md:flex gap-4 text-sm font-semibold text-gray-600 border-b pb-2 mb-4 pr-6">
+                    <div class="w-3/12">材料名稱</div>
+                    <div class="w-2/12 text-center text-green-600">原裝價格</div>
+                    <div class="w-2/12 text-center text-green-600">包裝規格</div>
+                    <div class="w-2/12 text-center text-blue-600">本次用量</div>
+                    <div class="w-1/12 text-center">單位</div>
+                    <div class="w-2/12 text-right">小計</div>
+                </div>
+
+                <!-- 材料列表 -->
+                <div id="ingredients-list" class="space-y-4 md:space-y-2">
+                    <!-- JavaScript 將在這裡動態生成材料列表 -->
+                </div>
+
+                <!-- 新增按鈕 -->
+                <button onclick="window.addIngredient()" class="no-export mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-primary hover:border-primary hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
+                    <i class="ph ph-plus-circle text-xl"></i> 新增材料
+                </button>
+
+                <!-- 總計區塊 -->
+                <div class="mt-8 bg-orange-50 rounded-lg p-5 border border-orange-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <!-- 左側：總成本 -->
+                        <div class="w-full md:w-1/2">
+                            <div class="text-gray-600 text-sm font-medium mb-1">總成本 (A)</div>
+                            <div class="text-3xl font-bold text-gray-900">$ <span id="total-cost">0.00</span></div>
                         </div>
-                        <div class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
-                            <span class="text-gray-600 text-sm">建議售價 <span class="text-xs text-gray-400">(總成本 / (1-毛利率))</span></span>
-                            <div class="text-xl font-bold text-primary">$ <span id="suggested-price">0.00</span></div>
+                        
+                        <!-- 右側：售價與毛利 -->
+                        <div class="w-full md:w-1/2 space-y-3">
+                            <div class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
+                                <span class="text-gray-600 text-sm">目標毛利率</span>
+                                <div class="flex items-center">
+                                    <input type="number" id="target-margin" oninput="window.updateMeta('margin', this.value)" class="w-16 text-right font-bold text-gray-900 border-b border-gray-300 focus:border-primary focus:outline-none">
+                                    <span class="ml-1 text-gray-600">%</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
+                                <span class="text-gray-600 text-sm">建議售價 <span class="text-xs text-gray-400">(總成本 / (1-毛利率))</span></span>
+                                <div class="text-xl font-bold text-primary">$ <span id="suggested-price">0.00</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -119,22 +137,30 @@
         </div>
 
         <!-- 操作區塊 (不會被截圖) -->
-        <div class="no-export mt-6 flex gap-4 justify-center">
-            <button onclick="resetData()" class="px-6 py-3 bg-white text-gray-600 rounded-lg shadow hover:bg-gray-50 transition-colors flex items-center gap-2 font-medium">
-                <i class="ph ph-arrow-counter-clockwise text-xl"></i> 重新載入範例
+        <div class="no-export mt-6 flex flex-wrap gap-3 justify-center">
+            <button onclick="window.clearCurrentTab()" class="px-5 py-3 bg-red-50 text-red-600 rounded-lg shadow hover:bg-red-100 transition-colors flex items-center gap-2 font-medium">
+                <i class="ph ph-trash text-xl"></i> 結案清空
             </button>
-            <button onclick="exportToImage()" class="px-6 py-3 bg-primary text-white rounded-lg shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-colors flex items-center gap-2 font-medium" id="export-btn">
-                <i class="ph ph-download-simple text-xl"></i> 快速出圖回報
+            <button onclick="window.resetData()" class="px-5 py-3 bg-white text-gray-600 rounded-lg shadow hover:bg-gray-50 transition-colors flex items-center gap-2 font-medium">
+                <i class="ph ph-arrow-counter-clockwise text-xl"></i> 載入範例
+            </button>
+            <button onclick="window.exportToImage()" class="px-5 py-3 bg-primary text-white rounded-lg shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-colors flex items-center gap-2 font-medium flex-grow md:flex-grow-0 justify-center" id="export-btn">
+                <i class="ph ph-image text-xl"></i> 寬版出圖回報
             </button>
         </div>
     </div>
 
-    <script>
+    <!-- 模組化腳本：處理 Firebase 與邏輯 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // 設定當前日期
         const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('zh-TW', dateOptions);
 
-        // 預設公版資料 - 移除範例文字
+        // 預設範例資料
         const defaultIngredients = [
             { name: '基本湯底：味噌湯', bulkPrice: 15, bulkQty: 1, usage: 1, unit: '份' },
             { name: '高麗菜', bulkPrice: 100, bulkQty: 1000, usage: 50, unit: '克' },
@@ -148,15 +174,154 @@
             { name: '16P鮑魚', bulkPrice: 400, bulkQty: 16, usage: 1, unit: '顆' },
         ];
 
-        let ingredients = JSON.parse(JSON.stringify(defaultIngredients));
+        // 初始化 10 個方案的資料結構
+        let currentTab = 1;
+        let tabsData = {};
+        for (let i = 1; i <= 10; i++) {
+            tabsData[i] = {
+                name: i === 1 ? '海鮮味噌烏龍麵' : `未命名方案 ${i}`,
+                margin: 18,
+                ingredients: i === 1 ? JSON.parse(JSON.stringify(defaultIngredients)) : []
+            };
+        }
 
-        // 渲染列表
-        function render() {
+        // Firebase 變數
+        let db, auth, user, appId;
+        let saveTimeout = null;
+
+        // 初始化 Firebase
+        async function initFirebase() {
+            try {
+                // 套用您專屬的 Firebase 金鑰
+                const firebaseConfig = {
+                    apiKey: "AIzaSyAT9nmcxVI-1J4pTXMhvfXmFzYJlaQR3HM",
+                    authDomain: "my-leave-calendar-50cfa.firebaseapp.com",
+                    projectId: "my-leave-calendar-50cfa",
+                    storageBucket: "my-leave-calendar-50cfa.firebasestorage.app",
+                    messagingSenderId: "37489112070",
+                    appId: "1:37489112070:web:3d68bb273b7ac438297f87"
+                };
+
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                appId = "cost_calculator_app"; // 資料庫內的獨立命名空間
+
+                // 登入驗證：綁定您自己的專案，請務必開啟「匿名登入」
+                try {
+                    await signInAnonymously(auth);
+                } catch (err) {
+                    console.error("登入失敗：", err);
+                    document.getElementById('cloud-status').innerHTML = '<i class="ph ph-warning"></i> 資料庫權限錯誤';
+                    document.getElementById('cloud-status').className = 'ml-2 text-xs text-red-500 font-medium';
+                    window.renderTabs();
+                    window.render();
+                    return;
+                }
+
+                // 監聽登入狀態並載入雲端資料
+                onAuthStateChanged(auth, (u) => {
+                    user = u;
+                    if (user) {
+                        loadCloudData();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase 初始化失敗:", error);
+                window.renderTabs();
+                window.render();
+            }
+        }
+
+        let isInitialLoad = true;
+
+        // 載入雲端資料
+        function loadCloudData() {
+            if (!user) return;
+            const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'cost_tabs');
+            
+            onSnapshot(colRef, (snapshot) => {
+                snapshot.forEach(doc => {
+                    const tabId = parseInt(doc.id.replace('tab_', ''));
+                    if (!isNaN(tabId) && tabId >= 1 && tabId <= 10) {
+                        tabsData[tabId] = doc.data();
+                    }
+                });
+                
+                if (isInitialLoad) {
+                    window.renderTabs();
+                    window.render();
+                    isInitialLoad = false;
+                } else {
+                    // 非首次載入，僅更新頁籤視覺（避免打字時失去焦點）
+                    window.renderTabs(); 
+                }
+            }, (error) => {
+                console.error("讀取雲端資料失敗:", error);
+            });
+        }
+
+        // 寫入雲端 (Debounced)
+        function scheduleCloudSave() {
+            const statusEl = document.getElementById('cloud-status');
+            statusEl.innerHTML = '<i class="ph ph-spinner animate-spin"></i> 儲存中...';
+            statusEl.className = 'ml-2 text-xs text-orange-500 font-medium';
+
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                if (!user) {
+                    statusEl.innerHTML = '<i class="ph ph-warning"></i> 僅本地暫存';
+                    return;
+                }
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cost_tabs', `tab_${currentTab}`);
+                    await setDoc(docRef, tabsData[currentTab]);
+                    statusEl.innerHTML = '<i class="ph ph-cloud-check"></i> 雲端已同步';
+                    statusEl.className = 'ml-2 text-xs text-green-600 font-medium';
+                } catch (error) {
+                    console.error("寫入雲端失敗:", error);
+                    statusEl.innerHTML = '<i class="ph ph-warning"></i> 儲存失敗';
+                    statusEl.className = 'ml-2 text-xs text-red-500 font-medium';
+                }
+            }, 800);
+        }
+
+        // ================= UI 渲染函數 =================
+
+        window.renderTabs = function() {
+            const container = document.getElementById('tab-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const isActive = i === currentTab;
+                let displayName = tabsData[i].name || `方案 ${i}`;
+                if (displayName.length > 6) displayName = displayName.substring(0, 6) + '...';
+                
+                const btn = document.createElement('button');
+                btn.className = `whitespace-nowrap px-4 py-3 md:py-2 rounded-t-lg font-medium transition-colors snap-start flex-shrink-0 border-x border-t ${isActive ? 'bg-white text-primary border-primary shadow-sm z-10' : 'bg-gray-200 text-gray-500 border-gray-300 hover:bg-gray-300 -mb-[1px]'}`;
+                btn.innerHTML = `<span class="opacity-50 text-xs mr-1">${i}.</span>${displayName}`;
+                btn.onclick = () => window.switchTab(i);
+                container.appendChild(btn);
+            }
+        };
+
+        window.switchTab = function(tabId) {
+            currentTab = tabId;
+            window.renderTabs();
+            window.render();
+        };
+
+        window.render = function() {
+            const activeData = tabsData[currentTab];
+            
+            // 更新 Meta 輸入框
+            document.getElementById('product-name').value = activeData.name || '';
+            document.getElementById('target-margin').value = activeData.margin || 18;
+
             const listContainer = document.getElementById('ingredients-list');
             listContainer.innerHTML = '';
 
-            ingredients.forEach((item, index) => {
-                // 自動計算單位成本
+            // 渲染材料列表
+            activeData.ingredients.forEach((item, index) => {
                 const unitCost = item.bulkQty ? (item.bulkPrice / item.bulkQty) : 0;
                 const subtotal = (unitCost * item.usage).toFixed(2);
                 
@@ -164,114 +329,140 @@
                 row.className = 'group relative flex flex-col md:flex-row md:items-center gap-2 md:gap-4 bg-white md:bg-transparent p-4 md:p-0 rounded-lg shadow-sm md:shadow-none border border-gray-100 md:border-none';
                 
                 row.innerHTML = `
-                    <!-- 材料名稱 -->
                     <div class="w-full md:w-3/12 font-medium">
                         <span class="md:hidden text-xs text-gray-400 block mb-1">材料名稱</span>
-                        <input type="text" value="${item.name}" onchange="updateItem(${index}, 'name', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-left" placeholder="材料名稱">
+                        <input type="text" value="${item.name}" onchange="window.updateItem(${index}, 'name', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-left" placeholder="材料名稱">
                     </div>
-
-                    <!-- 數值輸入區塊 -->
                     <div class="flex flex-row flex-wrap md:flex-nowrap gap-2 md:gap-4 w-full md:w-9/12 items-end md:items-center">
-                        
-                        <!-- 原裝價格 -->
                         <div class="w-[47%] md:w-2/12 relative">
                             <span class="md:hidden text-xs text-green-500 block mb-1">原裝價格</span>
                             <span class="absolute left-1 top-[1.6rem] md:top-1 text-gray-400 text-sm">$</span>
-                            <input type="number" inputmode="decimal" value="${item.bulkPrice}" oninput="updateItem(${index}, 'bulkPrice', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 pl-4 text-center bg-green-50/50 rounded-t" placeholder="0">
+                            <input type="number" inputmode="decimal" value="${item.bulkPrice}" oninput="window.updateItem(${index}, 'bulkPrice', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 pl-4 text-center bg-green-50/50 rounded-t" placeholder="0">
                         </div>
-
-                        <!-- 包裝規格 -->
                         <div class="w-[47%] md:w-2/12">
                             <span class="md:hidden text-xs text-green-500 block mb-1">包裝規格(數量)</span>
-                            <input type="number" inputmode="decimal" value="${item.bulkQty}" oninput="updateItem(${index}, 'bulkQty', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-center bg-green-50/50 rounded-t" placeholder="1">
+                            <input type="number" inputmode="decimal" value="${item.bulkQty}" oninput="window.updateItem(${index}, 'bulkQty', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-center bg-green-50/50 rounded-t" placeholder="1">
                         </div>
-
-                        <!-- 本次用量 -->
                         <div class="w-[30%] md:w-2/12">
                             <span class="md:hidden text-xs text-blue-500 block mb-1">本次用量</span>
-                            <input type="number" inputmode="decimal" value="${item.usage}" oninput="updateItem(${index}, 'usage', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-center bg-blue-50/50 rounded-t" placeholder="0">
+                            <input type="number" inputmode="decimal" value="${item.usage}" oninput="window.updateItem(${index}, 'usage', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-center bg-blue-50/50 rounded-t" placeholder="0">
                         </div>
-
-                        <!-- 單位 -->
                         <div class="w-[25%] md:w-1/12">
                             <span class="md:hidden text-xs text-gray-400 block mb-1">單位</span>
-                            <input type="text" value="${item.unit}" onchange="updateItem(${index}, 'unit', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-center" placeholder="單位">
+                            <input type="text" value="${item.unit}" onchange="window.updateItem(${index}, 'unit', this.value)" class="w-full border-b border-gray-200 focus:border-primary focus:outline-none py-1 text-center" placeholder="單位">
                         </div>
-
-                        <!-- 小計與自動計算的單價 -->
                         <div class="w-[35%] md:w-2/12 text-right mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-dashed border-gray-200 md:border-none flex flex-col justify-end">
                             <span class="text-[10px] md:text-xs text-gray-400 unit-price-val">單價: $${unitCost.toFixed(1)}</span>
                             <span class="font-semibold text-gray-700 subtotal-val">$ ${subtotal}</span>
                         </div>
                     </div>
-
-                    <!-- 刪除按鈕 (移至最後方，手機版成為獨立區塊) -->
-                    <button onclick="removeIngredient(${index})" class="no-export mt-4 md:mt-0 md:absolute md:-right-8 md:top-1/2 md:-translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-2 md:p-1 flex justify-center items-center w-full md:w-auto border border-gray-200 md:border-none rounded bg-gray-50 hover:bg-red-50 md:bg-transparent md:hover:bg-transparent" title="刪除此列">
+                    <button onclick="window.removeIngredient(${index})" class="no-export mt-4 md:mt-0 md:absolute md:-right-8 md:top-1/2 md:-translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-2 md:p-1 flex justify-center items-center w-full md:w-auto border border-gray-200 md:border-none rounded bg-gray-50 hover:bg-red-50 md:bg-transparent md:hover:bg-transparent" title="刪除此列">
                         <i class="ph ph-trash text-lg"></i><span class="md:hidden ml-1 text-sm">刪除材料</span>
                     </button>
                 `;
                 listContainer.appendChild(row);
             });
 
-            calculate();
-        }
+            window.calculate();
+        };
 
-        // 更新單筆資料
-        function updateItem(index, field, value) {
+        // ================= 資料操作函數 =================
+
+        window.updateMeta = function(field, value) {
+            if (field === 'margin') {
+                tabsData[currentTab].margin = parseFloat(value) || 0;
+                window.calculate();
+            } else {
+                tabsData[currentTab].name = value;
+                window.renderTabs();
+            }
+            scheduleCloudSave();
+        };
+
+        window.updateItem = function(index, field, value) {
+            const activeIngredients = tabsData[currentTab].ingredients;
             if (field === 'bulkPrice' || field === 'bulkQty' || field === 'usage') {
-                ingredients[index][field] = parseFloat(value) || 0;
-                calculate(); // 即時計算總計
+                activeIngredients[index][field] = parseFloat(value) || 0;
+                window.calculate();
                 
-                // 即時更新該列的小計與單價顯示，不重新渲染整個列表以免鍵盤縮回
-                const item = ingredients[index];
+                const item = activeIngredients[index];
                 const unitCost = item.bulkQty ? (item.bulkPrice / item.bulkQty) : 0;
                 const subtotal = (unitCost * item.usage).toFixed(2);
                 
                 const rows = document.getElementById('ingredients-list').children;
-                const subtotalSpan = rows[index].querySelector('.subtotal-val');
-                const unitPriceSpan = rows[index].querySelector('.unit-price-val');
-                
-                if(subtotalSpan) subtotalSpan.innerHTML = `$ ${subtotal}`;
-                if(unitPriceSpan) unitPriceSpan.innerHTML = `單價: $${unitCost.toFixed(2)}`;
+                if(rows[index]) {
+                    const subtotalSpan = rows[index].querySelector('.subtotal-val');
+                    const unitPriceSpan = rows[index].querySelector('.unit-price-val');
+                    if(subtotalSpan) subtotalSpan.innerHTML = `$ ${subtotal}`;
+                    if(unitPriceSpan) unitPriceSpan.innerHTML = `單價: $${unitCost.toFixed(2)}`;
+                }
             } else {
-                ingredients[index][field] = value;
+                activeIngredients[index][field] = value;
             }
-        }
+            scheduleCloudSave();
+        };
 
-        // 新增材料
-        function addIngredient() {
-            ingredients.push({ name: '', bulkPrice: 0, bulkQty: 1, usage: 0, unit: '' });
-            render();
-        }
+        window.addIngredient = function() {
+            tabsData[currentTab].ingredients.push({ name: '', bulkPrice: 0, bulkQty: 1, usage: 0, unit: '' });
+            window.render();
+            scheduleCloudSave();
+        };
 
-        // 移除材料
-        function removeIngredient(index) {
-            ingredients.splice(index, 1);
-            render();
-        }
+        window.removeIngredient = function(index) {
+            tabsData[currentTab].ingredients.splice(index, 1);
+            window.render();
+            scheduleCloudSave();
+        };
 
-        // 重置為預設範例
-        function resetData() {
+        window.resetData = function() {
             if(confirm('確定要捨棄目前資料，重新載入範例嗎？')) {
-                ingredients = JSON.parse(JSON.stringify(defaultIngredients));
-                document.getElementById('product-name').value = '海鮮味噌烏龍麵';
-                document.getElementById('target-margin').value = 18;
-                render();
+                tabsData[currentTab] = {
+                    name: '海鮮味噌烏龍麵',
+                    margin: 18,
+                    ingredients: JSON.parse(JSON.stringify(defaultIngredients))
+                };
+                window.renderTabs();
+                window.render();
+                scheduleCloudSave();
             }
-        }
+        };
 
-        // 計算總計與建議售價
-        function calculate() {
-            const totalCost = ingredients.reduce((sum, item) => {
+        window.clearCurrentTab = async function() {
+            if(confirm(`確定要「結案並清空」方案 ${currentTab} 的所有資料嗎？\n此動作無法復原。`)) {
+                // 重置本地資料
+                tabsData[currentTab] = {
+                    name: `未命名方案 ${currentTab}`,
+                    margin: 18,
+                    ingredients: []
+                };
+                window.renderTabs();
+                window.render();
+
+                // 刪除雲端資料
+                if (user) {
+                    try {
+                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cost_tabs', `tab_${currentTab}`);
+                        await deleteDoc(docRef);
+                        const statusEl = document.getElementById('cloud-status');
+                        statusEl.innerHTML = '<i class="ph ph-trash"></i> 雲端已清空';
+                        statusEl.className = 'ml-2 text-xs text-gray-500 font-medium';
+                    } catch (e) {
+                        console.error("刪除雲端資料失敗", e);
+                    }
+                }
+            }
+        };
+
+        window.calculate = function() {
+            const activeData = tabsData[currentTab];
+            const totalCost = activeData.ingredients.reduce((sum, item) => {
                 const unitCost = item.bulkQty ? (item.bulkPrice / item.bulkQty) : 0;
                 return sum + (unitCost * item.usage);
             }, 0);
             
             document.getElementById('total-cost').textContent = totalCost.toFixed(2);
 
-            const marginStr = document.getElementById('target-margin').value;
-            const margin = parseFloat(marginStr) || 0;
-            
+            const margin = activeData.margin || 0;
             let suggestedPrice = 0;
             if (margin >= 100) {
                 suggestedPrice = 0; 
@@ -280,10 +471,11 @@
             }
             
             document.getElementById('suggested-price').textContent = Math.ceil(suggestedPrice).toString(); 
-        }
+        };
 
-        // 匯出為圖片
-        async function exportToImage() {
+        // ================= 寬版出圖演算法 =================
+
+        window.exportToImage = async function() {
             const btn = document.getElementById('export-btn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> 產生中...';
@@ -291,40 +483,48 @@
 
             const captureArea = document.getElementById('capture-area');
             
-            // 加入匯出模式的 class，隱藏按鈕並讓輸入框變成純文字外觀
+            // 啟用匯出模式，隱藏按鈕等不需要的UI
             captureArea.classList.add('export-mode');
             
-            await new Promise(r => setTimeout(r, 100));
+            // 強制賦予寬度，觸發 Tailwind 的 md: (768px) 排版邏輯
+            captureArea.classList.add('export-desktop-force');
+            
+            await new Promise(r => setTimeout(r, 150)); // 等待重新排版
 
             try {
                 const canvas = await html2canvas(captureArea, {
                     scale: 2, 
-                    backgroundColor: '#f9fafb',
+                    backgroundColor: '#ffffff',
                     logging: false,
-                    useCORS: true
+                    useCORS: true,
+                    // 強制欺騙 html2canvas 目前為桌面寬度
+                    windowWidth: 1024 
                 });
 
                 const image = canvas.toDataURL("image/png", 1.0);
                 const link = document.createElement('a');
                 
-                const productName = document.getElementById('product-name').value || '未命名';
+                const productName = tabsData[currentTab].name || `方案_${currentTab}`;
                 const dateStr = document.getElementById('current-date').textContent.replace(/\//g, '');
                 
-                link.download = `成本試算_${productName}_${dateStr}.png`;
+                link.download = `新品成本_${productName}_${dateStr}.png`;
                 link.href = image;
                 link.click();
             } catch (error) {
                 console.error('出圖失敗:', error);
                 alert('出圖發生錯誤，請稍後再試。');
             } finally {
+                // 恢復原狀
                 captureArea.classList.remove('export-mode');
+                captureArea.classList.remove('export-desktop-force');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
-        }
+        };
 
-        // 初始化渲染
-        render();
+        // 啟動應用程式
+        initFirebase();
+
     </script>
 </body>
 </html>
