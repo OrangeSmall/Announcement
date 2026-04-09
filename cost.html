@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新品成本試算工具 v2</title>
+    <title>新品開發成本試算工具 v2.1</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 html2canvas 供截圖使用 -->
@@ -188,6 +188,9 @@
         // Firebase 變數
         let db, auth, user, appId;
         let saveTimeout = null;
+        
+        // 定義共用工作區的集合名稱，不再依賴個人 UID
+        const SHARED_COLLECTION_NAME = 'company_shared_cost_tabs';
 
         // 初始化 Firebase
         async function initFirebase() {
@@ -205,7 +208,7 @@
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                appId = "cost_calculator_app"; // 資料庫內的獨立命名空間
+                appId = "cost_calculator_app"; 
 
                 // 登入驗證：綁定您自己的專案，請務必開啟「匿名登入」
                 try {
@@ -235,10 +238,11 @@
 
         let isInitialLoad = true;
 
-        // 載入雲端資料
+        // 載入雲端資料 (改成讀取共用空間)
         function loadCloudData() {
             if (!user) return;
-            const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'cost_tabs');
+            // 改為讀取固定的共用路徑，不再使用 user.uid
+            const colRef = collection(db, SHARED_COLLECTION_NAME);
             
             onSnapshot(colRef, (snapshot) => {
                 snapshot.forEach(doc => {
@@ -261,7 +265,7 @@
             });
         }
 
-        // 寫入雲端 (Debounced)
+        // 寫入雲端 (改成寫入共用空間)
         function scheduleCloudSave() {
             const statusEl = document.getElementById('cloud-status');
             statusEl.innerHTML = '<i class="ph ph-spinner animate-spin"></i> 儲存中...';
@@ -274,7 +278,8 @@
                     return;
                 }
                 try {
-                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cost_tabs', `tab_${currentTab}`);
+                    // 改為寫入固定的共用路徑，不再使用 user.uid
+                    const docRef = doc(db, SHARED_COLLECTION_NAME, `tab_${currentTab}`);
                     await setDoc(docRef, tabsData[currentTab]);
                     statusEl.innerHTML = '<i class="ph ph-cloud-check"></i> 雲端已同步';
                     statusEl.className = 'ml-2 text-xs text-green-600 font-medium';
@@ -441,7 +446,7 @@
                 // 刪除雲端資料
                 if (user) {
                     try {
-                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cost_tabs', `tab_${currentTab}`);
+                        const docRef = doc(db, SHARED_COLLECTION_NAME, `tab_${currentTab}`);
                         await deleteDoc(docRef);
                         const statusEl = document.getElementById('cloud-status');
                         statusEl.innerHTML = '<i class="ph ph-trash"></i> 雲端已清空';
