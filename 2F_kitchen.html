@@ -5,22 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2F 熟食部廚房出餐系統</title>
     <style>
-        :root { --bg-dark: #1f2937; --card-bg: #ffffff; --primary: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --text-main: #111827; }
+        :root { --bg-dark: #1f2937; --card-bg: #ffffff; --primary: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --purple: #8b5cf6; --text-main: #111827; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-dark); margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
         .header { display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #374151; }
-        .header-left { display: flex; align-items: center; gap: 20px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
         .header h1 { margin: 0; font-size: 28px; letter-spacing: 2px;}
         .clock { font-size: 24px; font-weight: bold; color: #9ca3af; }
-        .btn-inventory { background: #4b5563; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-inventory:active { background: #374151; }
+        .btn-header { background: #4b5563; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-header:active { background: #374151; }
+        .btn-broadcast { background: var(--purple); }
+        .btn-broadcast:active { background: #7c3aed; }
         
         .orders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; flex-grow: 1; align-items: start; overflow-y: auto; }
-        .order-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; border-top: 8px solid var(--warning); transition: all 0.3s ease; }
+        .order-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; border-top: 8px solid var(--warning); transition: all 0.3s ease; position: relative;}
         .order-card.status-cooking { border-top-color: var(--primary); }
+        .order-card.type-proactive { border-top-color: var(--purple); }
         .card-header { padding: 15px; background: #f9fafb; border-bottom: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
         .order-id { font-size: 28px; font-weight: 900; color: var(--text-main); }
         .order-time { font-size: 18px; color: #6b7280; font-weight: bold; }
         .order-main-remark { padding: 10px 15px; background: #fee2e2; color: #b91c1c; font-size: 16px; font-weight: bold; border-bottom: 1px solid #fca5a5; }
+        .proactive-badge { background: #f3e8ff; color: #6d28d9; padding: 5px 15px; font-size: 14px; font-weight: bold; border-bottom: 1px solid #e9d5ff; text-align: center;}
         
         .items-list { padding: 15px; flex-grow: 1; font-size: 22px; }
         .item-row { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px dashed #d1d5db; cursor: pointer; user-select: none; }
@@ -28,12 +32,9 @@
         .item-row.done { opacity: 0.4; text-decoration: line-through; }
         .item-main { display: flex; justify-content: space-between; font-weight: bold; }
         .item-qty { color: var(--primary); font-size: 26px; }
-        
-        /* 數量修改按鈕樣式 */
         .edit-qty-btn { cursor: pointer; padding: 0 5px; border-radius: 4px; transition: background 0.2s; }
         .edit-qty-btn:hover { background: #e5e7eb; opacity: 0.8; }
         .edit-qty-icon { font-size: 18px; opacity: 0.6; margin-left: 4px; }
-
         .item-remark { font-size: 16px; color: var(--danger); margin-top: 5px; }
 
         .card-actions { padding: 15px; background: #f3f4f6; border-top: 1px solid #e5e7eb; }
@@ -52,11 +53,13 @@
         .timer-text { text-align: right; font-size: 14px; color: #4b5563; font-weight: bold; margin-bottom: 10px; }
         .btn-success { background: var(--success); color: white; padding: 20px; font-size: 24px; width: 100%; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; padding: 20px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 15px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box;}
+        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box;}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 15px; flex-shrink: 0;}
         .modal-header h2 { margin: 0; font-size: 24px; color: var(--text-main); }
         .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #6b7280; }
+        
+        /* 庫存列表樣式 */
         .inventory-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-right: 10px; }
         .inv-category h3 { margin: 0 0 10px 0; color: #374151; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 10px;}
         .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
@@ -69,6 +72,25 @@
         .delete-item-btn { position: absolute; top: -10px; right: -10px; background: white; color: #6b7280; border: 1px solid #d1d5db; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10; transition: 0.2s; padding: 0;}
         .delete-item-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
         .add-inv-item { border: 2px dashed #9ca3af; background: #f9fafb; color: #6b7280; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 8px; padding: 12px 10px; font-weight: bold; font-size: 16px; min-height: 80px;}
+
+        /* 主動廣播 Modal 專用樣式 */
+        .proactive-layout { display: flex; gap: 20px; height: 100%; overflow: hidden;}
+        .p-menu { flex: 2; display: flex; flex-direction: column; border-right: 2px solid #f3f4f6; padding-right: 15px;}
+        .p-cart { flex: 1; display: flex; flex-direction: column; min-width: 250px;}
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; flex-shrink: 0;}
+        .tab-btn { padding: 10px 15px; font-size: 16px; font-weight: bold; border: none; background: #e5e7eb; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: var(--purple); color: white; }
+        .p-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; overflow-y: auto; align-content: start; padding-right: 5px;}
+        .p-item-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; background: white;}
+        .qty-controls { display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: 10px;}
+        .qty-btn { width: 30px; height: 30px; font-size: 18px; border: none; border-radius: 5px; background: #e5e7eb; cursor: pointer; }
+        .qty-btn.add { background: var(--purple); color: white; }
+        .qty-input { font-size: 16px; font-weight: bold; width: 40px; height: 28px; text-align: center; border: 1px solid #d1d5db; border-radius: 5px; }
+        .p-cart-list { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; background: #f9fafb;}
+        .p-cart-item { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; border-bottom: 1px dashed #d1d5db; padding-bottom: 5px;}
+        .p-submit-btn { background: var(--purple); color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s;}
+        .p-submit-btn:active { background: #7c3aed; }
+        .p-submit-btn:disabled { background: #9ca3af; cursor: not-allowed; }
         
         .sync-indicator { color: #10b981; font-size: 14px; position: absolute; right: 15px; top: 15px; font-weight: bold;}
     </style>
@@ -77,7 +99,8 @@
     <div class="header">
         <div class="header-left">
             <h1>👨‍🍳 2F 廚房出餐系統</h1>
-            <button class="btn-inventory" onclick="openInventoryModal()">📦 品項庫存設定</button>
+            <button class="btn-header" onclick="openInventoryModal()">📦 品項庫存設定</button>
+            <button class="btn-header btn-broadcast" onclick="openProactiveModal()">📢 主動製作廣播</button>
         </div>
         <div class="clock" id="clock">00:00:00</div>
     </div>
@@ -87,6 +110,7 @@
         <div style="color: #9ca3af; font-size: 24px; text-align: center; width: 100%; margin-top: 50px;">載入雲端資料中... ⏳</div>
     </div>
 
+    <!-- 庫存設定 Modal -->
     <div class="modal-overlay" id="inventoryModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -103,6 +127,46 @@
         </div>
     </div>
 
+    <!-- 主動製作廣播 Modal -->
+    <div class="modal-overlay" id="proactiveModal">
+        <div class="modal-content" style="max-width: 1000px; height: 85vh;">
+            <div class="modal-header">
+                <h2>📢 建立廚房主動製作任務</h2>
+                <button class="close-modal" onclick="closeProactiveModal()">✖</button>
+            </div>
+            <div style="margin-bottom: 15px; color: #6b7280; font-size: 15px;">
+                選擇即將大量製作的品項與數量，並設定完成時間。送出後將同步通知 1F 前台，並記錄於最終營業結算中。
+            </div>
+            <div class="proactive-layout">
+                <!-- 左側：選單 -->
+                <div class="p-menu">
+                    <div class="tabs" id="pCategoryTabs"></div>
+                    <div class="p-items-grid" id="pItemsGrid"></div>
+                </div>
+                <!-- 右側：廣播車 -->
+                <div class="p-cart">
+                    <h3 style="margin-top: 0; color: #374151;">本次製作清單</h3>
+                    <div class="p-cart-list" id="pCartList">
+                        <div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側點選製作數量</div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: bold; color: #374151; display: block; margin-bottom: 5px;">預估完成時間 (分鐘)：</label>
+                        <select id="pEta" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 16px;">
+                            <option value="5">5 分鐘</option>
+                            <option value="10" selected>10 分鐘</option>
+                            <option value="15">15 分鐘</option>
+                            <option value="20">20 分鐘</option>
+                            <option value="30">30 分鐘</option>
+                            <option value="45">45 分鐘</option>
+                            <option value="60">60 分鐘</option>
+                        </select>
+                    </div>
+                    <button class="p-submit-btn" id="pSubmitBtn" onclick="submitProactiveOrder()">🚀 發送通報並建立任務</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <audio id="kitchenSound" src="https://actions.google.com/sounds/v1/door_bells/doorbell.ogg" preload="auto"></audio>
     <audio id="doneSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg" preload="auto"></audio>
 
@@ -110,7 +174,6 @@
         // --- 填入您的 Google Apps Script Web App URL ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbzvmu2NXvJ6hiD23fgCFfuHD5vpvkuLxPP6Iiq67MBn24GG-uorUjK7OZPm9Zb0b8bP/exec';
 
-        // 內建的基本款菜單防護網
         const defaultMenuData = {
             "主食": ["雙拼便當(雞+魚)", "雙拼便當(魚+魚)", "純雞腿便當", "純魚便當", "便當(不限品項)", "和風牛肉丼飯", "薑汁豬肉丼飯"],
             "炸物": ["酥炸白身魚", "酥炸牡蠣", "酥炸牛肉餅", "酥炸竹筴魚", "酥炸蟹味棒", "極厚蝦排", "咖哩可樂餅", "日式炸蝦"],
@@ -123,13 +186,16 @@
         let outOfStockItems = new Set();
         let orders = [];
 
+        // 主動廣播功能專用變數
+        let pCurrentCat = "主食";
+        let pCart = {};
+
         async function init() {
             updateClock();
             setInterval(updateClock, 1000);
             setInterval(updateTimers, 1000); 
             
             await fetchSyncData();
-            // 每 5 秒自動向雲端抓取一次最新資料
             setInterval(fetchSyncData, 5000);
         }
 
@@ -138,10 +204,9 @@
             document.getElementById('clock').innerText = now.toLocaleTimeString('zh-TW', { hour12: false });
         }
 
-        // 呼叫雲端 API 抓取最新狀態
         async function fetchSyncData() {
             try {
-                // 加上隨機參數強制破解瀏覽器快取
+                // 使用時間戳記避免快取，確保資料即時更新
                 const noCacheUrl = API_URL + '?action=getSyncData&t=' + new Date().getTime();
                 const res = await fetch(noCacheUrl);
                 const json = await res.json();
@@ -163,7 +228,6 @@
                         const localOrder = orders.find(o => o.id == so.id);
                         if (localOrder) {
                             so.items.forEach((item, i) => {
-                                // 若 2F 本地修改了完成狀態，則保留本地狀態
                                 item.done = localOrder.items[i] ? localOrder.items[i].done : false;
                             });
                         } else {
@@ -171,14 +235,12 @@
                         }
                     });
 
-                    // 檢查是否為初始載入畫面 (避免因陣列皆為空而跳過初次渲染)
                     const grid = document.getElementById('ordersGrid');
                     const isFirstLoad = grid.innerHTML.includes('載入雲端資料中');
 
                     if (isFirstLoad || JSON.stringify(orders) !== JSON.stringify(serverOrders)) {
                         orders = serverOrders;
                         renderOrders();
-                        // 確保只有非初次載入且有新單時才發出聲音
                         if (hasNewOrder && !isFirstLoad) {
                             const sound = document.getElementById("kitchenSound");
                             sound.currentTime = 0; sound.play();
@@ -186,6 +248,9 @@
                     }
 
                     if(document.getElementById('inventoryModal').style.display === 'flex') renderInventoryModal();
+                    if(document.getElementById('proactiveModal').style.display === 'flex') {
+                        renderPTabs(); renderPItems();
+                    }
 
                     const syncEl = document.getElementById('syncStatus');
                     syncEl.style.color = '#10b981';
@@ -200,18 +265,16 @@
                 syncEl.innerText = "● 雲端連線異常";
                 
                 const grid = document.getElementById('ordersGrid');
-                // 若仍卡在載入畫面，顯示錯誤提示以利排除
-                if (grid.innerHTML.includes('載入雲端資料中')) {
+                if (orders.length === 0) {
                     let errorHelp = "請確認 Google Sheets 第一列是否有輸入標題。";
                     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                        errorHelp = "連線被拒絕 (Failed to fetch)。<br><br>💡 <b>解決方式：</b><br>這通常是暫時的網路波動。若持續發生，請至 GAS 點擊「管理部署作業」>「編輯」，<br>將版本設為「<b>建立新版本</b>」，且存取權限務必設為「<b>所有人 (Anyone)</b>」。";
+                        errorHelp = "連線被拒絕 (Failed to fetch)。<br><br>💡 <b>解決方式：</b><br>請至 GAS 點擊「管理部署作業」>「編輯」，<br>將版本設為「<b>建立新版本</b>」，且存取權限務必設為「<b>所有人 (Anyone)</b>」。";
                     }
                     grid.innerHTML = `<div style="color: var(--danger); font-size: 20px; text-align: center; width: 100%; margin-top: 50px;">⚠️ 讀取失敗<br><br><span style="font-size:16px; color:#6b7280;">錯誤訊息：${error.message}<br><br>${errorHelp}</span></div>`;
                 }
             }
         }
 
-        // POST 送出 API 封裝
         async function apiPost(payload) {
             try {
                 await fetch(API_URL, {
@@ -249,6 +312,7 @@
 
                 const isWaiting = order.status === 'waiting';
                 const isOutOfStock = order.etaStr === '缺貨';
+                const isProactive = order.id.startsWith('PRO-'); 
                 
                 let cookingAreaHTML = '';
                 if (!isWaiting) {
@@ -256,7 +320,7 @@
                         cookingAreaHTML = `<div class="cooking-status" style="color: var(--danger);">❌ 此單已標記：有品項無庫存</div>`;
                     } else {
                         cookingAreaHTML = `
-                            <div class="cooking-status">👨‍🍳 製作中 (回傳：${order.etaStr}分)</div>
+                            <div class="cooking-status">👨‍🍳 ${isProactive ? '備料製作中' : '製作中'} (回傳：${order.etaStr}分)</div>
                             ${order.targetTime ? `
                                 <div class="progress-container"><div class="progress-bar" id="progress-${order.id}"></div></div>
                                 <div class="timer-text" id="timer-text-${order.id}">計算中...</div>
@@ -265,10 +329,14 @@
                     }
                 }
 
+                let cardClass = isWaiting ? '' : 'status-cooking';
+                if (isProactive) cardClass = 'type-proactive';
+
                 const cardHTML = `
-                    <div class="order-card ${!isWaiting ? 'status-cooking' : ''}">
+                    <div class="order-card ${cardClass}">
                         <div class="card-header"><div class="order-id">#${order.id}</div><div class="order-time">📥 ${order.time}</div></div>
-                        ${order.mainRemark ? `<div class="order-main-remark" style="display:block;">⚠️ ${order.mainRemark}</div>` : ''}
+                        ${isProactive ? `<div class="proactive-badge">📢 廚房主動製作任務</div>` : ''}
+                        ${order.mainRemark && !isProactive ? `<div class="order-main-remark" style="display:block;">⚠️ ${order.mainRemark}</div>` : ''}
                         <div class="items-list">${itemsHTML}</div>
                         <div class="card-actions">
                             <div class="action-eta" style="display: ${isWaiting ? 'flex' : 'none'};">
@@ -294,7 +362,6 @@
             updateTimers(); 
         }
 
-        // 倒數計時條更新邏輯
         function updateTimers() {
             const now = Date.now();
             orders.forEach(order => {
@@ -324,7 +391,6 @@
             });
         }
 
-        // 修改品項數量邏輯
         function editItemQty(orderIndex, itemIndex, event) {
             event.stopPropagation();
             const order = orders[orderIndex];
@@ -382,6 +448,7 @@
             renderOrders();
         }
 
+        /* ----- 庫存管理 Modal ----- */
         function openInventoryModal() { document.getElementById('inventoryModal').style.display = 'flex'; renderInventoryModal(); }
         function closeInventoryModal() { document.getElementById('inventoryModal').style.display = 'none'; }
         
@@ -425,6 +492,126 @@
             if (confirm(`確定要刪除「${itemName}」嗎？這將同步移除 1F 的該品項。`)) {
                 apiPost({ action: 'editMenu', category: category, itemName: itemName, type: 'delete' });
             }
+        }
+
+        /* ----- 主動廣播製作 Modal ----- */
+        function openProactiveModal() {
+            document.getElementById('proactiveModal').style.display = 'flex';
+            pCurrentCat = Object.keys(menuData)[0] || "主食";
+            pCart = {};
+            renderPTabs();
+            renderPItems();
+            renderPCart();
+        }
+        
+        function closeProactiveModal() {
+            document.getElementById('proactiveModal').style.display = 'none';
+        }
+
+        function renderPTabs() {
+            const tabsContainer = document.getElementById("pCategoryTabs");
+            tabsContainer.innerHTML = "";
+            for (let category in menuData) {
+                const btn = document.createElement("button");
+                btn.className = `tab-btn ${category === pCurrentCat ? "active" : ""}`;
+                btn.innerText = category;
+                btn.onclick = () => {
+                    pCurrentCat = category;
+                    renderPTabs();
+                    renderPItems();
+                };
+                tabsContainer.appendChild(btn);
+            }
+        }
+
+        function renderPItems() {
+            const grid = document.getElementById("pItemsGrid");
+            grid.innerHTML = "";
+            if(!menuData[pCurrentCat]) return;
+
+            menuData[pCurrentCat].forEach(item => {
+                const qty = pCart[item] ? pCart[item] : 0;
+                grid.innerHTML += `
+                    <div class="p-item-card">
+                        <div style="font-weight: bold; font-size: 16px;">${item}</div>
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="updatePQty('${item}', -1)">-</button>
+                            <input type="number" class="qty-input" value="${qty}" min="0" onchange="setPQty('${item}', this.value)" onclick="this.select()">
+                            <button class="qty-btn add" onclick="updatePQty('${item}', 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updatePQty(item, change) {
+            if (!pCart[item]) pCart[item] = 0;
+            pCart[item] += change;
+            if (pCart[item] <= 0) delete pCart[item];
+            renderPItems(); renderPCart();
+        }
+
+        function setPQty(item, value) {
+            let num = parseInt(value, 10);
+            if (isNaN(num) || num <= 0) delete pCart[item];
+            else pCart[item] = num;
+            renderPItems(); renderPCart();
+        }
+
+        function renderPCart() {
+            const list = document.getElementById("pCartList");
+            list.innerHTML = "";
+            const items = Object.keys(pCart);
+            if (items.length === 0) {
+                list.innerHTML = '<div style="color: #9ca3af; text-align: center; margin-top: 20px;">請從左側點選製作數量</div>';
+                return;
+            }
+            items.forEach(item => {
+                list.innerHTML += `
+                    <div class="p-cart-item">
+                        <span>${item}</span>
+                        <span style="font-weight: bold; color: var(--purple);">x ${pCart[item]}</span>
+                    </div>
+                `;
+            });
+        }
+
+        async function submitProactiveOrder() {
+            if (Object.keys(pCart).length === 0) { alert("請先選擇要製作的品項！"); return; }
+            
+            const btn = document.getElementById("pSubmitBtn");
+            btn.innerText = "傳送中...";
+            btn.disabled = true;
+
+            const now = new Date();
+            const idStr = `PRO-${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+            const timeStr = now.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', hour12: false});
+            
+            let orderItems = [];
+            for(let key in pCart) { orderItems.push({ name: key, qty: pCart[key], remark: "", done: false }); }
+
+            const etaMins = parseInt(document.getElementById("pEta").value, 10);
+            const totalDur = etaMins * 60000;
+            const targetT = Date.now() + totalDur;
+
+            const payload = {
+                action: 'proactiveOrder',
+                order: { 
+                    id: idStr, 
+                    time: timeStr, 
+                    items: orderItems, 
+                    mainRemark: "【廚房主動製作任務】",
+                    etaStr: etaMins.toString(),
+                    targetTime: targetT,
+                    totalDuration: totalDur
+                }
+            };
+
+            await apiPost(payload);
+            
+            closeProactiveModal();
+            btn.innerText = "🚀 發送通報並建立任務";
+            btn.disabled = false;
         }
 
         window.onload = init;
