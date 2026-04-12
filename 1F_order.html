@@ -11,6 +11,7 @@
             --card-bg: #ffffff;
             --text-main: #1f2937;
             --danger: #ef4444;
+            --purple: #8b5cf6;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 10px; display: flex; height: 100vh; box-sizing: border-box; gap: 15px; }
         .menu-section { flex: 2; background: var(--card-bg); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; position: relative; }
@@ -52,6 +53,8 @@
         .status-waiting { background: #f59e0b; border-left-color: #f59e0b; }
         .status-cooking { background: #3b82f6; border-left-color: #3b82f6; }
         .status-danger { background: #ef4444; border-left-color: #ef4444; }
+        .status-proactive { background: var(--purple); border-left-color: var(--purple); }
+        .proactive-badge-text { font-size: 13px; color: #6d28d9; background: #f3e8ff; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: inline-block;}
 
         .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: none; flex-direction: column; z-index: 100; padding: 15px; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
@@ -127,7 +130,6 @@
         let currentCategory = "主食";
         let cart = {}; 
         
-        // 初始載入與定時同步
         async function init() {
             renderTabs();
             renderItems();
@@ -136,10 +138,11 @@
             setInterval(fetchSyncData, 5000);
         }
 
-        // 呼叫雲端 API 抓取最新狀態
         async function fetchSyncData() {
             try {
-                const res = await fetch(API_URL + '?action=getSyncData');
+                // 加入時間戳記避免快取，確保狀態追蹤即時更新
+                const noCacheUrl = API_URL + '?action=getSyncData&t=' + new Date().getTime();
+                const res = await fetch(noCacheUrl);
                 const json = await res.json();
                 
                 if (json.status === 'success') {
@@ -147,9 +150,7 @@
                     const serverOOS = json.data.menu.outOfStock;
                     const serverOrders = json.data.orders;
                     
-                    // 關鍵防護：如果雲端資料庫不是空的，才用雲端覆蓋本地；如果是空的，就保持本地的基本款
                     if (Object.keys(serverMenu).length > 0) {
-                        // 確保「限定品項」頁籤就算在雲端沒資料也不會消失
                         if (!serverMenu["限定品項"]) serverMenu["限定品項"] = [];
 
                         const menuChanged = JSON.stringify(menuData) !== JSON.stringify(serverMenu);
@@ -162,7 +163,6 @@
                                 currentCategory = Object.keys(menuData)[0];
                             }
                             
-                            // 清理購物車中已缺貨或被刪除的品項
                             Object.keys(cart).forEach(item => {
                                 let itemExists = false;
                                 for(let cat in menuData) { if(menuData[cat].includes(item)) itemExists = true; }
@@ -176,10 +176,8 @@
                         }
                     }
                     
-                    // 每次同步都更新右側的狀態追蹤列表
                     updateStatusList(serverOrders);
                     
-                    // 更新連線狀態燈號
                     const syncEl = document.getElementById('syncStatus');
                     syncEl.style.color = '#10b981';
                     syncEl.innerText = `● 同步成功 ${new Date().toLocaleTimeString('zh-TW', {hour12:false})}`;
@@ -188,18 +186,16 @@
                 console.error("同步失敗", error);
                 const syncEl = document.getElementById('syncStatus');
                 syncEl.style.color = '#ef4444';
-                syncEl.innerText = "● 雲端連線中斷";
+                syncEl.innerText = "● 雲端連線異常";
             }
         }
 
-        // POST 送出 API 封裝
         async function apiPost(payload) {
             try {
                 await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                // 送出後立即強制更新一次畫面
                 fetchSyncData();
             } catch(e) {
                 console.error("API POST Error:", e);
@@ -293,12 +289,10 @@
             btn.disabled = true;
 
             const remarks = document.getElementById("orderRemarks").value;
-            // 產生單號 (MMDD-HHMMSS 格式)
             const now = new Date();
             const idStr = `${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
             const timeStr = now.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', hour12: false});
             
-            // 轉換購物車格式以符合雲端
             let orderItems = [];
             for(let key in cart) { orderItems.push({ name: key, qty: cart[key].qty, remark: cart[key].remark, done: false }); }
 
@@ -328,7 +322,7 @@
         function updateStatusList(serverOrders) {
             const list = document.getElementById("statusList");
             if(serverOrders.length === 0) {
-                list.innerHTML = '<div style="color: #9ca3af; text-align: center; margin-top: 20px;">雲端目前無進行中的訂單</div>';
+                list.innerHTML = '<div style="color: #9ca3af; text-align: center; margin-top: 20px;">目前無進行中的訂單</div>';
                 return;
             }
             list.innerHTML = "";
@@ -336,8 +330,10 @@
             [...serverOrders].reverse().forEach(o => {
                 let isWaiting = o.status === 'waiting';
                 let isOos = o.etaStr === '缺貨';
-                let statusClass = isWaiting ? 'status-waiting' : (isOos ? 'status-danger' : 'status-cooking');
-                let statusText = isWaiting ? '待 2F 接收' : (isOos ? '❌ 含有缺貨品項' : `👨‍🍳 製作中 (預計 ${o.etaStr}分)`);
+                let isProactive = o.id.startsWith('PRO-'); // 判斷是否為 2F 主動製作任務
+                
+                let statusClass = isWaiting ? 'status-waiting' : (isOos ? 'status-danger' : (isProactive ? 'status-proactive' : 'status-cooking'));
+                let statusText = isWaiting ? '待 2F 接收' : (isOos ? '❌ 含有缺貨品項' : (isProactive ? `👨‍🍳 備料製作中 (預計 ${o.etaStr}分)` : `👨‍🍳 製作中 (預計 ${o.etaStr}分)`));
                 
                 let itemsTextHTML = o.items.map(item => {
                     let res = `${item.name} x${item.qty}`;
@@ -348,8 +344,9 @@
                 list.innerHTML += `
                     <div class="order-status-card ${statusClass}">
                         <div style="font-size: 14px; color: #6b7280;">單號 #${o.id} · ${o.time}</div>
+                        ${isProactive ? `<div class="proactive-badge-text">📢 廚房主動通報</div>` : ''}
                         <div style="font-weight: bold; margin: 5px 0;">${itemsTextHTML}</div>
-                        ${o.mainRemark ? `<div style="font-size: 14px; color: #dc2626; border-top: 1px dashed #d1d5db; padding-top: 5px; margin-top: 5px;">備註：${o.mainRemark}</div>` : ''}
+                        ${o.mainRemark && !isProactive ? `<div style="font-size: 14px; color: #dc2626; border-top: 1px dashed #d1d5db; padding-top: 5px; margin-top: 5px;">備註：${o.mainRemark}</div>` : ''}
                         <div class="status-badge ${statusClass}">${statusText}</div>
                     </div>
                 `;
@@ -373,7 +370,6 @@
             if (newItem && newItem.trim() !== "") {
                 const itemTrimmed = newItem.trim();
                 if (!menuData[currentCategory].includes(itemTrimmed)) {
-                    // 呼叫雲端寫入
                     apiPost({ action: 'editMenu', category: currentCategory, itemName: itemTrimmed, type: 'add' });
                 } else { alert("⚠️ 此品項已經存在了！"); }
             }
@@ -387,7 +383,6 @@
         async function uploadDefaultMenu() {
             if(!confirm("確定要將這套基本款菜單批次寫入您的 Google Sheets 嗎？(約需 2~3 秒)")) return;
             
-            // 顯示上傳中提示
             document.getElementById('editGrid').innerHTML = "<div style='grid-column: 1/-1; text-align: center; color: #3b82f6; font-size: 18px; font-weight: bold; padding: 20px;'>☁️ 正在將菜單批次寫入雲端，請稍候...</div>";
             
             let promises = [];
@@ -402,8 +397,6 @@
             
             await Promise.all(promises);
             alert("✅ 基本款菜單已成功上傳至雲端！未來請直接使用介面新增或刪改。");
-            
-            // 重新抓取雲端資料以更新畫面
             fetchSyncData();
         }
 
