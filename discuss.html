@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合作機制討論</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .report-section {
+            break-inside: avoid;
+            height: 100%;
+        }
+        .list-item-spacing li {
+            margin-bottom: 0.35rem;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        .sub-list {
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+            color: #4b5563;
+        }
+        /* 美化滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
+
+    <!-- 操作區塊 (不會被截圖) -->
+    <div class="mb-6 w-full max-w-7xl flex justify-end sticky top-4 z-50" data-html2canvas-ignore="true">
+        <button id="downloadBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition duration-200 flex items-center gap-2 border-2 border-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            匯出長條圖片
+        </button>
+    </div>
+
+    <!-- 報表內容區塊 (截圖目標) -->
+    <div id="reportContainer" class="bg-white w-full max-w-7xl p-6 md:p-10 shadow-2xl rounded-xl text-gray-800">
+        
+        <!-- ==================== 第一部分：後端機制 ==================== -->
+        <div class="mb-8">
+            <div class="flex items-center gap-4 mb-6 border-b-4 border-blue-800 pb-4">
+                <div class="bg-blue-800 text-white px-4 py-2 rounded-lg text-lg font-bold tracking-widest whitespace-nowrap">後端機制</div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-wide">申進廠商／合作廠商審核與合作準備</h1>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">1. 廠商申進前基本篩選</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>是否符合門市目前商品需求</li>
+                        <li>商品是否具市場性、差異性與銷售潛力</li>
+                        <li>毛利是否符合公司基本標準</li>
+                        <li>是否會增加現場過多作業負擔</li>
+                        <li>是否能配合供貨穩定度與交期</li>
+                        <li>是否有正式窗口可對接</li>
+                        <li>是否能配合公司請款、對帳、開票流程</li>
+                        <li>是否符合目前門市定位與客群需求</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">2. 廠商需提出的基本資料</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>公司名稱</li>
+                        <li>公司統編</li>
+                        <li>負責人名稱</li>
+                        <li>聯絡窗口姓名</li>
+                        <li>聯絡電話</li>
+                        <li>Email</li>
+                        <li>公司地址</li>
+                        <li>匯款／請款資料</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">3. 廠商需提供的合法與證明文件</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>營業登記或公司登記資料</li>
+                        <li>食品業者登錄字號</li>
+                        <li>食品衛生合格證明</li>
+                        <li>相關檢驗報告</li>
+                        <li>產品責任險資料</li>
+                        <li>進口商品相關證明</li>
+                        <li>有效期限內之證書資料</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">4. 商品基本資料</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>商品名稱</li>
+                        <li>商品規格</li>
+                        <li>單位／重量／容量</li>
+                        <li>成分標示</li>
+                        <li>產地</li>
+                        <li>保存方式</li>
+                        <li>保存期限</li>
+                        <li>有效日期標示方式</li>
+                        <li>過敏原資訊</li>
+                        <li>食用或使用建議</li>
+                        <li>包裝方式</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">5. 報價與交易條件</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>進貨價格</li>
+                        <li>建議售價</li>
+                        <li>最低訂購量</li>
+                        <li>箱入數</li>
+                        <li>是否可拆箱</li>
+                        <li>檔期價／活動價條件</li>
+                        <li>運費計算方式</li>
+                        <li>免運門檻</li>
+                        <li>付款條件（月結／現金／匯款）</li>
+                        <li>發票開立方式</li>
+                        <li>漲價通知機制</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">6. 供貨與配送能力</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>配送區域</li>
+                        <li>配送頻率</li>
+                        <li>最短交期</li>
+                        <li>是否可指定到貨時段</li>
+                        <li>缺貨處理方式</li>
+                        <li>臨時加單是否可配合</li>
+                        <li>旺季供貨穩定度</li>
+                        <li>是否具安全庫存概念</li>
+                        <li>斷貨時替代方案</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">7. 異常與售後處理</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>商品瑕疵處理方式</li>
+                        <li>退換貨標準</li>
+                        <li>到貨錯誤處理流程</li>
+                        <li>品質異常回報窗口</li>
+                        <li>客訴處理窗口</li>
+                        <li>賠償責任歸屬</li>
+                        <li>問題發生後回覆時效</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">8. 合作支援能力</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>是否可提供試吃品</li>
+                        <li>是否可提供門市試吃支援</li>
+                        <li>是否可提供教育訓練</li>
+                        <li>是否可提供商品圖文素材</li>
+                        <li>是否可配合活動檔期</li>
+                        <li>是否可提供展示物／POP</li>
+                        <li>是否可配合社群曝光合作</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-blue-500">
+                    <h2 class="text-lg font-bold mb-3 text-blue-900">9. 廠商提案時必附內容</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>合作目的</li>
+                        <li>主推品項</li>
+                        <li>建議合作模式</li>
+                        <li>預估月銷量或主打方向</li>
+                        <li>適合門市的原因</li>
+                        <li>預估毛利</li>
+                        <li>可提供的支援</li>
+                        <li>試賣方案</li>
+                        <li>異常處理方式</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-red-50 rounded-lg p-5 shadow-sm border-t-4 border-red-500">
+                    <h2 class="text-lg font-bold mb-3 text-red-800">10. 不予審核／暫緩合作條件</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>基本公司資料不全</li>
+                        <li>食安／檢驗文件不全</li>
+                        <li>報價不完整</li>
+                        <li>商品資訊不明</li>
+                        <li>無正式窗口</li>
+                        <li>無法配合對帳／開票流程</li>
+                        <li>報價過高、毛利過低</li>
+                        <li>供貨不穩</li>
+                        <li>商品定位不符</li>
+                        <li>配合度差</li>
+                        <li>溝通成本過高</li>
+                        <li>需投入大量人力但效益不明確</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-green-50 rounded-lg p-5 shadow-sm border-t-4 border-green-500 lg:col-span-2">
+                    <h2 class="text-lg font-bold mb-3 text-green-900">11. 後端需建立的管理機制</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                        <li>廠商申進審核表</li>
+                        <li>合作前資料檢核表</li>
+                        <li>固定報價／提案格式</li>
+                        <li>試賣觀察期機制</li>
+                        <li>成效追蹤與淘汰機制</li>
+                        <li>合作分級制度（可長期／觀察中／暫緩）</li>
+                        <li class="font-bold text-green-800">明確區分必要文件、合作條件、加分條件</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t border-dashed border-gray-300 my-10"></div>
+
+        <!-- ==================== 第二部分：前端機制 ==================== -->
+        <div>
+            <div class="flex items-center gap-4 mb-6 border-b-4 border-indigo-800 pb-4">
+                <div class="bg-indigo-800 text-white px-4 py-2 rounded-lg text-lg font-bold tracking-widest whitespace-nowrap">前端機制</div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-wide">對外客戶需求接單初步篩選標準</h1>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-indigo-500">
+                    <h2 class="text-lg font-bold mb-3 text-indigo-900">1. 客戶接單基本門檻</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>需有最低接單標準
+                            <ul class="list-[circle] list-inside pl-5 sub-list text-sm">
+                                <li>例如：商業案單人頭單價低於 150 元不接</li>
+                            </ul>
+                        </li>
+                        <li>若低於標準，除特殊合作目的，不列入承接</li>
+                        <li>特例需經管理層核准，不可現場直接答應</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-indigo-500">
+                    <h2 class="text-lg font-bold mb-3 text-indigo-900">2. 客戶初步篩選條件</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>是否有明確需求內容</li>
+                        <li>是否有明確數量</li>
+                        <li>是否有合理預算</li>
+                        <li>是否有合理交期</li>
+                        <li>是否符合公司目前產能與人力</li>
+                        <li>是否有長期合作或曝光效益</li>
+                        <li>是否屬於過度壓價型客戶</li>
+                        <li>是否會造成現場出貨與營運負擔</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-indigo-500">
+                    <h2 class="text-lg font-bold mb-3 text-indigo-900">3. 對外接單前需確認資訊</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>客戶名稱／公司名稱</li>
+                        <li>公司統編</li>
+                        <li>聯絡窗口與聯絡電話</li>
+                        <li>開立發票需求</li>
+                        <li>報價抬頭</li>
+                        <li>使用日期／交貨日期</li>
+                        <li>品項與數量需求</li>
+                        <li>預算範圍</li>
+                        <li>配送／自取方式</li>
+                        <li>特殊包裝或客製需求</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-gray-50 rounded-lg p-5 shadow-sm border-t-4 border-indigo-500">
+                    <h2 class="text-lg font-bold mb-3 text-indigo-900">4. 報價與承接標準</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>報價單需有固定格式</li>
+                        <li>報價前先確認需求是否完整</li>
+                        <li>報價後修改次數過多者需重新評估</li>
+                        <li>低價但高客製、高耗工案件需特別審核</li>
+                        <li>折扣不可由現場個別承諾</li>
+                        <li>優惠、讓利、贈送需有授權標準</li>
+                        <li>接單後需有取消、異動、追加的規範</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-red-50 rounded-lg p-5 shadow-sm border-t-4 border-red-500">
+                    <h2 class="text-lg font-bold mb-3 text-red-800">5. 不接單或暫緩承接條件</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>單價過低或毛利過低</li>
+                        <li>文件不清或需求反覆不明</li>
+                        <li>急單但配合度低</li>
+                        <li>客製要求過多但預算不足</li>
+                        <li>時程壓縮到影響門市正常營運</li>
+                        <li>對方條件不合理或溝通風險高</li>
+                    </ul>
+                </div>
+
+                <div class="report-section bg-green-50 rounded-lg p-5 shadow-sm border-t-4 border-green-500">
+                    <h2 class="text-lg font-bold mb-3 text-green-900">6. 前端需建立的管理機制</h2>
+                    <ul class="list-disc list-inside pl-1 text-gray-700 list-item-spacing">
+                        <li>接案初審表</li>
+                        <li>標準報價單</li>
+                        <li>最低接單門檻表</li>
+                        <li>折扣授權機制</li>
+                        <li>特例簽核機制</li>
+                        <li>接單後追蹤與檢討表</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const container = document.getElementById('reportContainer');
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            // 變更按鈕狀態
+            btn.innerHTML = '圖片生成中...';
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            // 調整截圖前的樣式確保內容完整
+            window.scrollTo(0, 0);
+
+            // 使用 html2canvas 將 div 轉為圖片
+            html2canvas(container, {
+                scale: 2, // 提高解析度
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                windowWidth: container.scrollWidth,
+                windowHeight: container.scrollHeight
+            }).then(canvas => {
+                // 建立下載連結
+                const link = document.createElement('a');
+                const date = new Date();
+                const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+                
+                link.download = `業務審核機制完整回報_${dateString}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error('圖片生成失敗:', err);
+                alert('圖片生成失敗，請稍後再試。');
+            }).finally(() => {
+                // 恢復按鈕狀態
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            });
+        });
+    </script>
+</body>
+</html>
