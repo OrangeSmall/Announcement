@@ -348,11 +348,17 @@
                                     <button class="btn btn-eta" onclick="acceptOrder(${index}, '20')">20 分</button>
                                     <button class="btn btn-eta" onclick="acceptOrder(${index}, '30+')">30+ 分</button>
                                     <button class="btn btn-danger" onclick="acceptOrder(${index}, '缺貨')">❌ 此單有品項無庫存</button>
+                                    <!-- 新增：等待接收時的取消按鈕 -->
+                                    <button class="btn" style="background: #9ca3af; color: white; grid-column: span 5; padding: 10px;" onclick="cancelOrder(${index})">🗑️ 取消/刪除此單</button>
                                 </div>
                             </div>
                             <div class="action-cooking" style="display: ${!isWaiting ? 'flex' : 'none'};">
                                 ${cookingAreaHTML}
-                                <button class="btn btn-success" onclick="finishOrder(${index})">✅ 完成處理出餐</button>
+                                <!-- 修改：製作中狀態的按鈕佈局，加入取消按鈕 -->
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <button class="btn" style="background: #ef4444; color: white; flex: 1; padding: 15px; font-size: 18px;" onclick="cancelOrder(${index})">🗑️ 取消任務</button>
+                                    <button class="btn btn-success" style="flex: 2.5; padding: 15px; font-size: 20px; margin: 0;" onclick="finishOrder(${index})">✅ 完成處理出餐</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -446,6 +452,15 @@
             apiPost({ action: 'finishOrder', orderId: orders[index].id });
             orders.splice(index, 1);
             renderOrders();
+        }
+
+        // 新增：取消刪除訂單邏輯
+        function cancelOrder(index) {
+            if (confirm('確定要「刪除/取消」這筆任務嗎？\n此動作將同步移除兩邊系統的紀錄，且無法復原。')) {
+                apiPost({ action: 'cancelOrder', orderId: orders[index].id });
+                orders.splice(index, 1);
+                renderOrders();
+            }
         }
 
         /* ----- 庫存管理 Modal ----- */
