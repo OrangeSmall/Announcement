@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>餐飲排班系統原型</title>
+    <title>四維排班系統測試</title>
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -61,8 +61,13 @@
             'leave_xiu': { label: '休假', color: 'bg-orange-100 text-orange-800 border-orange-300', short: '休' },
             'empty_rest': { label: '空班(休)', color: 'bg-blue-100 text-blue-800 border-blue-300', short: '空' },
             'empty_work': { label: '空班(勤)', color: 'bg-purple-100 text-purple-800 border-purple-300', short: '空勤' },
+            'leave_te': { label: '特休', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', short: '特' },
+            'leave_shi': { label: '事假', color: 'bg-pink-100 text-pink-800 border-pink-300', short: '事' },
+            'leave_xu': { label: '需請假', color: 'bg-indigo-100 text-indigo-800 border-indigo-300', short: '請' },
             'none': { label: '未排', color: 'bg-gray-50 text-gray-400 border-gray-200', short: '-' }
         };
+
+        const LEAVE_KEYS = ['leave_li', 'leave_xiu', 'empty_rest', 'leave_te', 'leave_shi', 'leave_xu'];
 
         // --- 雲端庫設定 ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbzpmhBN1J7voF-yshK1GZ67vi7Op20z74uQ55ujpiQWnTseBTLMmZb-caRhwCkFDRk/exec'; 
@@ -72,6 +77,11 @@
             const [activeTab, setActiveTab] = useState('schedule'); 
             const [toast, setToast] = useState(null);
             
+            // --- 權限與密碼管理 ---
+            const [isAdminAuth, setIsAdminAuth] = useState(false);
+            const [passwordDialog, setPasswordDialog] = useState({ isOpen: false, onSuccess: null });
+            const [pwdInput, setPwdInput] = useState('');
+
             // --- 員工清單狀態 ---
             const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
             const [currentUser, setCurrentUser] = useState(DEFAULT_EMPLOYEES[0].id); 
@@ -106,7 +116,37 @@
             // 確保切換 Tab 或是員工資料變動時重新繪製 Icons
             useEffect(() => {
                 setTimeout(() => lucide.createIcons(), 100);
-            }, [activeTab, employees]);
+            }, [activeTab, employees, passwordDialog.isOpen, confirmDialog.isOpen]);
+
+            // --- 密碼驗證邏輯 ---
+            const handleVerifyPassword = () => {
+                if (pwdInput === '4091') {
+                    setIsAdminAuth(true);
+                    if (passwordDialog.onSuccess) passwordDialog.onSuccess();
+                    setPasswordDialog({ isOpen: false, onSuccess: null });
+                    setPwdInput('');
+                    showToast('管理員解鎖成功');
+                } else {
+                    alert('密碼錯誤！請重新輸入。');
+                    setPwdInput('');
+                }
+            };
+
+            const requireAdmin = (onSuccess) => {
+                if (isAdminAuth) {
+                    onSuccess();
+                } else {
+                    setPasswordDialog({ isOpen: true, onSuccess });
+                }
+            };
+
+            const handleTabClick = (tab) => {
+                if (tab === 'manage_emp') {
+                    requireAdmin(() => setActiveTab(tab));
+                } else {
+                    setActiveTab(tab);
+                }
+            };
 
             // --- 雲端資料抓取 (GET) ---
             const fetchCloudData = async () => {
@@ -118,9 +158,9 @@
                         if (json.data.allSchedules) setAllSchedules(json.data.allSchedules);
                         if (json.data.allDaySettings) setAllDaySettings(json.data.allDaySettings);
                         if (json.data.minStaffSettings) setMinStaffSettings(json.data.minStaffSettings);
+                        if (json.data.globalMaxLeave !== undefined) setGlobalMaxLeave(Number(json.data.globalMaxLeave));
                         if (json.data.employees) {
                             setEmployees(json.data.employees);
-                            // 確保當前選擇的使用者依然存在，否則切換到第一個
                             if (!json.data.employees.find(e => e.id === currentUser)) {
                                 setCurrentUser(json.data.employees[0]?.id || '');
                             }
@@ -151,14 +191,12 @@
                 }
             };
 
-            // --- 初始載入與每 15 秒輪詢 ---
             useEffect(() => {
                 fetchCloudData();
                 const interval = setInterval(fetchCloudData, 15000);
                 return () => clearInterval(interval);
             }, []);
 
-            // 確保當前月份的班表有被初始化
             useEffect(() => {
                 if (!allSchedules[monthKey]) {
                     const initialSchedule = {};
@@ -176,6 +214,13 @@
                 setToast(msg);
                 setTimeout(() => setToast(null), 3000);
             };
+            
+            // 雲端同步 Global Max Leave
+            const handleGlobalMaxLeaveChange = (val) => {
+                const num = Number(val);
+                setGlobalMaxLeave(num);
+                saveToCloud('globalMaxLeave', num);
+            };
 
             // --- 員工分類與分隔線處理 ---
             const storeEmployees = employees.filter(e => e.dept === '門市');
@@ -189,7 +234,6 @@
             if ((storeEmployees.length > 0 || kitchenEmployees.length > 0) && otherEmployees.length > 0) displayRows.push({ isDivider: true, label: '其他區域' });
             if (otherEmployees.length > 0) displayRows.push(...otherEmployees);
 
-            // --- 員工管理功能 ---
             const handleEmployeeChange = (id, field, value) => {
                 const newEmployees = employees.map(emp => 
                     emp.id === id ? { ...emp, [field]: value } : emp
@@ -218,7 +262,6 @@
                     message: `確定要刪除員工「${empName}」嗎？此操作將會將該員工從名單中移除。`,
                     onConfirm: () => {
                         const newEmployees = employees.filter(e => e.id !== id);
-                        // 清除其他人的錯休設定如果是指向這位被刪除的員工
                         const cleanedEmployees = newEmployees.map(e => 
                             e.conflict === id ? { ...e, conflict: null } : e
                         );
@@ -230,7 +273,6 @@
                 });
             };
 
-            // 最低出勤人數 Getter/Setter
             const getMinStaff = (dept, day) => {
                 const monthSettings = minStaffSettings[monthKey] || { store: {}, kitchen: {} };
                 if (monthSettings[dept]?.[day] !== undefined) return monthSettings[dept][day];
@@ -262,29 +304,27 @@
                 });
             };
 
-            // 取得某天某部門的休假人數與名單
             const getLeaveData = (scheduleData, day, dept) => {
                 if (!scheduleData[day]) return { count: 0, emps: [] };
                 let emps = [];
                 employees.filter(e => e.dept === dept).forEach(e => {
                     const status = scheduleData[day][e.id];
-                    if (['leave_li', 'leave_xiu', 'empty_rest'].includes(status)) {
+                    if (LEAVE_KEYS.includes(status)) {
                         emps.push(e);
                     }
                 });
                 return { count: emps.length, emps };
             };
 
-            // 跨月連休檢查函數
             const isDayLeaveGlobal = (scheduleData, targetYear, targetMonth, targetDay, empId) => {
                 const date = new Date(targetYear, targetMonth - 1, targetDay);
                 const mKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                 const tDay = date.getDate();
                 if (mKey === monthKey) {
-                    return ['leave_li', 'leave_xiu', 'empty_rest'].includes(scheduleData[tDay]?.[empId]);
+                    return LEAVE_KEYS.includes(scheduleData[tDay]?.[empId]);
                 }
                 const s = allSchedules[mKey]?.[tDay]?.[empId];
-                return ['leave_li', 'leave_xiu', 'empty_rest'].includes(s);
+                return LEAVE_KEYS.includes(s);
             };
 
             // 員工選假邏輯 (手動調整)
@@ -303,15 +343,19 @@
                     return;
                 }
 
-                const isLeave = ['leave_li', 'leave_xiu', 'empty_rest'].includes(type);
-                const wasLeave = ['leave_li', 'leave_xiu', 'empty_rest'].includes(currentType);
+                const isLeave = LEAVE_KEYS.includes(type);
+                const wasLeave = LEAVE_KEYS.includes(currentType);
+                const isSpecialLeave = ['leave_te', 'leave_shi', 'leave_xu'].includes(type);
                 
-                if (isLeave && !wasLeave && getLeaveData(currentSchedule, day, emp.dept).count >= globalMaxLeave) {
-                    alert(`${emp.dept} 當天休假人數已達上限 (${globalMaxLeave}人)`);
+                const dayMaxLeave = (daySetting.customMaxLeave !== undefined && daySetting.customMaxLeave !== '') ? Number(daySetting.customMaxLeave) : globalMaxLeave;
+
+                if (isLeave && !wasLeave && getLeaveData(currentSchedule, day, emp.dept).count >= dayMaxLeave) {
+                    alert(`${emp.dept} 當天休假人數已達上限 (${dayMaxLeave}人)`);
                     return;
                 }
 
-                if (isLeave) {
+                // 只有非特殊假別才受到防呆機制阻擋
+                if (isLeave && !isSpecialLeave) {
                     const tempSchedule = { ...currentSchedule };
                     tempSchedule[day] = { ...tempSchedule[day], [currentUser]: type };
                     
@@ -321,15 +365,13 @@
                     const d4 = isDayLeaveGlobal(tempSchedule, year, month, day + 1, currentUser);
                     const d5 = isDayLeaveGlobal(tempSchedule, year, month, day + 2, currentUser);
 
-                    // 檢查連續三天休假
                     if ((d1 && d2 && d3) || (d2 && d3 && d4) || (d3 && d4 && d5)) {
-                        alert('排班規定：禁止選擇連續3天休假！');
+                        alert('排班規定：禁止選擇連續3天休假！\n(若有特殊需求請改選「特休 / 事假 / 需請假」)');
                         return;
                     }
 
-                    // 檢查休假後必須出勤兩天的規定 (不可休-勤-休)
                     if ((d1 && !d2 && d3) || (d3 && !d4 && d5)) {
-                        alert('排班規定：休假後必須至少出勤兩天才能再次排休！');
+                        alert('排班規定：休假後必須至少出勤兩天才能再次排休！\n(若有特殊需求請改選「特休 / 事假 / 需請假」)');
                         return;
                     }
                 }
@@ -347,7 +389,6 @@
                 });
             };
 
-            // 一鍵清除本月班表
             const requestClearSchedule = () => {
                 setConfirmDialog({
                     isOpen: true,
@@ -370,7 +411,6 @@
                 });
             };
 
-            // 高階自動排班邏輯
             const autoSchedule = () => {
                 let monthData = JSON.parse(JSON.stringify(currentSchedule));
                 let newAnomalies = [];
@@ -383,9 +423,8 @@
                     }, 0);
                 };
 
-                const isLeaveType = (s) => ['leave_li', 'leave_xiu', 'empty_rest'].includes(s);
+                const isLeaveType = (s) => LEAVE_KEYS.includes(s);
 
-                // 動態處理特殊人員 (即便未來名稱變更或被刪除，也能安全過濾)
                 const specialNames = ['林尚正', '陳光庭', '霍磊', '吳東紘'];
                 const regularStaff = employees.filter(e => !specialNames.includes(e.name));
                 const processOrder = [
@@ -394,7 +433,7 @@
                     employees.find(e => e.name === '吳東紘'),
                     employees.find(e => e.name === '林尚正'),
                     employees.find(e => e.name === '陳光庭')
-                ].filter(Boolean); // 過濾掉找不到的人員
+                ].filter(Boolean); 
 
                 processOrder.forEach(emp => {
                     const getCount = (t) => {
@@ -419,34 +458,35 @@
 
                             for (let d = 1; d <= daysInMonth; d++) {
                                 if (monthData[d]?.[emp.id] !== 'none') continue; 
-                                if (currentDaySettings[d]?.isBanned) continue; 
+                                
+                                const daySetting = currentDaySettings[d] || {};
+                                if (daySetting.isBanned) continue; 
+                                
+                                const dayMaxLeave = (daySetting.customMaxLeave !== undefined && daySetting.customMaxLeave !== '') ? Number(daySetting.customMaxLeave) : globalMaxLeave;
 
                                 let canPlace = true;
 
-                                // 【絕對限制 1】: 不能造成連續 3 天休假
+                                let currentDeptLeave = 0;
+                                employees.filter(e => e.dept === emp.dept).forEach(e => {
+                                    if (isLeaveType(monthData[d]?.[e.id])) currentDeptLeave++;
+                                });
+                                if (currentDeptLeave >= dayMaxLeave) {
+                                    canPlace = false;
+                                }
+
                                 const lPrev1 = isLeaveType(monthData[d-1]?.[emp.id]);
                                 const lPrev2 = d > 2 ? isLeaveType(monthData[d-2]?.[emp.id]) : false;
                                 const lNext1 = isLeaveType(monthData[d+1]?.[emp.id]);
                                 const lNext2 = d < daysInMonth - 1 ? isLeaveType(monthData[d+2]?.[emp.id]) : false;
                                 
-                                if ((lPrev1 && lPrev2) || (lPrev1 && lNext1) || (lNext1 && lNext2)) {
-                                    canPlace = false;
-                                }
+                                if ((lPrev1 && lPrev2) || (lPrev1 && lNext1) || (lNext1 && lNext2)) canPlace = false;
+                                if ((lPrev2 && !lPrev1) || (lNext2 && !lNext1)) canPlace = false;
 
-                                // 【絕對限制 2】: 休假後一定需要出勤兩天 (避免休-勤-休)
-                                if ((lPrev2 && !lPrev1) || (lNext2 && !lNext1)) {
-                                    canPlace = false;
-                                }
-
-                                // 【絕對限制 3】: 每天最少上班人數
                                 const deptKey = emp.dept === '門市' ? 'store' : 'kitchen';
                                 const minReq = getMinStaff(deptKey, d);
                                 const potential = getPotentialWorkers(d, emp.dept);
-                                if (potential - 1 < minReq) {
-                                    canPlace = false; 
-                                }
+                                if (potential - 1 < minReq) canPlace = false; 
 
-                                // 【特殊原則】: 霍磊/吳東紘 互斥原則
                                 const kitchen1 = employees.find(e => e.name === '霍磊');
                                 const kitchen2 = employees.find(e => e.name === '吳東紘');
                                 if (kitchen1 && kitchen2) {
@@ -456,10 +496,8 @@
 
                                 if (!canPlace) continue;
 
-                                // --- 計分制 (Soft Constraints) ---
                                 let score = Math.random() * 10; 
 
-                                // 【優先級】：避免超過 6 天連續上班
                                 let streak = 0;
                                 for (let p = d - 1; p >= Math.max(1, d - 6); p--) {
                                     const ps = monthData[p]?.[emp.id];
@@ -469,7 +507,6 @@
                                 }
                                 if (streak >= 6) score += 10000;
 
-                                // 【優先級】：錯休人員盡量錯開
                                 if (emp.conflict) {
                                     const conflictEmp = employees.find(e => e.id === emp.conflict);
                                     if (conflictEmp && !isLeaveType(monthData[d]?.[conflictEmp.id])) {
@@ -477,12 +514,8 @@
                                     }
                                 }
 
-                                // 【優先級】：鼓勵連續休假 (最多2天)
-                                if (lPrev1 || lNext1) {
-                                    score += 3000;
-                                }
+                                if (lPrev1 || lNext1) score += 3000;
 
-                                // 【充裕人力優先排假】: 人數大於最低人數 3 人以上可優先安排
                                 if (potential - 1 >= minReq + 3) score += 2000;
                                 else if (potential - 1 >= minReq + 2) score += 1000;
                                 else if (potential - 1 >= minReq + 1) score += 500;
@@ -503,18 +536,15 @@
                         return needed; 
                     };
 
-                    // 1. 先排滿基本 4 例 4 休
                     let missingLi = placeLeaves('leave_li', Math.max(0, 4 - getCount('leave_li')));
                     let missingXiu = placeLeaves('leave_xiu', Math.max(0, 4 - getCount('leave_xiu')));
 
-                    // 2. 確保至少 1 天空班休
                     let currentEmptyRest = getCount('empty_rest');
                     if (currentEmptyRest < 1) {
                         let missingER = placeLeaves('empty_rest', 1);
                         if (missingER === 0) currentEmptyRest++;
                     }
 
-                    // 3. 檢查並打斷超過 6 天的長班 (轉為空班休)
                     const checkAnyStreak = () => {
                         let currentStreak = 0;
                         for (let d = 1; d <= daysInMonth; d++) {
@@ -535,28 +565,20 @@
                         else break; 
                     }
 
-                    // 4. 盡可能將總休假天數補齊至 10 天
-                    let currentTotalLeave = getCount('leave_li') + getCount('leave_xiu') + currentEmptyRest;
+                    let currentTotalLeave = getCount('leave_li') + getCount('leave_xiu') + currentEmptyRest + getCount('leave_te') + getCount('leave_shi') + getCount('leave_xu');
                     let extraAttempts = 0;
                     while (currentTotalLeave < TARGET_TOTAL_LEAVE && extraAttempts < 5) {
                         extraAttempts++;
-                        // 優先用「休假」來補
                         if (placeLeaves('leave_xiu', 1) === 0) {
                             currentTotalLeave++;
                         } else if (currentEmptyRest < MAX_EMPTY_POOL) {
-                            // 若一般休假塞不進去，嘗試用「空班休」補
                             if (placeLeaves('empty_rest', 1) === 0) {
                                 currentEmptyRest++;
                                 currentTotalLeave++;
-                            } else {
-                                break;
-                            }
-                        } else {
-                            break;
-                        }
+                            } else break;
+                        } else break;
                     }
 
-                    // 記錄異常 (保留基礎配額的警告，以及未達 10 天的警告)
                     let finalLi = getCount('leave_li');
                     let finalXiu = getCount('leave_xiu');
                     if (finalLi < 4) newAnomalies.push(`${emp.name} 的 [例假] 未達基本 4 天 (缺 ${4 - finalLi} 天)`);
@@ -565,7 +587,6 @@
                         newAnomalies.push(`${emp.name} 總休假未達 10 天 (僅 ${currentTotalLeave} 天)`);
                     }
 
-                    // 5. 剩餘的空班額度全部轉為空班勤
                     let emptyWorkTarget = MAX_EMPTY_POOL - currentEmptyRest - getCount('empty_work');
                     let availableDays = Array.from({length: daysInMonth}, (_,i)=>i+1).filter(d => monthData[d]?.[emp.id] === 'none');
                     availableDays.sort(() => Math.random() - 0.5); 
@@ -576,7 +597,6 @@
                     }
                 });
 
-                // 將未排的日子填入出勤
                 for (let d = 1; d <= daysInMonth; d++) {
                     if (!monthData[d]) monthData[d] = {};
                     employees.forEach(emp => {
@@ -586,7 +606,6 @@
                     });
                 }
 
-                // --- 產生異常報告 ---
                 for (let d = 1; d <= daysInMonth; d++) {
                     let storeCount = 0; let kitchenCount = 0;
                     employees.forEach(emp => {
@@ -618,16 +637,14 @@
                 });
 
                 setAnomalies(newAnomalies);
-                
                 setAllSchedules(prev => {
                     const newState = { ...prev, [monthKey]: monthData };
                     saveToCloud('allSchedules', newState);
                     return newState;
                 });
-                showToast('自動排班運算完成，已套用最少出勤兩天限制');
+                showToast('自動排班運算完成');
             };
 
-            // 匯出 CSV
             const exportToCSV = () => {
                 let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
                 csvContent += `部門,姓名,` + Array.from({length: daysInMonth}, (_, i) => i + 1).join(",") + "\n";
@@ -651,18 +668,12 @@
                 document.body.removeChild(link);
             };
 
-            // 匯出圖片 (html2canvas)
             const exportToImage = async () => {
                 const element = document.getElementById('export-schedule-container');
                 if (!element) return;
-                
                 showToast('正在產生班表圖片，請稍候...');
                 try {
-                    const canvas = await html2canvas(element, { 
-                        scale: 2, 
-                        useCORS: true, 
-                        backgroundColor: '#ffffff' 
-                    });
+                    const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
                     link.download = `${year}年${month}月_排班表.png`;
                     link.href = canvas.toDataURL('image/png');
@@ -674,11 +685,10 @@
                 }
             };
 
-            // 統計計算
             const stats = useMemo(() => {
                 const res = {};
                 employees.forEach(emp => {
-                    res[emp.id] = { work: 0, leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0, total_leave: 0 };
+                    res[emp.id] = { work: 0, leave_li: 0, leave_xiu: 0, empty_rest: 0, empty_work: 0, total_leave: 0, other_leave: 0 };
                 });
 
                 for (let d = 1; d <= daysInMonth; d++) {
@@ -689,6 +699,7 @@
                         if (s === 'leave_li') { res[emp.id].leave_li++; res[emp.id].total_leave++; }
                         if (s === 'leave_xiu') { res[emp.id].leave_xiu++; res[emp.id].total_leave++; }
                         if (s === 'empty_rest') { res[emp.id].empty_rest++; res[emp.id].total_leave++; }
+                        if (s === 'leave_te' || s === 'leave_shi' || s === 'leave_xu') { res[emp.id].other_leave++; res[emp.id].total_leave++; }
                         if (s === 'empty_work') { res[emp.id].empty_work++; res[emp.id].work++; } 
                     });
                 }
@@ -697,15 +708,12 @@
 
             return (
                 <div className="min-h-screen flex flex-col relative">
-                    {/* Header (響應式優化：手機版自動換行或橫向捲動) */}
                     <header className="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center z-40 gap-3 md:gap-0">
                         <div className="flex justify-between items-center w-full md:w-auto">
                             <div className="flex items-center gap-2">
                                 <i data-lucide="calendar-days" className="w-5 h-5 md:w-6 md:h-6"></i>
                                 <h1 className="text-lg md:text-xl font-bold">排班系統</h1>
                             </div>
-                            
-                            {/* 月份選擇器 */}
                             <div className="flex items-center bg-slate-700 rounded-md overflow-hidden border border-slate-600 text-xs md:text-sm">
                                 <span className="pl-2 md:pl-3 pr-1.5 md:pr-2 py-1 md:py-1.5 text-slate-300 border-r border-slate-600">月份</span>
                                 <input 
@@ -720,19 +728,17 @@
                                 />
                             </div>
                         </div>
-
                         <div className="flex gap-1.5 md:gap-4 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar items-center">
-                            <button onClick={() => setActiveTab('employee')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'employee' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>員工排休</button>
-                            <button onClick={() => setActiveTab('schedule')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'schedule' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>總班表</button>
-                            <button onClick={() => setActiveTab('stats')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'stats' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>統計</button>
-                            <button onClick={() => setActiveTab('manage_emp')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'manage_emp' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>員工管理</button>
+                            <button onClick={() => handleTabClick('employee')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'employee' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>員工排休</button>
+                            <button onClick={() => handleTabClick('schedule')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'schedule' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>總班表</button>
+                            <button onClick={() => handleTabClick('stats')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors ${activeTab === 'stats' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>統計</button>
+                            <button onClick={() => handleTabClick('manage_emp')} className={`whitespace-nowrap px-3 py-1.5 md:py-2 text-sm md:text-base rounded-md transition-colors flex items-center gap-1 ${activeTab === 'manage_emp' ? 'bg-blue-600' : 'hover:bg-slate-700'}`}>
+                                {!isAdminAuth && <i data-lucide="lock" className="w-3 h-3 md:w-4 md:h-4"></i>} 員工管理
+                            </button>
                         </div>
                     </header>
 
-                    {/* Main Content */}
                     <main className="flex-1 p-3 md:p-6 overflow-hidden flex flex-col">
-                        
-                        {/* 員工排休頁面 */}
                         {activeTab === 'employee' && (
                             <EmployeeView 
                                 employees={employees}
@@ -744,7 +750,7 @@
                                 getLeaveData={(day, dept) => getLeaveData(currentSchedule, day, dept)}
                                 showToast={showToast}
                                 globalMaxLeave={globalMaxLeave}
-                                setGlobalMaxLeave={setGlobalMaxLeave}
+                                setGlobalMaxLeave={handleGlobalMaxLeaveChange}
                                 currentDaySettings={currentDaySettings}
                                 monthKey={monthKey}
                                 setAllDaySettings={(newSettingsResolver) => {
@@ -758,15 +764,16 @@
                                 month={month}
                                 lastSyncTime={lastSyncTime}
                                 isSyncing={isSyncing}
+                                requireAdmin={requireAdmin}
+                                isAdminAuth={isAdminAuth}
                             />
                         )}
 
-                        {/* 員工管理頁籤 */}
-                        {activeTab === 'manage_emp' && (
+                        {activeTab === 'manage_emp' && isAdminAuth && (
                             <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden flex flex-col h-full max-w-5xl mx-auto w-full">
                                 <div className="p-3 md:p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                                     <div>
-                                        <h2 className="text-base md:text-lg font-semibold text-gray-700">員工管理</h2>
+                                        <h2 className="text-base md:text-lg font-semibold text-gray-700">員工管理 (管理員)</h2>
                                         <p className="text-[10px] md:text-xs text-gray-500 mt-0.5">即時同步至雲端資料庫</p>
                                     </div>
                                     <button onClick={handleAddEmployee} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs md:text-sm transition flex items-center gap-1">
@@ -788,8 +795,7 @@
                                                 <tr key={emp.id} className="border-b border-gray-100 hover:bg-gray-50">
                                                     <td className="p-1 md:p-2">
                                                         <input 
-                                                            type="text" 
-                                                            value={emp.name} 
+                                                            type="text" value={emp.name} 
                                                             onChange={(e) => handleEmployeeChange(emp.id, 'name', e.target.value)} 
                                                             className="border border-gray-300 p-1.5 md:p-2 rounded w-full outline-none focus:ring-2 focus:ring-blue-400" 
                                                             placeholder="請輸入姓名"
@@ -834,7 +840,6 @@
                             </div>
                         )}
 
-                        {/* 總班表管理頁面 */}
                         {activeTab === 'schedule' && (
                             <div className="flex flex-col h-full bg-white rounded-lg shadow border border-gray-200">
                                 <div className="p-3 md:p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-lg flex-wrap gap-2 md:gap-4">
@@ -856,7 +861,6 @@
                                     </div>
                                 </div>
 
-                                {/* 異常提示區塊 */}
                                 {anomalies.length > 0 && (
                                     <div className="m-2 md:m-4 p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg max-h-32 overflow-y-auto">
                                         <h3 className="text-red-800 font-bold flex items-center gap-1.5 mb-1.5 text-xs md:text-sm">
@@ -870,7 +874,6 @@
                                 
                                 <div className="flex-1 overflow-auto relative pb-8">
                                     <div className="min-w-max">
-                                        {/* Header Row */}
                                         <div className="flex sticky-header border-b border-gray-300 text-sm font-medium text-gray-600 shadow-sm">
                                             <div className="w-24 md:w-32 flex-shrink-0 p-2 md:p-3 border-r border-gray-300 sticky-corner flex items-center justify-center text-xs md:text-sm">
                                                 部門/姓名
@@ -892,7 +895,6 @@
                                             })}
                                         </div>
 
-                                        {/* Employee Rows */}
                                         {displayRows.map(emp => {
                                             if (emp.isDivider) {
                                                 return (
@@ -935,7 +937,6 @@
                                             );
                                         })}
 
-                                        {/* 統計列：每日最低出勤人數 (可編輯, 低於底線顯示紅底白字) */}
                                         <div className="flex border-b border-gray-300 bg-amber-50">
                                             <div className="w-24 md:w-32 flex-shrink-0 p-1 md:p-2 border-r border-gray-300 sticky-col flex flex-col justify-center bg-amber-100">
                                                 <span className="text-[10px] md:text-xs font-bold text-gray-700 text-center leading-tight">門市<br className="md:hidden"/>人數/底線</span>
@@ -994,7 +995,6 @@
                             </div>
                         )}
 
-                        {/* 統計頁面 */}
                         {activeTab === 'stats' && (
                             <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden flex flex-col h-full">
                                 <div className="p-3 md:p-4 border-b border-gray-200 bg-gray-50">
@@ -1011,6 +1011,7 @@
                                                 <th className="p-2 md:p-3 border-b text-center text-orange-600">休假</th>
                                                 <th className="p-2 md:p-3 border-b text-center text-blue-600">空班(休)</th>
                                                 <th className="p-2 md:p-3 border-b text-center text-purple-600">空班(勤)</th>
+                                                <th className="p-2 md:p-3 border-b text-center text-pink-600">其他請假</th>
                                                 <th className="p-2 md:p-3 border-b text-center">總休假</th>
                                             </tr>
                                         </thead>
@@ -1019,7 +1020,7 @@
                                                 if (emp.isDivider) {
                                                     return (
                                                         <tr key={`divider-${emp.label}`} className="bg-gray-200 border-y border-gray-300">
-                                                            <td colSpan="8" className="p-1.5 text-center text-[10px] md:text-xs font-bold text-gray-500 tracking-widest">{emp.label}</td>
+                                                            <td colSpan="9" className="p-1.5 text-center text-[10px] md:text-xs font-bold text-gray-500 tracking-widest">{emp.label}</td>
                                                         </tr>
                                                     );
                                                 }
@@ -1034,6 +1035,7 @@
                                                         <td className="p-2 md:p-3 text-center">{s.leave_xiu}</td>
                                                         <td className="p-2 md:p-3 text-center">{s.empty_rest}</td>
                                                         <td className="p-2 md:p-3 text-center">{s.empty_work}</td>
+                                                        <td className="p-2 md:p-3 text-center text-pink-600">{s.other_leave}</td>
                                                         <td className="p-2 md:p-3 text-center font-medium bg-gray-50">{s.total_leave}</td>
                                                     </tr>
                                                 )
@@ -1045,14 +1047,37 @@
                         )}
                     </main>
 
-                    {/* Toast Notification */}
                     {toast && (
                         <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded shadow-lg animate-bounce z-[150] text-sm">
                             {toast}
                         </div>
                     )}
                     
-                    {/* Confirm Dialog */}
+                    {/* Password Authentication Dialog */}
+                    {passwordDialog.isOpen && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[250] p-4">
+                            <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-sm">
+                                <h3 className="text-base md:text-lg font-bold mb-3 text-gray-800 flex items-center gap-2">
+                                    <i data-lucide="lock" className="text-blue-500 w-5 h-5"></i>管理員驗證
+                                </h3>
+                                <p className="mb-4 text-gray-600 text-sm">請輸入管理員密碼以繼續操作：</p>
+                                <input 
+                                    type="password" 
+                                    value={pwdInput} 
+                                    onChange={e => setPwdInput(e.target.value)} 
+                                    onKeyDown={e => e.key === 'Enter' && handleVerifyPassword()}
+                                    className="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500 mb-6"
+                                    placeholder="輸入密碼..."
+                                    autoFocus
+                                />
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={() => { setPasswordDialog({isOpen: false, onSuccess: null}); setPwdInput(''); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition font-medium text-sm md:text-base">取消</button>
+                                    <button onClick={handleVerifyPassword} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition font-medium text-sm md:text-base">確認</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {confirmDialog.isOpen && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] p-4">
                             <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-sm">
@@ -1068,7 +1093,6 @@
                         </div>
                     )}
                     
-                    {/* 用於匯出圖片的隱藏區塊 (排版乾淨俐落) */}
                     <div id="export-schedule-container" className="fixed top-0 bg-white p-8 w-max" style={{ left: '-10000px', zIndex: -9999 }}>
                         <div className="text-3xl font-bold mb-6 text-center text-gray-800">{year}年 {month}月 排班總表</div>
                         <table className="border-collapse border border-gray-400 bg-white">
@@ -1118,7 +1142,6 @@
                                         </tr>
                                     );
                                 })}
-                                {/* 圖片匯出用的統計列 (異常也用紅底白字呈現) */}
                                 <tr className="bg-gray-100">
                                     <td className="border border-gray-400 p-2 text-center font-bold text-sm text-gray-700">門市出勤</td>
                                     {Array.from({length: daysInMonth}, (_, i) => {
@@ -1170,22 +1193,29 @@
             );
         }
 
-        // --- 員工排休元件 (手機版優化核心) ---
-        function EmployeeView({ employees, currentUser, setCurrentUser, currentSchedule, daysInMonth, onDayClick, getLeaveData, showToast, globalMaxLeave, setGlobalMaxLeave, currentDaySettings, monthKey, setAllDaySettings, year, month, lastSyncTime, isSyncing }) {
+        function EmployeeView({ employees, currentUser, setCurrentUser, currentSchedule, daysInMonth, onDayClick, getLeaveData, showToast, globalMaxLeave, setGlobalMaxLeave, currentDaySettings, monthKey, setAllDaySettings, year, month, lastSyncTime, isSyncing, requireAdmin, isAdminAuth }) {
             const [selectedDay, setSelectedDay] = useState(null); 
             
-            // 管理員設定表單狀態
             const [adminDate, setAdminDate] = useState('1');
             const [isAdminHoliday, setIsAdminHoliday] = useState(false);
             const [isAdminBanned, setIsAdminBanned] = useState(false);
             const [adminBanReason, setAdminBanReason] = useState('');
             const [adminActivityNote, setAdminActivityNote] = useState('');
+            const [adminMaxLeave, setAdminMaxLeave] = useState('');
             const [showAdminPanel, setShowAdminPanel] = useState(false);
 
             const currentEmp = employees.find(e => e.id === currentUser) || employees[0];
             const currentConflictEmp = employees.find(e => e.id === currentEmp?.conflict);
 
-            // 儲存特殊日期設定
+            useEffect(() => {
+                const dSetting = currentDaySettings[adminDate] || {};
+                setIsAdminHoliday(dSetting.isHoliday || false);
+                setIsAdminBanned(dSetting.isBanned || false);
+                setAdminBanReason(dSetting.banReason || '');
+                setAdminActivityNote(dSetting.activityNote || '');
+                setAdminMaxLeave(dSetting.customMaxLeave !== undefined ? dSetting.customMaxLeave : '');
+            }, [adminDate, currentDaySettings]);
+
             const handleSaveDaySetting = () => {
                 setAllDaySettings(prev => ({
                     ...prev,
@@ -1195,15 +1225,12 @@
                             isHoliday: isAdminHoliday,
                             isBanned: isAdminBanned,
                             banReason: adminBanReason,
-                            activityNote: adminActivityNote
+                            activityNote: adminActivityNote,
+                            customMaxLeave: adminMaxLeave === '' ? '' : Number(adminMaxLeave)
                         }
                     }
                 }));
                 showToast(`已更新 ${adminDate} 日的特殊設定`);
-                setAdminBanReason('');
-                setAdminActivityNote('');
-                setIsAdminBanned(false);
-                setIsAdminHoliday(false);
             };
             
             const storeEmployees = employees.filter(e => e.dept === '門市');
@@ -1212,9 +1239,7 @@
 
             return (
                 <div className="flex flex-col md:flex-row gap-4 md:gap-6 max-w-7xl mx-auto w-full">
-                    {/* 左側操作區 */}
                     <div className="w-full md:w-80 flex flex-col gap-3 md:gap-4 flex-shrink-0">
-                        {/* 模擬登入區塊 */}
                         <div className="bg-white p-3 md:p-5 rounded-lg shadow border border-gray-200">
                             <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4 text-gray-800 border-b pb-2">身分切換 (模擬登入)</h2>
                             <select 
@@ -1251,12 +1276,11 @@
                             )}
                         </div>
 
-                        {/* 排休規定與狀態 */}
                         <div className="bg-white p-3 md:p-5 rounded-lg shadow border border-gray-200 hidden md:block">
                             <h2 className="text-base md:text-lg font-semibold mb-2 text-gray-800">排休規定與狀態</h2>
                             <ul className="text-xs md:text-sm text-gray-600 space-y-1.5 md:space-y-2 mb-3 md:mb-4 pl-1">
                                 <li>• 點擊右側日曆選擇想要的假別。</li>
-                                <li>• 每日同部門最多 <strong className="text-red-500">{globalMaxLeave}</strong> 人同時排休。</li>
+                                <li>• 每日同部門最多 <strong className="text-red-500">{globalMaxLeave}</strong> 人同時排休 (特定日依標示為準)。</li>
                                 <li>• <strong className="text-red-500">禁止選擇連續 3 天休假。</strong></li>
                             </ul>
                             <div className="text-[10px] md:text-xs text-gray-400 flex items-center gap-1.5 border-t pt-3">
@@ -1272,29 +1296,31 @@
                             </div>
                         </div>
 
-                        {/* 管理員設定區塊 (手機版自動收合減少佔位) */}
                         <div className="bg-amber-50 p-3 md:p-4 rounded-lg shadow border border-amber-200">
                             <div 
                                 className="flex justify-between items-center cursor-pointer"
-                                onClick={() => setShowAdminPanel(!showAdminPanel)}
+                                onClick={() => {
+                                    if (showAdminPanel) setShowAdminPanel(false);
+                                    else requireAdmin(() => setShowAdminPanel(true));
+                                }}
                             >
                                 <h2 className="text-sm md:text-md font-bold text-amber-800 flex items-center gap-1.5 md:gap-2">
-                                    <i data-lucide="settings" className="w-3.5 h-3.5 md:w-4 md:h-4"></i> 模擬管理員設定
+                                    <i data-lucide="settings" className="w-3.5 h-3.5 md:w-4 md:h-4"></i> 模擬管理員設定 {!isAdminAuth && <i data-lucide="lock" className="w-3 h-3 text-amber-600"></i>}
                                 </h2>
                                 <i data-lucide={showAdminPanel ? "chevron-up" : "chevron-down"} className="w-4 h-4 text-amber-800"></i>
                             </div>
                             
-                            {showAdminPanel && (
+                            {showAdminPanel && isAdminAuth && (
                                 <div className="mt-3 md:mt-4 space-y-3 md:space-y-4 text-xs md:text-sm">
                                     <div>
                                         <label className="block text-gray-700 mb-1">每日部門休假上限人數：</label>
                                         <input 
                                             type="number" min="1" max="10" 
                                             value={globalMaxLeave} 
-                                            onChange={(e) => setGlobalMaxLeave(Number(e.target.value))}
+                                            onChange={(e) => setGlobalMaxLeave(e.target.value)}
                                             className="w-full border border-gray-300 rounded p-1.5 md:p-2 outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                                         />
-                                        <p className="text-[9px] md:text-[10px] text-gray-500 mt-1">* 此上限為手動排休時的輔助防呆</p>
+                                        <p className="text-[9px] md:text-[10px] text-gray-500 mt-1">* 此為預設全局上限 (手動與自動排班皆適用)</p>
                                     </div>
                                     <hr className="border-amber-200" />
                                     <div>
@@ -1334,6 +1360,17 @@
                                                 className="w-full border rounded p-1.5 md:p-2 outline-none"
                                             />
                                         </div>
+                                        <div className="mb-3">
+                                            <label className="block text-gray-700 mb-1">當日特定休假上限 (選填)：</label>
+                                            <input 
+                                                type="number" min="0" max="10"
+                                                placeholder={`預設為全局上限 (${globalMaxLeave})`}
+                                                value={adminMaxLeave}
+                                                onChange={e => setAdminMaxLeave(e.target.value)}
+                                                className="w-full border rounded p-1.5 md:p-2 outline-none"
+                                            />
+                                            <p className="text-[9px] md:text-[10px] text-gray-500 mt-1">* 留空則套用預設的 {globalMaxLeave} 人</p>
+                                        </div>
                                         <button onClick={handleSaveDaySetting} className="w-full bg-amber-600 text-white rounded p-2 hover:bg-amber-700 transition font-medium">
                                             儲存日期設定
                                         </button>
@@ -1343,7 +1380,6 @@
                         </div>
                     </div>
 
-                    {/* 右側日曆區 */}
                     <div className="flex-1 bg-white p-2 md:p-5 rounded-lg shadow border border-gray-200 overflow-hidden flex flex-col">
                         <div className="mb-2 md:mb-4 px-1 md:px-0 flex items-center justify-between">
                             <h2 className="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-1">
@@ -1354,19 +1390,15 @@
                         </div>
                         
                         <div className="overflow-x-auto pb-2 no-scrollbar">
-                            {/* 手機版設定 min-width 確保格子不會被壓得太扁 */}
                             <div className="grid grid-cols-7 gap-1 md:gap-2 min-w-[320px]">
-                                {/* 日曆標頭 */}
                                 {['一', '二', '三', '四', '五', '六', '日'].map((d, i) => (
                                     <div key={d} className={`text-center font-medium py-1 md:py-2 text-xs md:text-base ${i >= 5 ? 'text-red-500' : 'text-gray-500'}`}>{d}</div>
                                 ))}
                                 
-                                {/* 計算第一天是星期幾來補空白 */}
                                 {Array.from({length: new Date(year, month - 1, 1).getDay() === 0 ? 6 : new Date(year, month - 1, 1).getDay() - 1}, (_, i) => (
                                     <div key={`blank-${i}`} className="p-1 md:p-2"></div>
                                 ))}
                                 
-                                {/* 渲染天數 */}
                                 {Array.from({length: daysInMonth}, (_, i) => {
                                     const day = i + 1;
                                     const status = currentSchedule[day] ? currentSchedule[day][currentUser] : 'none';
@@ -1379,10 +1411,11 @@
                                     const isBanned = dSetting.isBanned;
                                     const isHoliday = dSetting.isHoliday;
                                     const activityNote = dSetting.activityNote;
+                                    const dayMaxLeave = (dSetting.customMaxLeave !== undefined && dSetting.customMaxLeave !== '') ? Number(dSetting.customMaxLeave) : globalMaxLeave;
                                     const isRedDay = isWeekend || isHoliday;
                                     
                                     const leaveData = getLeaveData(day, currentEmp?.dept);
-                                    const isFull = leaveData.count >= globalMaxLeave && !['leave_li', 'leave_xiu', 'empty_rest'].includes(status);
+                                    const isFull = leaveData.count >= dayMaxLeave && !LEAVE_KEYS.includes(status);
                                     const canClick = !isBanned && (!isFull || status !== 'none') && currentEmp;
                                     
                                     return (
@@ -1392,11 +1425,10 @@
                                             className={`
                                                 h-[5.5rem] md:h-28 border rounded md:rounded-md p-1 md:p-2 flex flex-col cursor-pointer transition relative overflow-hidden
                                                 ${status !== 'none' ? conf.color : 'bg-gray-50 hover:bg-gray-100 border-gray-200'}
-                                                ${isBanned ? 'bg-red-50 border-red-200 cursor-not-allowed opacity-80' : ''}
+                                                ${isBanned ? 'bg-red-100 border-red-300 cursor-not-allowed opacity-90' : ''}
                                                 ${(isFull && !isBanned && status === 'none') ? 'opacity-60 cursor-not-allowed bg-gray-200' : ''}
                                             `}
                                         >
-                                            {/* 日期與國定假日標籤 */}
                                             <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center mb-0.5 md:mb-1">
                                                 <span className={`font-semibold text-xs md:text-base leading-none mb-0.5 md:mb-0 ${isRedDay ? 'text-red-600' : ''}`}>
                                                     {day} {isHoliday && <span className="ml-0.5 md:ml-1 text-[8px] md:text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded align-middle">國定</span>}
@@ -1404,21 +1436,18 @@
                                                 {status !== 'none' && <span className="text-[9px] md:text-xs px-1 md:px-1.5 py-0.5 rounded bg-white bg-opacity-70 font-bold leading-none">{conf.short}</span>}
                                             </div>
 
-                                            {/* 禁休原因 */}
-                                            {isBanned && (
-                                                <div className="text-[8px] md:text-[10px] text-red-600 font-bold bg-red-100 rounded px-0.5 md:px-1 py-0.5 my-0.5 md:my-1 text-center truncate">
-                                                    禁休: {dSetting.banReason}
+                                            {isBanned && dSetting.banReason && (
+                                                <div className="text-[8px] md:text-[10px] text-red-700 font-bold bg-white/50 rounded px-0.5 md:px-1 py-0.5 my-0.5 md:my-1 text-center truncate">
+                                                    {dSetting.banReason}
                                                 </div>
                                             )}
 
-                                            {/* 活動標註 */}
                                             {activityNote && (
                                                 <div className="text-[8px] md:text-[10px] text-blue-700 font-bold bg-blue-100 border border-blue-200 rounded px-0.5 md:px-1 py-0.5 my-0.5 text-center truncate" title={activityNote}>
                                                     {activityNote}
                                                 </div>
                                             )}
 
-                                            {/* 已排休人員預覽 */}
                                             <div className="flex-1 overflow-y-auto mt-0.5 md:mt-1 no-scrollbar">
                                                 <div className="flex flex-wrap gap-0.5 md:gap-1">
                                                     {leaveData.emps.map(e => (
@@ -1429,14 +1458,13 @@
                                                 </div>
                                             </div>
 
-                                            {/* 狀態列 */}
                                             <div className="text-[8px] md:text-[10px] text-right mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t border-black/5 leading-none">
                                                 {isBanned ? (
                                                     <span className="text-red-500 font-bold">不可排休</span>
                                                 ) : isFull && status === 'none' ? (
                                                     <span className="text-orange-500 font-bold">名額滿</span>
                                                 ) : (
-                                                    <span className="text-gray-500">休:{leaveData.count}/{globalMaxLeave}</span>
+                                                    <span className="text-gray-500">休:{leaveData.count}/{dayMaxLeave}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -1446,13 +1474,15 @@
                         </div>
                     </div>
 
-                    {/* 選擇假別 Modal */}
                     {selectedDay && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
                             <div className="bg-white rounded-lg p-5 md:p-6 w-full max-w-[320px] shadow-xl">
                                 <h3 className="text-base md:text-lg font-bold mb-4">選擇 {selectedDay} 日 班別</h3>
-                                <div className="space-y-2.5 md:space-y-2">
+                                <div className="space-y-2.5 md:space-y-2 max-h-[60vh] overflow-y-auto pr-1">
                                     <button onClick={() => { onDayClick(selectedDay, 'empty_rest'); setSelectedDay(null); }} className="w-full text-left px-4 py-3 md:py-2 rounded hover:bg-blue-50 text-blue-700 border border-blue-200 text-sm md:text-base font-medium">空班 - 休息</button>
+                                    <button onClick={() => { onDayClick(selectedDay, 'leave_te'); setSelectedDay(null); }} className="w-full text-left px-4 py-3 md:py-2 rounded hover:bg-yellow-50 text-yellow-700 border border-yellow-200 text-sm md:text-base font-medium">特休</button>
+                                    <button onClick={() => { onDayClick(selectedDay, 'leave_shi'); setSelectedDay(null); }} className="w-full text-left px-4 py-3 md:py-2 rounded hover:bg-pink-50 text-pink-700 border border-pink-200 text-sm md:text-base font-medium">事假</button>
+                                    <button onClick={() => { onDayClick(selectedDay, 'leave_xu'); setSelectedDay(null); }} className="w-full text-left px-4 py-3 md:py-2 rounded hover:bg-indigo-50 text-indigo-700 border border-indigo-200 text-sm md:text-base font-medium">需請假</button>
                                     <hr className="my-2 border-gray-100" />
                                     <button onClick={() => { onDayClick(selectedDay, 'none'); setSelectedDay(null); }} className="w-full text-left px-4 py-3 md:py-2 rounded hover:bg-gray-100 text-gray-600 border border-gray-300 text-sm md:text-base font-medium">取消排休 (清空)</button>
                                 </div>
