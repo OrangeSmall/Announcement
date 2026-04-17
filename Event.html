@@ -287,7 +287,16 @@
       const handleClearMonth = () => {
         const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
         if (!Object.keys(events).some(date => date.startsWith(monthPrefix))) { alert("當月無排程可清除！"); return; }
-        if (!window.confirm(`⚠️ 確定要「清空」 ${year}年${month + 1}月 的所有活動嗎？`)) return;
+        
+        // 新增：密碼驗證防呆機制
+        const password = window.prompt("⚠️ 安全驗證：\n此動作將清空當月所有每日駐點活動。\n請輸入清除密碼：");
+        if (password === null) return; // 按下取消
+        if (password !== "0704") {
+          alert("❌ 密碼錯誤，清除動作已取消！");
+          return;
+        }
+
+        if (!window.confirm(`✅ 密碼正確。\n最後確認：確定要「清空」 ${year}年${month + 1}月 的所有活動嗎？(此動作無法復原)`)) return;
         
         const newEvents = { ...events };
         Object.keys(newEvents).forEach(date => { if (date.startsWith(monthPrefix)) delete newEvents[date]; });
@@ -364,11 +373,19 @@
 
       // --- 渲染：檔期活動資訊面板 (側邊欄) ---
       const renderCampaignSidebar = () => {
+        // 取得當前觀看月份的頭尾時間
+        const viewStart = new Date(year, month, 1);
+        const viewEnd = new Date(year, month + 1, 0, 23, 59, 59);
+        
         const activeCampaigns = campaigns.filter(c => {
-          const endDate = new Date(c.endDate);
-          const cutoff = new Date();
-          cutoff.setMonth(cutoff.getMonth() - 1);
-          return endDate >= cutoff;
+          if (!c.startDate || !c.endDate) return false;
+          const [sYear, sMonth, sDay] = c.startDate.split('-');
+          const cStart = new Date(sYear, sMonth - 1, sDay);
+          const [eYear, eMonth, eDay] = c.endDate.split('-');
+          const cEnd = new Date(eYear, eMonth - 1, eDay, 23, 59, 59);
+          
+          // 只要檔期的開始時間在月底前，且結束時間在月初後，就代表這檔期在這個月有進行
+          return cStart <= viewEnd && cEnd >= viewStart;
         });
 
         return (
@@ -528,12 +545,19 @@
         const monthDates = Object.keys(events).filter(date => date.startsWith(monthPrefix)).sort();
         const hasDailyEvents = monthDates.some(date => events[date] && events[date].length > 0);
 
+        // 取得當前觀看月份的頭尾時間
+        const viewStart = new Date(year, month, 1);
+        const viewEnd = new Date(year, month + 1, 0, 23, 59, 59);
+        
         // 取得當月進行中的檔期
         const activeCampaigns = campaigns.filter(c => {
-          const endDate = new Date(c.endDate);
-          const cutoff = new Date();
-          cutoff.setMonth(cutoff.getMonth() - 1);
-          return endDate >= cutoff;
+          if (!c.startDate || !c.endDate) return false;
+          const [sYear, sMonth, sDay] = c.startDate.split('-');
+          const cStart = new Date(sYear, sMonth - 1, sDay);
+          const [eYear, eMonth, eDay] = c.endDate.split('-');
+          const cEnd = new Date(eYear, eMonth - 1, eDay, 23, 59, 59);
+          
+          return cStart <= viewEnd && cEnd >= viewStart;
         });
 
         if (!hasDailyEvents && activeCampaigns.length === 0) {
