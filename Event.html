@@ -94,7 +94,7 @@
     const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
     const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
-    // === 廠商同名同色（高對比色盤，跨日期 / 跨店別一致）===
+    // === 廠商同名同色 ===
     const VENDOR_PALETTE = [
       '#1D4ED8', '#DC2626', '#059669', '#7C3AED', '#C2410C',
       '#0E7490', '#BE185D', '#4D7C0F', '#334155', '#B45309',
@@ -178,13 +178,11 @@
       
       const [viewMode, setViewMode] = useState('mobile');
 
-      // 每日活動 Modal 狀態
       const [selectedDate, setSelectedDate] = useState(null);
       const [formData, setFormData] = useState({
         id: '', vendor: '', store: '四維店', status: '洽談中', times: [''], desc: '', registrar: ''
       });
 
-      // 檔期活動 Modal 狀態
       const [showCampaignModal, setShowCampaignModal] = useState(false);
       const [campaignData, setCampaignData] = useState({
         id: '', name: '', startDate: '', endDate: '', store: '全門市', desc: ''
@@ -215,10 +213,18 @@
         return () => unsubscribe();
       }, [user]);
 
-      const updateCloudData = async (newEvents, newCampaigns) => {
+      // 🛠️ 核心修復：獨立更新事件，不覆蓋檔期
+      const updateEventsInCloud = async (newEvents) => {
         if (!user) return;
         const docRef = doc(db, 'artifacts', boardAppId, 'public', 'data', 'tasting_calendar', 'shared_board');
-        await setDoc(docRef, { events: newEvents, campaigns: newCampaigns }, { merge: true });
+        await setDoc(docRef, { events: newEvents }, { merge: true });
+      };
+
+      // 🛠️ 核心修復：獨立更新檔期，不覆蓋事件
+      const updateCampaignsInCloud = async (newCampaigns) => {
+        if (!user) return;
+        const docRef = doc(db, 'artifacts', boardAppId, 'public', 'data', 'tasting_calendar', 'shared_board');
+        await setDoc(docRef, { campaigns: newCampaigns }, { merge: true });
       };
 
       const year = currentDate.getFullYear();
@@ -257,7 +263,7 @@
 
         const newEventsState = { ...events, [selectedDate]: dateEvents };
         setEvents(newEventsState);
-        updateCloudData(newEventsState, campaigns);
+        updateEventsInCloud(newEventsState); // 🛡️ 只傳送 Events
         resetForm();
       };
 
@@ -269,7 +275,7 @@
         const newEventsState = { ...events, [selectedDate]: dateEvents };
         if (dateEvents.length === 0) delete newEventsState[selectedDate]; 
         setEvents(newEventsState);
-        updateCloudData(newEventsState, campaigns);
+        updateEventsInCloud(newEventsState); // 🛡️ 只傳送 Events
         resetForm();
       };
 
@@ -288,20 +294,15 @@
         const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
         if (!Object.keys(events).some(date => date.startsWith(monthPrefix))) { alert("當月無排程可清除！"); return; }
         
-        // 新增：密碼驗證防呆機制
         const password = window.prompt("⚠️ 安全驗證：\n此動作將清空當月所有每日駐點活動。\n請輸入清除密碼：");
-        if (password === null) return; // 按下取消
-        if (password !== "0704") {
-          alert("❌ 密碼錯誤，清除動作已取消！");
-          return;
-        }
-
-        if (!window.confirm(`✅ 密碼正確。\n最後確認：確定要「清空」 ${year}年${month + 1}月 的所有活動嗎？(此動作無法復原)`)) return;
+        if (password === null) return; 
+        if (password !== "0704") { alert("❌ 密碼錯誤，清除動作已取消！"); return; }
+        if (!window.confirm(`✅ 密碼正確。\n最後確認：確定要「清空」 ${year}年${month + 1}月 的所有每日駐點活動嗎？(此動作無法復原)`)) return;
         
         const newEvents = { ...events };
         Object.keys(newEvents).forEach(date => { if (date.startsWith(monthPrefix)) delete newEvents[date]; });
         setEvents(newEvents);
-        updateCloudData(newEvents, campaigns);
+        updateEventsInCloud(newEvents); // 🛡️ 只傳送 Events，不會清空檔期
       };
 
       // --- 檔期活動表單處理 ---
@@ -322,7 +323,7 @@
         
         newCampaignsList.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
         setCampaigns(newCampaignsList);
-        updateCloudData(events, newCampaignsList);
+        updateCampaignsInCloud(newCampaignsList); // 🛡️ 只傳送 Campaigns
         setShowCampaignModal(false);
       };
 
@@ -330,7 +331,7 @@
         if (!window.confirm("確定刪除此檔期資訊？")) return;
         const newCampaignsList = campaigns.filter(c => c.id !== id);
         setCampaigns(newCampaignsList);
-        updateCloudData(events, newCampaignsList);
+        updateCampaignsInCloud(newCampaignsList); // 🛡️ 只傳送 Campaigns
         setShowCampaignModal(false);
       };
 
@@ -371,9 +372,8 @@
         document.body.removeChild(link);
       };
 
-      // --- 渲染：檔期活動資訊面板 (側邊欄) ---
+      // --- 渲染：檔期活動資訊面板 ---
       const renderCampaignSidebar = () => {
-        // 取得當前觀看月份的頭尾時間
         const viewStart = new Date(year, month, 1);
         const viewEnd = new Date(year, month + 1, 0, 23, 59, 59);
         
@@ -383,8 +383,6 @@
           const cStart = new Date(sYear, sMonth - 1, sDay);
           const [eYear, eMonth, eDay] = c.endDate.split('-');
           const cEnd = new Date(eYear, eMonth - 1, eDay, 23, 59, 59);
-          
-          // 只要檔期的開始時間在月底前，且結束時間在月初後，就代表這檔期在這個月有進行
           return cStart <= viewEnd && cEnd >= viewStart;
         });
 
@@ -397,7 +395,7 @@
             
             <div className="flex-grow flex flex-col gap-3 overflow-y-auto no-scrollbar pb-2">
               {activeCampaigns.length === 0 ? (
-                <div className="text-center text-[#c97a84] text-sm py-8 border border-dashed border-[#e8d5d7] rounded-xl bg-[#faf7f7]">目前無進行中的檔期活動</div>
+                <div className="text-center text-[#c97a84] text-sm py-8 border border-dashed border-[#e8d5d7] rounded-xl bg-[#faf7f7]">此月份無進行中的檔期活動</div>
               ) : (
                 activeCampaigns.map(c => (
                   <div key={c.id} onClick={() => openCampaignModal(c)} className="p-3 bg-white border border-[#e8d5d7] rounded-xl shadow-sm cursor-pointer hover:border-[#c97a84] hover:shadow-md transition-all group relative">
@@ -539,31 +537,27 @@
         return <div className="bg-white border-2 border-[#ebdadd] rounded-2xl overflow-hidden shadow-sm w-full">{days}</div>;
       };
 
-      // --- 渲染：當月排程總覽 (專供閱讀與一鍵出圖) ---
+      // --- 渲染：當月排程總覽 ---
       const renderOverviewList = () => {
         const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
         const monthDates = Object.keys(events).filter(date => date.startsWith(monthPrefix)).sort();
         const hasDailyEvents = monthDates.some(date => events[date] && events[date].length > 0);
 
-        // 取得當前觀看月份的頭尾時間
         const viewStart = new Date(year, month, 1);
         const viewEnd = new Date(year, month + 1, 0, 23, 59, 59);
-        
-        // 取得當月進行中的檔期
         const activeCampaigns = campaigns.filter(c => {
           if (!c.startDate || !c.endDate) return false;
           const [sYear, sMonth, sDay] = c.startDate.split('-');
           const cStart = new Date(sYear, sMonth - 1, sDay);
           const [eYear, eMonth, eDay] = c.endDate.split('-');
           const cEnd = new Date(eYear, eMonth - 1, eDay, 23, 59, 59);
-          
           return cStart <= viewEnd && cEnd >= viewStart;
         });
 
         if (!hasDailyEvents && activeCampaigns.length === 0) {
           return (
             <div className="text-center py-16 bg-[#faf7f7] border-2 border-dashed border-[#ebdadd] rounded-2xl w-full">
-              <p className="text-xl text-[#c97a84] font-bold">當月目前尚無任何活動排程 🌸</p>
+              <p className="text-xl text-[#c97a84] font-bold">此月份目前尚無任何活動排程 🌸</p>
             </div>
           );
         }
@@ -581,7 +575,6 @@
                 <h2 className="text-3xl font-black text-[#5c3a3e] tracking-widest">{year}年 {month + 1}月 門市活動總覽</h2>
               </div>
               
-              {/* 檔期活動區塊 */}
               {activeCampaigns.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-xl font-black text-[#5c3a3e] mb-4 flex items-center gap-2 border-l-4 border-[#c97a84] pl-3">
@@ -604,7 +597,6 @@
                 </div>
               )}
 
-              {/* 每日駐點排程區塊 */}
               {hasDailyEvents && (
                 <div>
                   <h3 className="text-xl font-black text-[#5c3a3e] mb-4 flex items-center gap-2 border-l-4 border-[#c97a84] pl-3">
