@@ -668,7 +668,7 @@
                 });
                 showToast('自動排班運算完成');
             };
-
+            // 匯出 CSV
             const exportToCSV = () => {
                 let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
                 csvContent += `部門,姓名,` + Array.from({length: daysInMonth}, (_, i) => i + 1).join(",") + "\n";
@@ -677,8 +677,8 @@
                 exportEmployees.forEach(emp => {
                     let row = `${emp.dept},${emp.name}`;
                     for (let d = 1; d <= daysInMonth; d++) {
-                        const shift = currentSchedule[d] ? currentSchedule[d][emp.id] : 'none';
-                        row += `,${SHIFT_TYPES[shift].label}`;
+                        const shift = currentSchedule[d]?.[emp.id] || 'none';
+                        row += `,${(SHIFT_TYPES[shift] || SHIFT_TYPES['none']).label}`;
                     }
                     csvContent += row + "\n";
                 });
@@ -942,8 +942,8 @@
                                                     </div>
                                                     {Array.from({length: daysInMonth}, (_, i) => {
                                                         const day = i + 1;
-                                                        const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
-                                                        const conf = SHIFT_TYPES[shift];
+                                                        const shift = currentSchedule[day]?.[emp.id] || 'none';
+                                                        const conf = SHIFT_TYPES[shift] || SHIFT_TYPES['none'];
                                                         return (
                                                             <div key={`cell-${emp.id}-${day}`} className="w-10 md:w-12 flex-shrink-0 border-r border-gray-200 p-0.5 md:p-1 relative group cursor-pointer"
                                                                 onClick={(e) => {
@@ -1160,8 +1160,8 @@
                                             </td>
                                             {Array.from({length: daysInMonth}, (_, i) => {
                                                 const day = i + 1;
-                                                const shift = currentSchedule[day] ? currentSchedule[day][emp.id] : 'none';
-                                                const conf = SHIFT_TYPES[shift];
+                                                const shift = currentSchedule[day]?.[emp.id] || 'none';
+                                                const conf = SHIFT_TYPES[shift] || SHIFT_TYPES['none'];
                                                 return (
                                                     <td key={day} className={`border border-gray-400 p-2 text-center font-bold align-middle ${shift !== 'none' ? conf.color : 'text-gray-300'}`}>
                                                         {conf.short === '-' ? '' : conf.short}
@@ -1430,8 +1430,8 @@
                                 
                                 {Array.from({length: daysInMonth}, (_, i) => {
                                     const day = i + 1;
-                                    const status = currentSchedule[day] ? currentSchedule[day][currentUser] : 'none';
-                                    const conf = SHIFT_TYPES[status];
+                                    const status = currentSchedule[day]?.[currentUser] || 'none';
+                                    const conf = SHIFT_TYPES[status] || SHIFT_TYPES['none'];
                                     
                                     const dateObj = new Date(year, month - 1, day);
                                     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
