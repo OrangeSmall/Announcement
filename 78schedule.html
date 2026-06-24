@@ -8,67 +8,78 @@
   <!-- 引入 Tailwind CSS 來處理樣式 -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- 引入 Babel 讓瀏覽器可以讀懂 React/JSX 語法 -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- 【升級】換成更穩定的 cdnjs 伺服器，避免 unpkg 當機導致白畫面 -->
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
 </head>
 <body class="bg-[#1a120b]">
   
-  <!-- 這是 React 應用程式掛載的目標位置 -->
   <div id="root"></div>
 
-  <!-- 主要程式碼：使用 text/babel 並指定為 module -->
-  <script type="text/babel" data-type="module">
-    // --- 1. 從 CDN 引入所有需要的套件 ---
-    import React, { useState, useEffect } from 'https://esm.sh/react@18.2.0';
-    import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+  <!-- 1. 將 Firebase 模組獨立出來載入 -->
+  <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    // --- 2. 你的雲端資料庫初始化 (Firebase Config) ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyAT9nmcxVI-1J4pTXMhvfXmFzYJlaQR3HM",
-      authDomain: "my-leave-calendar-50cfa.firebaseapp.com",
-      projectId: "my-leave-calendar-50cfa",
-      storageBucket: "my-leave-calendar-50cfa.firebasestorage.app",
-      messagingSenderId: "37489112070",
-      appId: "1:37489112070:web:3d68bb273b7ac438297f87"
+    // 將模組掛載到全域，讓 Babel 可以讀取
+    window.FirebaseAPI = {
+      initializeApp, getAuth, signInAnonymously, onAuthStateChanged,
+      getFirestore, doc, setDoc, onSnapshot
     };
+  </script>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const boardAppId = 'my-team-leave-calendar'; // 設定一個群組公用的佈告欄 ID
+  <!-- 2. 主要程式碼 -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-    // --- 背景圖片網址 (使用轉換後的 Google Drive 連結確保能顯示與截圖) ---
-    const BACKGROUND_IMAGE_URL = 'https://lh3.googleusercontent.com/d/1EDYgJMhaola2xXPC7apBzQOKMO043qmY';
-
-    // --- 3. 輔助函數 ---
-    const formatDate = (year, month, day) => {
-      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    };
-    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-    const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
-
-    // 根據名字產生固定的低對比柔和背景色 (莫蘭迪色系)
-    const PASTEL_COLORS = [
-      'bg-[#e6b8a2]', 'bg-[#b2c8b8]', 'bg-[#c5b9cd]', 'bg-[#b5c7d3]', 
-      'bg-[#e3cda4]', 'bg-[#c8d6b9]', 'bg-[#d9aeb4]', 'bg-[#d1bfae]',
-    ];
-    const getUserColorClass = (username) => {
-      let hash = 0;
-      for (let i = 0; i < username.length; i++) {
-        hash = username.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      return PASTEL_COLORS[Math.abs(hash) % PASTEL_COLORS.length];
-    };
-
-    // --- 4. React 主要元件 ---
     function App() {
+      // 從全域環境提取 Firebase 功能
+      const { 
+        initializeApp, getAuth, signInAnonymously, onAuthStateChanged, 
+        getFirestore, doc, setDoc, onSnapshot 
+      } = window.FirebaseAPI;
+
+      // 你的雲端資料庫初始化 (Firebase Config)
+      const firebaseConfig = {
+        apiKey: "AIzaSyAT9nmcxVI-1J4pTXMhvfXmFzYJlaQR3HM",
+        authDomain: "my-leave-calendar-50cfa.firebaseapp.com",
+        projectId: "my-leave-calendar-50cfa",
+        storageBucket: "my-leave-calendar-50cfa.firebasestorage.app",
+        messagingSenderId: "37489112070",
+        appId: "1:37489112070:web:3d68bb273b7ac438297f87"
+      };
+
+      // 初始化 Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const boardAppId = 'my-team-leave-calendar';
+
+      const BACKGROUND_IMAGE_URL = 'https://lh3.googleusercontent.com/d/1EDYgJMhaola2xXPC7apBzQOKMO043qmY';
+
+      const formatDate = (year, month, day) => {
+        return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      };
+      const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+      const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+      const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+      const PASTEL_COLORS = [
+        'bg-[#e6b8a2]', 'bg-[#b2c8b8]', 'bg-[#c5b9cd]', 'bg-[#b5c7d3]', 
+        'bg-[#e3cda4]', 'bg-[#c8d6b9]', 'bg-[#d9aeb4]', 'bg-[#d1bfae]',
+      ];
+      const getUserColorClass = (username) => {
+        let hash = 0;
+        for (let i = 0; i < username.length; i++) {
+          hash = username.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return PASTEL_COLORS[Math.abs(hash) % PASTEL_COLORS.length];
+      };
+
       const [user, setUser] = useState(null);
       const [isSyncing, setIsSyncing] = useState(true);
-
       const [currentDate, setCurrentDate] = useState(new Date());
       const [users, setUsers] = useState([]);
       const [selectedUser, setSelectedUser] = useState(''); 
@@ -103,7 +114,6 @@
             const data = docSnap.data();
             setUsers(data.users || []);
             
-            // --- 自動清理一年以上的舊資料 ---
             const rawLeaves = data.leaves || {};
             let needsCleanup = false;
             const oneYearAgo = new Date();
@@ -111,13 +121,18 @@
 
             const cleanedLeaves = {};
             Object.keys(rawLeaves).forEach(usr => {
-              cleanedLeaves[usr] = rawLeaves[usr].filter(dateStr => {
-                if (new Date(dateStr) < oneYearAgo) {
-                  needsCleanup = true;
-                  return false; 
-                }
-                return true;
-              });
+              // 【升級】加入防呆機制：確保讀取到的資料是陣列，避免 filter 報錯導致網頁崩潰
+              if (Array.isArray(rawLeaves[usr])) {
+                cleanedLeaves[usr] = rawLeaves[usr].filter(dateStr => {
+                  if (new Date(dateStr) < oneYearAgo) {
+                    needsCleanup = true;
+                    return false; 
+                  }
+                  return true;
+                });
+              } else {
+                cleanedLeaves[usr] = []; // 如果資料格式錯誤，自動重置為空陣列
+              }
             });
 
             setLeaves(cleanedLeaves);
@@ -135,6 +150,8 @@
           }
         }, (error) => {
           console.error("同步資料時發生錯誤:", error);
+          setIsSyncing(false);
+          alert("⚠️ 無法連線到資料庫！\n請檢查 Firebase Firestore 的「規則(Rules)」是否過期了 (請改成 allow read, write: if true;)");
         });
 
         return () => unsubscribe();
@@ -255,7 +272,6 @@
       return (
         <div className="min-h-screen p-4 md:p-8 font-serif selection:bg-[#a67c52] selection:text-white relative overflow-hidden">
           
-          {/* 全域背景圖 (讓整個網頁都有情境，這層不會被截圖) */}
           <div className="fixed inset-0 z-0 pointer-events-none">
             <img src={BACKGROUND_IMAGE_URL} crossOrigin="anonymous" className="w-full h-full object-cover opacity-30" />
             <div className="absolute inset-0 bg-black/60"></div>
@@ -263,7 +279,6 @@
 
           <div className="max-w-5xl mx-auto relative z-10 flex flex-col gap-6">
             
-            {/* 頂部狀態與控制列 */}
             <div className="bg-[#dfc4a4]/95 backdrop-blur-md rounded-xl p-4 border-4 border-[#8b5a2b] shadow-xl flex flex-col lg:flex-row justify-between items-center gap-4">
               
               <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
@@ -282,7 +297,6 @@
                   </button>
                 </div>
                 
-                {/* 雲端連線狀態指示燈 */}
                 <div className="flex items-center text-sm font-bold text-[#5a3a22] bg-[#f8f0e3] px-3 py-1.5 rounded-full border border-[#a67c52] shadow-inner">
                   {isSyncing ? (
                     <><span className="w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse"></span> 連線中...</>
@@ -293,7 +307,6 @@
               </div>
 
               <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-                {/* 截圖提示文字 */}
                 <div className="px-3 md:px-4 py-2 rounded-lg font-bold shadow-sm border-2 flex items-center gap-2 bg-[#e8d5b5] border-[#a67c52] text-[#5a3a22] text-sm md:text-base whitespace-nowrap">
                   📸 總表使用桌面截圖
                 </div>
@@ -309,16 +322,12 @@
 
             </div>
 
-            {/* 主要內容區 (這是會被截圖保存的區塊) */}
             <div id="export-area" className="relative rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/10">
               
-              {/* 僅保留黑色半透明與模糊遮罩，維持乾淨的毛玻璃透明感 */}
               <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px] z-0"></div>
 
-              {/* 內部排版 Padding */}
               <div className="relative z-10 p-6 md:p-12 lg:p-16">
                 
-                {/* 羊皮紙本體 */}
                 <div className="bg-[#f4e8d3]/95 backdrop-blur-sm border-4 border-[#8b5a2b] shadow-2xl relative max-w-4xl mx-auto rounded-sm">
                   <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-b from-[#8b5a2b]/30 to-transparent"></div>
 
@@ -329,7 +338,6 @@
                       </h1>
                     </div>
 
-                    {/* 填寫模式：使用者選擇器 (這段只在填寫時顯示，截圖時因為強迫切到view所以不會拍進去) */}
                     {activeTab === 'input' && (
                       <div className="mb-6 flex flex-wrap items-center gap-4 bg-[#e8d5b5] p-4 rounded-lg border border-[#a67c52]">
                         <div className="flex items-center gap-2">
@@ -400,8 +408,14 @@
       );
     }
 
-    const root = createRoot(document.getElementById('root'));
-    root.render(<App />);
+    // 【升級】使用輪詢機制，確保 Firebase 完全載入後才啟動 React，解決非同步錯誤問題
+    const checkFirebaseLoaded = setInterval(() => {
+      if (window.FirebaseAPI) {
+        clearInterval(checkFirebaseLoaded);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+      }
+    }, 50);
   </script>
 </body>
 </html>
